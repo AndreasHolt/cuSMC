@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+const int globalca = 1*5+40/40-(40+2)*2;</declaration>
+	<template>
+		<name x="5" y="5">Template</name>
+		<declaration>// Place local declarations here.
+clock x; 
+const int ca = 1*5+40/40-(40+2)*2;</declaration>
+		<location id="id0" x="-17" y="-51">
+			<label kind="invariant" x="-42" y="-85">x &lt;= 10</label>
+		</location>
+		<location id="id1" x="-59" y="34">
+		</location>
+		<location id="id2" x="25" y="34">
+		</location>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id2"/>
+			<label kind="guard" x="8" y="-34">x &lt;= 3</label>
+			<label kind="assignment" x="17" y="-17">x = 100 + globalca</label>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="guard" x="-85" y="-34">x &lt;= 10</label>
+			<label kind="assignment" x="-85" y="-17">x = 0</label>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+Process = Template();
+// List one or more processes to be composed into a system.
+system Process;
+    </system>
+	<queries>
+		<query>
+			<formula></formula>
+			<comment></comment>
+		</query>
+	</queries>
+</nta>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+broadcast chan ask, try;</declaration>
+	<template>
+		<name x="5" y="5">rare_event</name>
+		<declaration>// Place local declarations here.</declaration>
+		<location id="id0" x="0" y="0">
+			<label kind="exponentialrate" x="0" y="17">1</label>
+		</location>
+		<location id="id1" x="136" y="-42">
+			<label kind="exponentialrate" x="136" y="-25">1</label>
+		</location>
+		<location id="id2" x="136" y="42">
+			<name x="126" y="8">Goal</name>
+		</location>
+		<location id="id3" x="51" y="-85">
+			<label kind="exponentialrate" x="51" y="-68">1</label>
+		</location>
+		<branchpoint id="id4" x="76" y="0">
+		</branchpoint>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="0" y="-59">try?</label>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id3"/>
+			<label kind="synchronisation" x="85" y="-85">ask!</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id2"/>
+			<label kind="probability" x="93" y="25">1</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id1"/>
+			<label kind="probability" x="25" y="-42">10000000</label>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id4"/>
+		</transition>
+	</template>
+	<template>
+		<name>enabler</name>
+		<location id="id5" x="0" y="0">
+			<label kind="exponentialrate" x="-10" y="34">1</label>
+		</location>
+		<location id="id6" x="136" y="0">
+			<label kind="exponentialrate" x="126" y="34">1</label>
+		</location>
+		<init ref="id5"/>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id5"/>
+			<label kind="synchronisation" x="52" y="25">try!</label>
+			<nail x="102" y="42"/>
+			<nail x="34" y="42"/>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id6"/>
+			<label kind="synchronisation" x="18" y="-17">ask?</label>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+rare = rare_event();
+enab = enabler();
+// List one or more processes to be composed into a system.
+system rare, enab;
+    </system>
+	<queries>
+		<query>
+			<formula>Pr[&lt;=100; 1000000](&lt;&gt; rare.Goal)</formula>
+			<comment></comment>
+		</query>
+	</queries>
+</nta>

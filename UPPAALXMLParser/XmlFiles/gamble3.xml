@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+broadcast chan gamble, win, lose;</declaration>
+	<template>
+		<name>channeltest2</name>
+		<location id="id0" x="-484" y="-263">
+			<name x="-494" y="-297">Start</name>
+			<label kind="exponentialrate" x="-494" y="-229">1</label>
+		</location>
+		<location id="id1" x="-204" y="-297">
+			<label kind="exponentialrate" x="-214" y="-263">1</label>
+		</location>
+		<location id="id2" x="-263" y="-391">
+			<label kind="exponentialrate" x="-273" y="-357">2</label>
+		</location>
+		<location id="id3" x="-144" y="-212">
+			<label kind="exponentialrate" x="-154" y="-178">1</label>
+		</location>
+		<branchpoint id="id4" x="-161" y="-314">
+		</branchpoint>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-322" y="-331">lose!</label>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id0"/>
+			<label kind="synchronisation" x="-322" y="-242">win!</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id3"/>
+			<label kind="probability" x="-152" y="-246">1</label>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id2"/>
+			<label kind="probability" x="-245" y="-335">2</label>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id4"/>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="-322" y="-284">gamble?</label>
+		</transition>
+	</template>
+	<template>
+		<name>channeltest3</name>
+		<location id="id5" x="0" y="0">
+		</location>
+		<location id="id6" x="110" y="-8">
+			<label kind="exponentialrate" x="100" y="26">10</label>
+		</location>
+		<location id="id7" x="85" y="-93">
+			<label kind="exponentialrate" x="75" y="-59">10</label>
+		</location>
+		<location id="id8" x="102" y="59">
+			<label kind="exponentialrate" x="92" y="93">10</label>
+		</location>
+		<branchpoint id="id9" x="144" y="-17">
+		</branchpoint>
+		<init ref="id5"/>
+		<transition>
+			<source ref="id7"/>
+			<target ref="id5"/>
+			<label kind="synchronisation" x="18" y="-63">win!</label>
+		</transition>
+		<transition>
+			<source ref="id8"/>
+			<target ref="id5"/>
+			<label kind="synchronisation" x="18" y="12">lose!</label>
+		</transition>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id8"/>
+			<label kind="probability" x="123" y="38">1</label>
+		</transition>
+		<transition>
+			<source ref="id9"/>
+			<target ref="id7"/>
+			<label kind="probability" x="114" y="-38">10</label>
+		</transition>
+		<transition>
+			<source ref="id6"/>
+			<target ref="id9"/>
+		</transition>
+		<transition>
+			<source ref="id5"/>
+			<target ref="id6"/>
+			<label kind="synchronisation" x="18" y="-21">gamble?</label>
+		</transition>
+	</template>
+	<template>
+		<name>channeltest1</name>
+		<location id="id10" x="0" y="0">
+			<name x="-10" y="-34">Start</name>
+			<label kind="exponentialrate" x="-10" y="34">1</label>
+		</location>
+		<location id="id11" x="161" y="-127">
+			<name x="151" y="-161">WannaGambl</name>
+			<label kind="exponentialrate" x="151" y="-93">1</label>
+		</location>
+		<location id="id12" x="161" y="85">
+			<name x="151" y="51">Idiot</name>
+			<label kind="exponentialrate" x="151" y="119">1</label>
+		</location>
+		<location id="id13" x="374" y="-127">
+			<name x="364" y="-161">Goal</name>
+			<label kind="exponentialrate" x="364" y="-93">1</label>
+		</location>
+		<location id="id14" x="374" y="85">
+			<name x="364" y="51">Lose</name>
+			<label kind="exponentialrate" x="364" y="119">1</label>
+		</location>
+		<location id="id15" x="263" y="-127">
+			<name x="253" y="-161">Gambling</name>
+			<label kind="exponentialrate" x="253" y="-93">1</label>
+		</location>
+		<branchpoint id="id16" x="102" y="-17">
+		</branchpoint>
+		<init ref="id10"/>
+		<transition>
+			<source ref="id15"/>
+			<target ref="id14"/>
+			<label kind="synchronisation" x="281" y="-38">lose?</label>
+		</transition>
+		<transition>
+			<source ref="id15"/>
+			<target ref="id13"/>
+			<label kind="synchronisation" x="281" y="-144">win?</label>
+		</transition>
+		<transition>
+			<source ref="id11"/>
+			<target ref="id15"/>
+			<label kind="synchronisation" x="179" y="-144">gamble!</label>
+		</transition>
+		<transition>
+			<source ref="id12"/>
+			<target ref="id14"/>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id12"/>
+			<label kind="probability" x="131" y="51">1</label>
+		</transition>
+		<transition>
+			<source ref="id16"/>
+			<target ref="id11"/>
+			<label kind="probability" x="131" y="-55">5</label>
+		</transition>
+		<transition>
+			<source ref="id10"/>
+			<target ref="id16"/>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+test1 = channeltest1();
+test2 = channeltest2();
+test3 = channeltest3();
+// List one or more processes to be composed into a system.
+system test1, test2, test3;</system>
+	<queries>
+		<query>
+			<formula>Pr[&lt;=100](&lt;&gt;test1.Goal)</formula>
+			<comment></comment>
+		</query>
+	</queries>
+</nta>

@@ -1,0 +1,6125 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<!DOCTYPE nta PUBLIC "-//Uppaal Team//DTD Flat System 1.1//En" "http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd">
+<nta>
+<declaration>int p = 100; 
+const double brn = 2.4; 
+const double alpha = 1.0/5.1; 
+const double gamma = 1.0/3.4; 
+const double beta = brn * gamma; 
+const double pH = 9.0/10000.0; 
+const double kappa = gamma * pH / (1.0-pH); 
+const double tau = 1.0/10.12; 
+int inf = 1;
+</declaration>
+<template>
+<name x="5" y="5">person0
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id0" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id1" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id2" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id3" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id4" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id5" x="119" y="-161">
+</branchpoint>
+<init ref="id0"/>
+<transition>
+<source ref="id4"/>
+<target ref="id3"/>
+</transition>
+<transition>
+<source ref="id5"/>
+<target ref="id4"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id5"/>
+<target ref="id3"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id2"/>
+<target ref="id5"/>
+</transition>
+<transition>
+<source ref="id1"/>
+<target ref="id2"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id0"/>
+<target ref="id1"/>
+</transition>
+</template><template>
+<name x="5" y="5">person1
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id6" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id7" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id8" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id9" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id10" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id11" x="119" y="-161">
+</branchpoint>
+<init ref="id6"/>
+<transition>
+<source ref="id10"/>
+<target ref="id9"/>
+</transition>
+<transition>
+<source ref="id11"/>
+<target ref="id10"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id11"/>
+<target ref="id9"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id8"/>
+<target ref="id11"/>
+</transition>
+<transition>
+<source ref="id7"/>
+<target ref="id8"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id6"/>
+<target ref="id7"/>
+</transition>
+</template><template>
+<name x="5" y="5">person2
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id12" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id13" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id14" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id15" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id16" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id17" x="119" y="-161">
+</branchpoint>
+<init ref="id12"/>
+<transition>
+<source ref="id16"/>
+<target ref="id15"/>
+</transition>
+<transition>
+<source ref="id17"/>
+<target ref="id16"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id17"/>
+<target ref="id15"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id14"/>
+<target ref="id17"/>
+</transition>
+<transition>
+<source ref="id13"/>
+<target ref="id14"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id12"/>
+<target ref="id13"/>
+</transition>
+</template><template>
+<name x="5" y="5">person3
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id18" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id19" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id20" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id21" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id22" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id23" x="119" y="-161">
+</branchpoint>
+<init ref="id18"/>
+<transition>
+<source ref="id22"/>
+<target ref="id21"/>
+</transition>
+<transition>
+<source ref="id23"/>
+<target ref="id22"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id23"/>
+<target ref="id21"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id20"/>
+<target ref="id23"/>
+</transition>
+<transition>
+<source ref="id19"/>
+<target ref="id20"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id18"/>
+<target ref="id19"/>
+</transition>
+</template><template>
+<name x="5" y="5">person4
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id24" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id25" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id26" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id27" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id28" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id29" x="119" y="-161">
+</branchpoint>
+<init ref="id24"/>
+<transition>
+<source ref="id28"/>
+<target ref="id27"/>
+</transition>
+<transition>
+<source ref="id29"/>
+<target ref="id28"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id29"/>
+<target ref="id27"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id26"/>
+<target ref="id29"/>
+</transition>
+<transition>
+<source ref="id25"/>
+<target ref="id26"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id24"/>
+<target ref="id25"/>
+</transition>
+</template><template>
+<name x="5" y="5">person5
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id30" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id31" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id32" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id33" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id34" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id35" x="119" y="-161">
+</branchpoint>
+<init ref="id30"/>
+<transition>
+<source ref="id34"/>
+<target ref="id33"/>
+</transition>
+<transition>
+<source ref="id35"/>
+<target ref="id34"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id35"/>
+<target ref="id33"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id32"/>
+<target ref="id35"/>
+</transition>
+<transition>
+<source ref="id31"/>
+<target ref="id32"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id30"/>
+<target ref="id31"/>
+</transition>
+</template><template>
+<name x="5" y="5">person6
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id36" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id37" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id38" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id39" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id40" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id41" x="119" y="-161">
+</branchpoint>
+<init ref="id36"/>
+<transition>
+<source ref="id40"/>
+<target ref="id39"/>
+</transition>
+<transition>
+<source ref="id41"/>
+<target ref="id40"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id41"/>
+<target ref="id39"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id38"/>
+<target ref="id41"/>
+</transition>
+<transition>
+<source ref="id37"/>
+<target ref="id38"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id36"/>
+<target ref="id37"/>
+</transition>
+</template><template>
+<name x="5" y="5">person7
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id42" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id43" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id44" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id45" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id46" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id47" x="119" y="-161">
+</branchpoint>
+<init ref="id42"/>
+<transition>
+<source ref="id46"/>
+<target ref="id45"/>
+</transition>
+<transition>
+<source ref="id47"/>
+<target ref="id46"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id47"/>
+<target ref="id45"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id44"/>
+<target ref="id47"/>
+</transition>
+<transition>
+<source ref="id43"/>
+<target ref="id44"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id42"/>
+<target ref="id43"/>
+</transition>
+</template><template>
+<name x="5" y="5">person8
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id48" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id49" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id50" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id51" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id52" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id53" x="119" y="-161">
+</branchpoint>
+<init ref="id48"/>
+<transition>
+<source ref="id52"/>
+<target ref="id51"/>
+</transition>
+<transition>
+<source ref="id53"/>
+<target ref="id52"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id53"/>
+<target ref="id51"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id50"/>
+<target ref="id53"/>
+</transition>
+<transition>
+<source ref="id49"/>
+<target ref="id50"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id48"/>
+<target ref="id49"/>
+</transition>
+</template><template>
+<name x="5" y="5">person9
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id54" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id55" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id56" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id57" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id58" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id59" x="119" y="-161">
+</branchpoint>
+<init ref="id54"/>
+<transition>
+<source ref="id58"/>
+<target ref="id57"/>
+</transition>
+<transition>
+<source ref="id59"/>
+<target ref="id58"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id59"/>
+<target ref="id57"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id56"/>
+<target ref="id59"/>
+</transition>
+<transition>
+<source ref="id55"/>
+<target ref="id56"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id54"/>
+<target ref="id55"/>
+</transition>
+</template><template>
+<name x="5" y="5">person10
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id60" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id61" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id62" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id63" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id64" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id65" x="119" y="-161">
+</branchpoint>
+<init ref="id60"/>
+<transition>
+<source ref="id64"/>
+<target ref="id63"/>
+</transition>
+<transition>
+<source ref="id65"/>
+<target ref="id64"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id65"/>
+<target ref="id63"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id62"/>
+<target ref="id65"/>
+</transition>
+<transition>
+<source ref="id61"/>
+<target ref="id62"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id60"/>
+<target ref="id61"/>
+</transition>
+</template><template>
+<name x="5" y="5">person11
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id66" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id67" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id68" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id69" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id70" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id71" x="119" y="-161">
+</branchpoint>
+<init ref="id66"/>
+<transition>
+<source ref="id70"/>
+<target ref="id69"/>
+</transition>
+<transition>
+<source ref="id71"/>
+<target ref="id70"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id71"/>
+<target ref="id69"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id68"/>
+<target ref="id71"/>
+</transition>
+<transition>
+<source ref="id67"/>
+<target ref="id68"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id66"/>
+<target ref="id67"/>
+</transition>
+</template><template>
+<name x="5" y="5">person12
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id72" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id73" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id74" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id75" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id76" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id77" x="119" y="-161">
+</branchpoint>
+<init ref="id72"/>
+<transition>
+<source ref="id76"/>
+<target ref="id75"/>
+</transition>
+<transition>
+<source ref="id77"/>
+<target ref="id76"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id77"/>
+<target ref="id75"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id74"/>
+<target ref="id77"/>
+</transition>
+<transition>
+<source ref="id73"/>
+<target ref="id74"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id72"/>
+<target ref="id73"/>
+</transition>
+</template><template>
+<name x="5" y="5">person13
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id78" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id79" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id80" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id81" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id82" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id83" x="119" y="-161">
+</branchpoint>
+<init ref="id78"/>
+<transition>
+<source ref="id82"/>
+<target ref="id81"/>
+</transition>
+<transition>
+<source ref="id83"/>
+<target ref="id82"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id83"/>
+<target ref="id81"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id80"/>
+<target ref="id83"/>
+</transition>
+<transition>
+<source ref="id79"/>
+<target ref="id80"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id78"/>
+<target ref="id79"/>
+</transition>
+</template><template>
+<name x="5" y="5">person14
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id84" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id85" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id86" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id87" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id88" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id89" x="119" y="-161">
+</branchpoint>
+<init ref="id84"/>
+<transition>
+<source ref="id88"/>
+<target ref="id87"/>
+</transition>
+<transition>
+<source ref="id89"/>
+<target ref="id88"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id89"/>
+<target ref="id87"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id86"/>
+<target ref="id89"/>
+</transition>
+<transition>
+<source ref="id85"/>
+<target ref="id86"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id84"/>
+<target ref="id85"/>
+</transition>
+</template><template>
+<name x="5" y="5">person15
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id90" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id91" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id92" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id93" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id94" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id95" x="119" y="-161">
+</branchpoint>
+<init ref="id90"/>
+<transition>
+<source ref="id94"/>
+<target ref="id93"/>
+</transition>
+<transition>
+<source ref="id95"/>
+<target ref="id94"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id95"/>
+<target ref="id93"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id92"/>
+<target ref="id95"/>
+</transition>
+<transition>
+<source ref="id91"/>
+<target ref="id92"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id90"/>
+<target ref="id91"/>
+</transition>
+</template><template>
+<name x="5" y="5">person16
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id96" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id97" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id98" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id99" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id100" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id101" x="119" y="-161">
+</branchpoint>
+<init ref="id96"/>
+<transition>
+<source ref="id100"/>
+<target ref="id99"/>
+</transition>
+<transition>
+<source ref="id101"/>
+<target ref="id100"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id101"/>
+<target ref="id99"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id98"/>
+<target ref="id101"/>
+</transition>
+<transition>
+<source ref="id97"/>
+<target ref="id98"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id96"/>
+<target ref="id97"/>
+</transition>
+</template><template>
+<name x="5" y="5">person17
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id102" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id103" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id104" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id105" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id106" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id107" x="119" y="-161">
+</branchpoint>
+<init ref="id102"/>
+<transition>
+<source ref="id106"/>
+<target ref="id105"/>
+</transition>
+<transition>
+<source ref="id107"/>
+<target ref="id106"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id107"/>
+<target ref="id105"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id104"/>
+<target ref="id107"/>
+</transition>
+<transition>
+<source ref="id103"/>
+<target ref="id104"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id102"/>
+<target ref="id103"/>
+</transition>
+</template><template>
+<name x="5" y="5">person18
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id108" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id109" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id110" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id111" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id112" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id113" x="119" y="-161">
+</branchpoint>
+<init ref="id108"/>
+<transition>
+<source ref="id112"/>
+<target ref="id111"/>
+</transition>
+<transition>
+<source ref="id113"/>
+<target ref="id112"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id113"/>
+<target ref="id111"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id110"/>
+<target ref="id113"/>
+</transition>
+<transition>
+<source ref="id109"/>
+<target ref="id110"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id108"/>
+<target ref="id109"/>
+</transition>
+</template><template>
+<name x="5" y="5">person19
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id114" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id115" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id116" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id117" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id118" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id119" x="119" y="-161">
+</branchpoint>
+<init ref="id114"/>
+<transition>
+<source ref="id118"/>
+<target ref="id117"/>
+</transition>
+<transition>
+<source ref="id119"/>
+<target ref="id118"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id119"/>
+<target ref="id117"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id116"/>
+<target ref="id119"/>
+</transition>
+<transition>
+<source ref="id115"/>
+<target ref="id116"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id114"/>
+<target ref="id115"/>
+</transition>
+</template><template>
+<name x="5" y="5">person20
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id120" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id121" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id122" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id123" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id124" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id125" x="119" y="-161">
+</branchpoint>
+<init ref="id120"/>
+<transition>
+<source ref="id124"/>
+<target ref="id123"/>
+</transition>
+<transition>
+<source ref="id125"/>
+<target ref="id124"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id125"/>
+<target ref="id123"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id122"/>
+<target ref="id125"/>
+</transition>
+<transition>
+<source ref="id121"/>
+<target ref="id122"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id120"/>
+<target ref="id121"/>
+</transition>
+</template><template>
+<name x="5" y="5">person21
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id126" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id127" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id128" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id129" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id130" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id131" x="119" y="-161">
+</branchpoint>
+<init ref="id126"/>
+<transition>
+<source ref="id130"/>
+<target ref="id129"/>
+</transition>
+<transition>
+<source ref="id131"/>
+<target ref="id130"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id131"/>
+<target ref="id129"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id128"/>
+<target ref="id131"/>
+</transition>
+<transition>
+<source ref="id127"/>
+<target ref="id128"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id126"/>
+<target ref="id127"/>
+</transition>
+</template><template>
+<name x="5" y="5">person22
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id132" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id133" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id134" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id135" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id136" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id137" x="119" y="-161">
+</branchpoint>
+<init ref="id132"/>
+<transition>
+<source ref="id136"/>
+<target ref="id135"/>
+</transition>
+<transition>
+<source ref="id137"/>
+<target ref="id136"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id137"/>
+<target ref="id135"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id134"/>
+<target ref="id137"/>
+</transition>
+<transition>
+<source ref="id133"/>
+<target ref="id134"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id132"/>
+<target ref="id133"/>
+</transition>
+</template><template>
+<name x="5" y="5">person23
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id138" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id139" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id140" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id141" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id142" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id143" x="119" y="-161">
+</branchpoint>
+<init ref="id138"/>
+<transition>
+<source ref="id142"/>
+<target ref="id141"/>
+</transition>
+<transition>
+<source ref="id143"/>
+<target ref="id142"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id143"/>
+<target ref="id141"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id140"/>
+<target ref="id143"/>
+</transition>
+<transition>
+<source ref="id139"/>
+<target ref="id140"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id138"/>
+<target ref="id139"/>
+</transition>
+</template><template>
+<name x="5" y="5">person24
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id144" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id145" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id146" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id147" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id148" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id149" x="119" y="-161">
+</branchpoint>
+<init ref="id144"/>
+<transition>
+<source ref="id148"/>
+<target ref="id147"/>
+</transition>
+<transition>
+<source ref="id149"/>
+<target ref="id148"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id149"/>
+<target ref="id147"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id146"/>
+<target ref="id149"/>
+</transition>
+<transition>
+<source ref="id145"/>
+<target ref="id146"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id144"/>
+<target ref="id145"/>
+</transition>
+</template><template>
+<name x="5" y="5">person25
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id150" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id151" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id152" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id153" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id154" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id155" x="119" y="-161">
+</branchpoint>
+<init ref="id150"/>
+<transition>
+<source ref="id154"/>
+<target ref="id153"/>
+</transition>
+<transition>
+<source ref="id155"/>
+<target ref="id154"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id155"/>
+<target ref="id153"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id152"/>
+<target ref="id155"/>
+</transition>
+<transition>
+<source ref="id151"/>
+<target ref="id152"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id150"/>
+<target ref="id151"/>
+</transition>
+</template><template>
+<name x="5" y="5">person26
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id156" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id157" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id158" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id159" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id160" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id161" x="119" y="-161">
+</branchpoint>
+<init ref="id156"/>
+<transition>
+<source ref="id160"/>
+<target ref="id159"/>
+</transition>
+<transition>
+<source ref="id161"/>
+<target ref="id160"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id161"/>
+<target ref="id159"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id158"/>
+<target ref="id161"/>
+</transition>
+<transition>
+<source ref="id157"/>
+<target ref="id158"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id156"/>
+<target ref="id157"/>
+</transition>
+</template><template>
+<name x="5" y="5">person27
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id162" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id163" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id164" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id165" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id166" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id167" x="119" y="-161">
+</branchpoint>
+<init ref="id162"/>
+<transition>
+<source ref="id166"/>
+<target ref="id165"/>
+</transition>
+<transition>
+<source ref="id167"/>
+<target ref="id166"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id167"/>
+<target ref="id165"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id164"/>
+<target ref="id167"/>
+</transition>
+<transition>
+<source ref="id163"/>
+<target ref="id164"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id162"/>
+<target ref="id163"/>
+</transition>
+</template><template>
+<name x="5" y="5">person28
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id168" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id169" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id170" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id171" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id172" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id173" x="119" y="-161">
+</branchpoint>
+<init ref="id168"/>
+<transition>
+<source ref="id172"/>
+<target ref="id171"/>
+</transition>
+<transition>
+<source ref="id173"/>
+<target ref="id172"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id173"/>
+<target ref="id171"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id170"/>
+<target ref="id173"/>
+</transition>
+<transition>
+<source ref="id169"/>
+<target ref="id170"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id168"/>
+<target ref="id169"/>
+</transition>
+</template><template>
+<name x="5" y="5">person29
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id174" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id175" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id176" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id177" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id178" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id179" x="119" y="-161">
+</branchpoint>
+<init ref="id174"/>
+<transition>
+<source ref="id178"/>
+<target ref="id177"/>
+</transition>
+<transition>
+<source ref="id179"/>
+<target ref="id178"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id179"/>
+<target ref="id177"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id176"/>
+<target ref="id179"/>
+</transition>
+<transition>
+<source ref="id175"/>
+<target ref="id176"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id174"/>
+<target ref="id175"/>
+</transition>
+</template><template>
+<name x="5" y="5">person30
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id180" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id181" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id182" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id183" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id184" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id185" x="119" y="-161">
+</branchpoint>
+<init ref="id180"/>
+<transition>
+<source ref="id184"/>
+<target ref="id183"/>
+</transition>
+<transition>
+<source ref="id185"/>
+<target ref="id184"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id185"/>
+<target ref="id183"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id182"/>
+<target ref="id185"/>
+</transition>
+<transition>
+<source ref="id181"/>
+<target ref="id182"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id180"/>
+<target ref="id181"/>
+</transition>
+</template><template>
+<name x="5" y="5">person31
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id186" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id187" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id188" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id189" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id190" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id191" x="119" y="-161">
+</branchpoint>
+<init ref="id186"/>
+<transition>
+<source ref="id190"/>
+<target ref="id189"/>
+</transition>
+<transition>
+<source ref="id191"/>
+<target ref="id190"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id191"/>
+<target ref="id189"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id188"/>
+<target ref="id191"/>
+</transition>
+<transition>
+<source ref="id187"/>
+<target ref="id188"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id186"/>
+<target ref="id187"/>
+</transition>
+</template><template>
+<name x="5" y="5">person32
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id192" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id193" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id194" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id195" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id196" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id197" x="119" y="-161">
+</branchpoint>
+<init ref="id192"/>
+<transition>
+<source ref="id196"/>
+<target ref="id195"/>
+</transition>
+<transition>
+<source ref="id197"/>
+<target ref="id196"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id197"/>
+<target ref="id195"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id194"/>
+<target ref="id197"/>
+</transition>
+<transition>
+<source ref="id193"/>
+<target ref="id194"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id192"/>
+<target ref="id193"/>
+</transition>
+</template><template>
+<name x="5" y="5">person33
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id198" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id199" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id200" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id201" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id202" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id203" x="119" y="-161">
+</branchpoint>
+<init ref="id198"/>
+<transition>
+<source ref="id202"/>
+<target ref="id201"/>
+</transition>
+<transition>
+<source ref="id203"/>
+<target ref="id202"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id203"/>
+<target ref="id201"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id200"/>
+<target ref="id203"/>
+</transition>
+<transition>
+<source ref="id199"/>
+<target ref="id200"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id198"/>
+<target ref="id199"/>
+</transition>
+</template><template>
+<name x="5" y="5">person34
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id204" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id205" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id206" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id207" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id208" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id209" x="119" y="-161">
+</branchpoint>
+<init ref="id204"/>
+<transition>
+<source ref="id208"/>
+<target ref="id207"/>
+</transition>
+<transition>
+<source ref="id209"/>
+<target ref="id208"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id209"/>
+<target ref="id207"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id206"/>
+<target ref="id209"/>
+</transition>
+<transition>
+<source ref="id205"/>
+<target ref="id206"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id204"/>
+<target ref="id205"/>
+</transition>
+</template><template>
+<name x="5" y="5">person35
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id210" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id211" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id212" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id213" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id214" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id215" x="119" y="-161">
+</branchpoint>
+<init ref="id210"/>
+<transition>
+<source ref="id214"/>
+<target ref="id213"/>
+</transition>
+<transition>
+<source ref="id215"/>
+<target ref="id214"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id215"/>
+<target ref="id213"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id212"/>
+<target ref="id215"/>
+</transition>
+<transition>
+<source ref="id211"/>
+<target ref="id212"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id210"/>
+<target ref="id211"/>
+</transition>
+</template><template>
+<name x="5" y="5">person36
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id216" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id217" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id218" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id219" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id220" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id221" x="119" y="-161">
+</branchpoint>
+<init ref="id216"/>
+<transition>
+<source ref="id220"/>
+<target ref="id219"/>
+</transition>
+<transition>
+<source ref="id221"/>
+<target ref="id220"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id221"/>
+<target ref="id219"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id218"/>
+<target ref="id221"/>
+</transition>
+<transition>
+<source ref="id217"/>
+<target ref="id218"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id216"/>
+<target ref="id217"/>
+</transition>
+</template><template>
+<name x="5" y="5">person37
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id222" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id223" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id224" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id225" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id226" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id227" x="119" y="-161">
+</branchpoint>
+<init ref="id222"/>
+<transition>
+<source ref="id226"/>
+<target ref="id225"/>
+</transition>
+<transition>
+<source ref="id227"/>
+<target ref="id226"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id227"/>
+<target ref="id225"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id224"/>
+<target ref="id227"/>
+</transition>
+<transition>
+<source ref="id223"/>
+<target ref="id224"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id222"/>
+<target ref="id223"/>
+</transition>
+</template><template>
+<name x="5" y="5">person38
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id228" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id229" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id230" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id231" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id232" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id233" x="119" y="-161">
+</branchpoint>
+<init ref="id228"/>
+<transition>
+<source ref="id232"/>
+<target ref="id231"/>
+</transition>
+<transition>
+<source ref="id233"/>
+<target ref="id232"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id233"/>
+<target ref="id231"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id230"/>
+<target ref="id233"/>
+</transition>
+<transition>
+<source ref="id229"/>
+<target ref="id230"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id228"/>
+<target ref="id229"/>
+</transition>
+</template><template>
+<name x="5" y="5">person39
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id234" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id235" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id236" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id237" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id238" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id239" x="119" y="-161">
+</branchpoint>
+<init ref="id234"/>
+<transition>
+<source ref="id238"/>
+<target ref="id237"/>
+</transition>
+<transition>
+<source ref="id239"/>
+<target ref="id238"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id239"/>
+<target ref="id237"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id236"/>
+<target ref="id239"/>
+</transition>
+<transition>
+<source ref="id235"/>
+<target ref="id236"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id234"/>
+<target ref="id235"/>
+</transition>
+</template><template>
+<name x="5" y="5">person40
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id240" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id241" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id242" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id243" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id244" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id245" x="119" y="-161">
+</branchpoint>
+<init ref="id240"/>
+<transition>
+<source ref="id244"/>
+<target ref="id243"/>
+</transition>
+<transition>
+<source ref="id245"/>
+<target ref="id244"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id245"/>
+<target ref="id243"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id242"/>
+<target ref="id245"/>
+</transition>
+<transition>
+<source ref="id241"/>
+<target ref="id242"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id240"/>
+<target ref="id241"/>
+</transition>
+</template><template>
+<name x="5" y="5">person41
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id246" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id247" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id248" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id249" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id250" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id251" x="119" y="-161">
+</branchpoint>
+<init ref="id246"/>
+<transition>
+<source ref="id250"/>
+<target ref="id249"/>
+</transition>
+<transition>
+<source ref="id251"/>
+<target ref="id250"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id251"/>
+<target ref="id249"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id248"/>
+<target ref="id251"/>
+</transition>
+<transition>
+<source ref="id247"/>
+<target ref="id248"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id246"/>
+<target ref="id247"/>
+</transition>
+</template><template>
+<name x="5" y="5">person42
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id252" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id253" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id254" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id255" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id256" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id257" x="119" y="-161">
+</branchpoint>
+<init ref="id252"/>
+<transition>
+<source ref="id256"/>
+<target ref="id255"/>
+</transition>
+<transition>
+<source ref="id257"/>
+<target ref="id256"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id257"/>
+<target ref="id255"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id254"/>
+<target ref="id257"/>
+</transition>
+<transition>
+<source ref="id253"/>
+<target ref="id254"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id252"/>
+<target ref="id253"/>
+</transition>
+</template><template>
+<name x="5" y="5">person43
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id258" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id259" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id260" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id261" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id262" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id263" x="119" y="-161">
+</branchpoint>
+<init ref="id258"/>
+<transition>
+<source ref="id262"/>
+<target ref="id261"/>
+</transition>
+<transition>
+<source ref="id263"/>
+<target ref="id262"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id263"/>
+<target ref="id261"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id260"/>
+<target ref="id263"/>
+</transition>
+<transition>
+<source ref="id259"/>
+<target ref="id260"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id258"/>
+<target ref="id259"/>
+</transition>
+</template><template>
+<name x="5" y="5">person44
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id264" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id265" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id266" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id267" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id268" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id269" x="119" y="-161">
+</branchpoint>
+<init ref="id264"/>
+<transition>
+<source ref="id268"/>
+<target ref="id267"/>
+</transition>
+<transition>
+<source ref="id269"/>
+<target ref="id268"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id269"/>
+<target ref="id267"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id266"/>
+<target ref="id269"/>
+</transition>
+<transition>
+<source ref="id265"/>
+<target ref="id266"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id264"/>
+<target ref="id265"/>
+</transition>
+</template><template>
+<name x="5" y="5">person45
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id270" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id271" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id272" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id273" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id274" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id275" x="119" y="-161">
+</branchpoint>
+<init ref="id270"/>
+<transition>
+<source ref="id274"/>
+<target ref="id273"/>
+</transition>
+<transition>
+<source ref="id275"/>
+<target ref="id274"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id275"/>
+<target ref="id273"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id272"/>
+<target ref="id275"/>
+</transition>
+<transition>
+<source ref="id271"/>
+<target ref="id272"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id270"/>
+<target ref="id271"/>
+</transition>
+</template><template>
+<name x="5" y="5">person46
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id276" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id277" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id278" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id279" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id280" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id281" x="119" y="-161">
+</branchpoint>
+<init ref="id276"/>
+<transition>
+<source ref="id280"/>
+<target ref="id279"/>
+</transition>
+<transition>
+<source ref="id281"/>
+<target ref="id280"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id281"/>
+<target ref="id279"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id278"/>
+<target ref="id281"/>
+</transition>
+<transition>
+<source ref="id277"/>
+<target ref="id278"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id276"/>
+<target ref="id277"/>
+</transition>
+</template><template>
+<name x="5" y="5">person47
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id282" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id283" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id284" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id285" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id286" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id287" x="119" y="-161">
+</branchpoint>
+<init ref="id282"/>
+<transition>
+<source ref="id286"/>
+<target ref="id285"/>
+</transition>
+<transition>
+<source ref="id287"/>
+<target ref="id286"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id287"/>
+<target ref="id285"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id284"/>
+<target ref="id287"/>
+</transition>
+<transition>
+<source ref="id283"/>
+<target ref="id284"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id282"/>
+<target ref="id283"/>
+</transition>
+</template><template>
+<name x="5" y="5">person48
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id288" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id289" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id290" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id291" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id292" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id293" x="119" y="-161">
+</branchpoint>
+<init ref="id288"/>
+<transition>
+<source ref="id292"/>
+<target ref="id291"/>
+</transition>
+<transition>
+<source ref="id293"/>
+<target ref="id292"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id293"/>
+<target ref="id291"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id290"/>
+<target ref="id293"/>
+</transition>
+<transition>
+<source ref="id289"/>
+<target ref="id290"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id288"/>
+<target ref="id289"/>
+</transition>
+</template><template>
+<name x="5" y="5">person49
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id294" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id295" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id296" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id297" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id298" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id299" x="119" y="-161">
+</branchpoint>
+<init ref="id294"/>
+<transition>
+<source ref="id298"/>
+<target ref="id297"/>
+</transition>
+<transition>
+<source ref="id299"/>
+<target ref="id298"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id299"/>
+<target ref="id297"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id296"/>
+<target ref="id299"/>
+</transition>
+<transition>
+<source ref="id295"/>
+<target ref="id296"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id294"/>
+<target ref="id295"/>
+</transition>
+</template><template>
+<name x="5" y="5">person50
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id300" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id301" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id302" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id303" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id304" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id305" x="119" y="-161">
+</branchpoint>
+<init ref="id300"/>
+<transition>
+<source ref="id304"/>
+<target ref="id303"/>
+</transition>
+<transition>
+<source ref="id305"/>
+<target ref="id304"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id305"/>
+<target ref="id303"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id302"/>
+<target ref="id305"/>
+</transition>
+<transition>
+<source ref="id301"/>
+<target ref="id302"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id300"/>
+<target ref="id301"/>
+</transition>
+</template><template>
+<name x="5" y="5">person51
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id306" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id307" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id308" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id309" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id310" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id311" x="119" y="-161">
+</branchpoint>
+<init ref="id306"/>
+<transition>
+<source ref="id310"/>
+<target ref="id309"/>
+</transition>
+<transition>
+<source ref="id311"/>
+<target ref="id310"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id311"/>
+<target ref="id309"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id308"/>
+<target ref="id311"/>
+</transition>
+<transition>
+<source ref="id307"/>
+<target ref="id308"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id306"/>
+<target ref="id307"/>
+</transition>
+</template><template>
+<name x="5" y="5">person52
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id312" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id313" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id314" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id315" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id316" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id317" x="119" y="-161">
+</branchpoint>
+<init ref="id312"/>
+<transition>
+<source ref="id316"/>
+<target ref="id315"/>
+</transition>
+<transition>
+<source ref="id317"/>
+<target ref="id316"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id317"/>
+<target ref="id315"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id314"/>
+<target ref="id317"/>
+</transition>
+<transition>
+<source ref="id313"/>
+<target ref="id314"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id312"/>
+<target ref="id313"/>
+</transition>
+</template><template>
+<name x="5" y="5">person53
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id318" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id319" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id320" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id321" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id322" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id323" x="119" y="-161">
+</branchpoint>
+<init ref="id318"/>
+<transition>
+<source ref="id322"/>
+<target ref="id321"/>
+</transition>
+<transition>
+<source ref="id323"/>
+<target ref="id322"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id323"/>
+<target ref="id321"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id320"/>
+<target ref="id323"/>
+</transition>
+<transition>
+<source ref="id319"/>
+<target ref="id320"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id318"/>
+<target ref="id319"/>
+</transition>
+</template><template>
+<name x="5" y="5">person54
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id324" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id325" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id326" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id327" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id328" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id329" x="119" y="-161">
+</branchpoint>
+<init ref="id324"/>
+<transition>
+<source ref="id328"/>
+<target ref="id327"/>
+</transition>
+<transition>
+<source ref="id329"/>
+<target ref="id328"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id329"/>
+<target ref="id327"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id326"/>
+<target ref="id329"/>
+</transition>
+<transition>
+<source ref="id325"/>
+<target ref="id326"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id324"/>
+<target ref="id325"/>
+</transition>
+</template><template>
+<name x="5" y="5">person55
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id330" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id331" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id332" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id333" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id334" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id335" x="119" y="-161">
+</branchpoint>
+<init ref="id330"/>
+<transition>
+<source ref="id334"/>
+<target ref="id333"/>
+</transition>
+<transition>
+<source ref="id335"/>
+<target ref="id334"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id335"/>
+<target ref="id333"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id332"/>
+<target ref="id335"/>
+</transition>
+<transition>
+<source ref="id331"/>
+<target ref="id332"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id330"/>
+<target ref="id331"/>
+</transition>
+</template><template>
+<name x="5" y="5">person56
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id336" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id337" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id338" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id339" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id340" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id341" x="119" y="-161">
+</branchpoint>
+<init ref="id336"/>
+<transition>
+<source ref="id340"/>
+<target ref="id339"/>
+</transition>
+<transition>
+<source ref="id341"/>
+<target ref="id340"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id341"/>
+<target ref="id339"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id338"/>
+<target ref="id341"/>
+</transition>
+<transition>
+<source ref="id337"/>
+<target ref="id338"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id336"/>
+<target ref="id337"/>
+</transition>
+</template><template>
+<name x="5" y="5">person57
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id342" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id343" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id344" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id345" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id346" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id347" x="119" y="-161">
+</branchpoint>
+<init ref="id342"/>
+<transition>
+<source ref="id346"/>
+<target ref="id345"/>
+</transition>
+<transition>
+<source ref="id347"/>
+<target ref="id346"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id347"/>
+<target ref="id345"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id344"/>
+<target ref="id347"/>
+</transition>
+<transition>
+<source ref="id343"/>
+<target ref="id344"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id342"/>
+<target ref="id343"/>
+</transition>
+</template><template>
+<name x="5" y="5">person58
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id348" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id349" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id350" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id351" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id352" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id353" x="119" y="-161">
+</branchpoint>
+<init ref="id348"/>
+<transition>
+<source ref="id352"/>
+<target ref="id351"/>
+</transition>
+<transition>
+<source ref="id353"/>
+<target ref="id352"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id353"/>
+<target ref="id351"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id350"/>
+<target ref="id353"/>
+</transition>
+<transition>
+<source ref="id349"/>
+<target ref="id350"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id348"/>
+<target ref="id349"/>
+</transition>
+</template><template>
+<name x="5" y="5">person59
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id354" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id355" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id356" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id357" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id358" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id359" x="119" y="-161">
+</branchpoint>
+<init ref="id354"/>
+<transition>
+<source ref="id358"/>
+<target ref="id357"/>
+</transition>
+<transition>
+<source ref="id359"/>
+<target ref="id358"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id359"/>
+<target ref="id357"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id356"/>
+<target ref="id359"/>
+</transition>
+<transition>
+<source ref="id355"/>
+<target ref="id356"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id354"/>
+<target ref="id355"/>
+</transition>
+</template><template>
+<name x="5" y="5">person60
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id360" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id361" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id362" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id363" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id364" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id365" x="119" y="-161">
+</branchpoint>
+<init ref="id360"/>
+<transition>
+<source ref="id364"/>
+<target ref="id363"/>
+</transition>
+<transition>
+<source ref="id365"/>
+<target ref="id364"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id365"/>
+<target ref="id363"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id362"/>
+<target ref="id365"/>
+</transition>
+<transition>
+<source ref="id361"/>
+<target ref="id362"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id360"/>
+<target ref="id361"/>
+</transition>
+</template><template>
+<name x="5" y="5">person61
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id366" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id367" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id368" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id369" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id370" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id371" x="119" y="-161">
+</branchpoint>
+<init ref="id366"/>
+<transition>
+<source ref="id370"/>
+<target ref="id369"/>
+</transition>
+<transition>
+<source ref="id371"/>
+<target ref="id370"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id371"/>
+<target ref="id369"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id368"/>
+<target ref="id371"/>
+</transition>
+<transition>
+<source ref="id367"/>
+<target ref="id368"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id366"/>
+<target ref="id367"/>
+</transition>
+</template><template>
+<name x="5" y="5">person62
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id372" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id373" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id374" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id375" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id376" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id377" x="119" y="-161">
+</branchpoint>
+<init ref="id372"/>
+<transition>
+<source ref="id376"/>
+<target ref="id375"/>
+</transition>
+<transition>
+<source ref="id377"/>
+<target ref="id376"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id377"/>
+<target ref="id375"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id374"/>
+<target ref="id377"/>
+</transition>
+<transition>
+<source ref="id373"/>
+<target ref="id374"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id372"/>
+<target ref="id373"/>
+</transition>
+</template><template>
+<name x="5" y="5">person63
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id378" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id379" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id380" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id381" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id382" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id383" x="119" y="-161">
+</branchpoint>
+<init ref="id378"/>
+<transition>
+<source ref="id382"/>
+<target ref="id381"/>
+</transition>
+<transition>
+<source ref="id383"/>
+<target ref="id382"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id383"/>
+<target ref="id381"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id380"/>
+<target ref="id383"/>
+</transition>
+<transition>
+<source ref="id379"/>
+<target ref="id380"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id378"/>
+<target ref="id379"/>
+</transition>
+</template><template>
+<name x="5" y="5">person64
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id384" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id385" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id386" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id387" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id388" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id389" x="119" y="-161">
+</branchpoint>
+<init ref="id384"/>
+<transition>
+<source ref="id388"/>
+<target ref="id387"/>
+</transition>
+<transition>
+<source ref="id389"/>
+<target ref="id388"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id389"/>
+<target ref="id387"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id386"/>
+<target ref="id389"/>
+</transition>
+<transition>
+<source ref="id385"/>
+<target ref="id386"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id384"/>
+<target ref="id385"/>
+</transition>
+</template><template>
+<name x="5" y="5">person65
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id390" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id391" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id392" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id393" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id394" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id395" x="119" y="-161">
+</branchpoint>
+<init ref="id390"/>
+<transition>
+<source ref="id394"/>
+<target ref="id393"/>
+</transition>
+<transition>
+<source ref="id395"/>
+<target ref="id394"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id395"/>
+<target ref="id393"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id392"/>
+<target ref="id395"/>
+</transition>
+<transition>
+<source ref="id391"/>
+<target ref="id392"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id390"/>
+<target ref="id391"/>
+</transition>
+</template><template>
+<name x="5" y="5">person66
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id396" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id397" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id398" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id399" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id400" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id401" x="119" y="-161">
+</branchpoint>
+<init ref="id396"/>
+<transition>
+<source ref="id400"/>
+<target ref="id399"/>
+</transition>
+<transition>
+<source ref="id401"/>
+<target ref="id400"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id401"/>
+<target ref="id399"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id398"/>
+<target ref="id401"/>
+</transition>
+<transition>
+<source ref="id397"/>
+<target ref="id398"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id396"/>
+<target ref="id397"/>
+</transition>
+</template><template>
+<name x="5" y="5">person67
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id402" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id403" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id404" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id405" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id406" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id407" x="119" y="-161">
+</branchpoint>
+<init ref="id402"/>
+<transition>
+<source ref="id406"/>
+<target ref="id405"/>
+</transition>
+<transition>
+<source ref="id407"/>
+<target ref="id406"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id407"/>
+<target ref="id405"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id404"/>
+<target ref="id407"/>
+</transition>
+<transition>
+<source ref="id403"/>
+<target ref="id404"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id402"/>
+<target ref="id403"/>
+</transition>
+</template><template>
+<name x="5" y="5">person68
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id408" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id409" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id410" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id411" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id412" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id413" x="119" y="-161">
+</branchpoint>
+<init ref="id408"/>
+<transition>
+<source ref="id412"/>
+<target ref="id411"/>
+</transition>
+<transition>
+<source ref="id413"/>
+<target ref="id412"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id413"/>
+<target ref="id411"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id410"/>
+<target ref="id413"/>
+</transition>
+<transition>
+<source ref="id409"/>
+<target ref="id410"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id408"/>
+<target ref="id409"/>
+</transition>
+</template><template>
+<name x="5" y="5">person69
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id414" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id415" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id416" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id417" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id418" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id419" x="119" y="-161">
+</branchpoint>
+<init ref="id414"/>
+<transition>
+<source ref="id418"/>
+<target ref="id417"/>
+</transition>
+<transition>
+<source ref="id419"/>
+<target ref="id418"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id419"/>
+<target ref="id417"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id416"/>
+<target ref="id419"/>
+</transition>
+<transition>
+<source ref="id415"/>
+<target ref="id416"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id414"/>
+<target ref="id415"/>
+</transition>
+</template><template>
+<name x="5" y="5">person70
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id420" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id421" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id422" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id423" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id424" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id425" x="119" y="-161">
+</branchpoint>
+<init ref="id420"/>
+<transition>
+<source ref="id424"/>
+<target ref="id423"/>
+</transition>
+<transition>
+<source ref="id425"/>
+<target ref="id424"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id425"/>
+<target ref="id423"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id422"/>
+<target ref="id425"/>
+</transition>
+<transition>
+<source ref="id421"/>
+<target ref="id422"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id420"/>
+<target ref="id421"/>
+</transition>
+</template><template>
+<name x="5" y="5">person71
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id426" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id427" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id428" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id429" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id430" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id431" x="119" y="-161">
+</branchpoint>
+<init ref="id426"/>
+<transition>
+<source ref="id430"/>
+<target ref="id429"/>
+</transition>
+<transition>
+<source ref="id431"/>
+<target ref="id430"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id431"/>
+<target ref="id429"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id428"/>
+<target ref="id431"/>
+</transition>
+<transition>
+<source ref="id427"/>
+<target ref="id428"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id426"/>
+<target ref="id427"/>
+</transition>
+</template><template>
+<name x="5" y="5">person72
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id432" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id433" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id434" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id435" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id436" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id437" x="119" y="-161">
+</branchpoint>
+<init ref="id432"/>
+<transition>
+<source ref="id436"/>
+<target ref="id435"/>
+</transition>
+<transition>
+<source ref="id437"/>
+<target ref="id436"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id437"/>
+<target ref="id435"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id434"/>
+<target ref="id437"/>
+</transition>
+<transition>
+<source ref="id433"/>
+<target ref="id434"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id432"/>
+<target ref="id433"/>
+</transition>
+</template><template>
+<name x="5" y="5">person73
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id438" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id439" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id440" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id441" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id442" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id443" x="119" y="-161">
+</branchpoint>
+<init ref="id438"/>
+<transition>
+<source ref="id442"/>
+<target ref="id441"/>
+</transition>
+<transition>
+<source ref="id443"/>
+<target ref="id442"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id443"/>
+<target ref="id441"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id440"/>
+<target ref="id443"/>
+</transition>
+<transition>
+<source ref="id439"/>
+<target ref="id440"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id438"/>
+<target ref="id439"/>
+</transition>
+</template><template>
+<name x="5" y="5">person74
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id444" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id445" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id446" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id447" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id448" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id449" x="119" y="-161">
+</branchpoint>
+<init ref="id444"/>
+<transition>
+<source ref="id448"/>
+<target ref="id447"/>
+</transition>
+<transition>
+<source ref="id449"/>
+<target ref="id448"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id449"/>
+<target ref="id447"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id446"/>
+<target ref="id449"/>
+</transition>
+<transition>
+<source ref="id445"/>
+<target ref="id446"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id444"/>
+<target ref="id445"/>
+</transition>
+</template><template>
+<name x="5" y="5">person75
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id450" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id451" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id452" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id453" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id454" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id455" x="119" y="-161">
+</branchpoint>
+<init ref="id450"/>
+<transition>
+<source ref="id454"/>
+<target ref="id453"/>
+</transition>
+<transition>
+<source ref="id455"/>
+<target ref="id454"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id455"/>
+<target ref="id453"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id452"/>
+<target ref="id455"/>
+</transition>
+<transition>
+<source ref="id451"/>
+<target ref="id452"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id450"/>
+<target ref="id451"/>
+</transition>
+</template><template>
+<name x="5" y="5">person76
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id456" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id457" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id458" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id459" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id460" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id461" x="119" y="-161">
+</branchpoint>
+<init ref="id456"/>
+<transition>
+<source ref="id460"/>
+<target ref="id459"/>
+</transition>
+<transition>
+<source ref="id461"/>
+<target ref="id460"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id461"/>
+<target ref="id459"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id458"/>
+<target ref="id461"/>
+</transition>
+<transition>
+<source ref="id457"/>
+<target ref="id458"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id456"/>
+<target ref="id457"/>
+</transition>
+</template><template>
+<name x="5" y="5">person77
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id462" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id463" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id464" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id465" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id466" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id467" x="119" y="-161">
+</branchpoint>
+<init ref="id462"/>
+<transition>
+<source ref="id466"/>
+<target ref="id465"/>
+</transition>
+<transition>
+<source ref="id467"/>
+<target ref="id466"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id467"/>
+<target ref="id465"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id464"/>
+<target ref="id467"/>
+</transition>
+<transition>
+<source ref="id463"/>
+<target ref="id464"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id462"/>
+<target ref="id463"/>
+</transition>
+</template><template>
+<name x="5" y="5">person78
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id468" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id469" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id470" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id471" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id472" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id473" x="119" y="-161">
+</branchpoint>
+<init ref="id468"/>
+<transition>
+<source ref="id472"/>
+<target ref="id471"/>
+</transition>
+<transition>
+<source ref="id473"/>
+<target ref="id472"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id473"/>
+<target ref="id471"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id470"/>
+<target ref="id473"/>
+</transition>
+<transition>
+<source ref="id469"/>
+<target ref="id470"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id468"/>
+<target ref="id469"/>
+</transition>
+</template><template>
+<name x="5" y="5">person79
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id474" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id475" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id476" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id477" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id478" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id479" x="119" y="-161">
+</branchpoint>
+<init ref="id474"/>
+<transition>
+<source ref="id478"/>
+<target ref="id477"/>
+</transition>
+<transition>
+<source ref="id479"/>
+<target ref="id478"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id479"/>
+<target ref="id477"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id476"/>
+<target ref="id479"/>
+</transition>
+<transition>
+<source ref="id475"/>
+<target ref="id476"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id474"/>
+<target ref="id475"/>
+</transition>
+</template><template>
+<name x="5" y="5">person80
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id480" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id481" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id482" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id483" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id484" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id485" x="119" y="-161">
+</branchpoint>
+<init ref="id480"/>
+<transition>
+<source ref="id484"/>
+<target ref="id483"/>
+</transition>
+<transition>
+<source ref="id485"/>
+<target ref="id484"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id485"/>
+<target ref="id483"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id482"/>
+<target ref="id485"/>
+</transition>
+<transition>
+<source ref="id481"/>
+<target ref="id482"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id480"/>
+<target ref="id481"/>
+</transition>
+</template><template>
+<name x="5" y="5">person81
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id486" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id487" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id488" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id489" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id490" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id491" x="119" y="-161">
+</branchpoint>
+<init ref="id486"/>
+<transition>
+<source ref="id490"/>
+<target ref="id489"/>
+</transition>
+<transition>
+<source ref="id491"/>
+<target ref="id490"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id491"/>
+<target ref="id489"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id488"/>
+<target ref="id491"/>
+</transition>
+<transition>
+<source ref="id487"/>
+<target ref="id488"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id486"/>
+<target ref="id487"/>
+</transition>
+</template><template>
+<name x="5" y="5">person82
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id492" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id493" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id494" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id495" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id496" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id497" x="119" y="-161">
+</branchpoint>
+<init ref="id492"/>
+<transition>
+<source ref="id496"/>
+<target ref="id495"/>
+</transition>
+<transition>
+<source ref="id497"/>
+<target ref="id496"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id497"/>
+<target ref="id495"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id494"/>
+<target ref="id497"/>
+</transition>
+<transition>
+<source ref="id493"/>
+<target ref="id494"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id492"/>
+<target ref="id493"/>
+</transition>
+</template><template>
+<name x="5" y="5">person83
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id498" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id499" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id500" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id501" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id502" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id503" x="119" y="-161">
+</branchpoint>
+<init ref="id498"/>
+<transition>
+<source ref="id502"/>
+<target ref="id501"/>
+</transition>
+<transition>
+<source ref="id503"/>
+<target ref="id502"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id503"/>
+<target ref="id501"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id500"/>
+<target ref="id503"/>
+</transition>
+<transition>
+<source ref="id499"/>
+<target ref="id500"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id498"/>
+<target ref="id499"/>
+</transition>
+</template><template>
+<name x="5" y="5">person84
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id504" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id505" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id506" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id507" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id508" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id509" x="119" y="-161">
+</branchpoint>
+<init ref="id504"/>
+<transition>
+<source ref="id508"/>
+<target ref="id507"/>
+</transition>
+<transition>
+<source ref="id509"/>
+<target ref="id508"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id509"/>
+<target ref="id507"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id506"/>
+<target ref="id509"/>
+</transition>
+<transition>
+<source ref="id505"/>
+<target ref="id506"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id504"/>
+<target ref="id505"/>
+</transition>
+</template><template>
+<name x="5" y="5">person85
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id510" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id511" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id512" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id513" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id514" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id515" x="119" y="-161">
+</branchpoint>
+<init ref="id510"/>
+<transition>
+<source ref="id514"/>
+<target ref="id513"/>
+</transition>
+<transition>
+<source ref="id515"/>
+<target ref="id514"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id515"/>
+<target ref="id513"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id512"/>
+<target ref="id515"/>
+</transition>
+<transition>
+<source ref="id511"/>
+<target ref="id512"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id510"/>
+<target ref="id511"/>
+</transition>
+</template><template>
+<name x="5" y="5">person86
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id516" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id517" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id518" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id519" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id520" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id521" x="119" y="-161">
+</branchpoint>
+<init ref="id516"/>
+<transition>
+<source ref="id520"/>
+<target ref="id519"/>
+</transition>
+<transition>
+<source ref="id521"/>
+<target ref="id520"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id521"/>
+<target ref="id519"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id518"/>
+<target ref="id521"/>
+</transition>
+<transition>
+<source ref="id517"/>
+<target ref="id518"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id516"/>
+<target ref="id517"/>
+</transition>
+</template><template>
+<name x="5" y="5">person87
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id522" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id523" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id524" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id525" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id526" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id527" x="119" y="-161">
+</branchpoint>
+<init ref="id522"/>
+<transition>
+<source ref="id526"/>
+<target ref="id525"/>
+</transition>
+<transition>
+<source ref="id527"/>
+<target ref="id526"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id527"/>
+<target ref="id525"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id524"/>
+<target ref="id527"/>
+</transition>
+<transition>
+<source ref="id523"/>
+<target ref="id524"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id522"/>
+<target ref="id523"/>
+</transition>
+</template><template>
+<name x="5" y="5">person88
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id528" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id529" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id530" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id531" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id532" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id533" x="119" y="-161">
+</branchpoint>
+<init ref="id528"/>
+<transition>
+<source ref="id532"/>
+<target ref="id531"/>
+</transition>
+<transition>
+<source ref="id533"/>
+<target ref="id532"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id533"/>
+<target ref="id531"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id530"/>
+<target ref="id533"/>
+</transition>
+<transition>
+<source ref="id529"/>
+<target ref="id530"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id528"/>
+<target ref="id529"/>
+</transition>
+</template><template>
+<name x="5" y="5">person89
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id534" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id535" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id536" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id537" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id538" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id539" x="119" y="-161">
+</branchpoint>
+<init ref="id534"/>
+<transition>
+<source ref="id538"/>
+<target ref="id537"/>
+</transition>
+<transition>
+<source ref="id539"/>
+<target ref="id538"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id539"/>
+<target ref="id537"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id536"/>
+<target ref="id539"/>
+</transition>
+<transition>
+<source ref="id535"/>
+<target ref="id536"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id534"/>
+<target ref="id535"/>
+</transition>
+</template><template>
+<name x="5" y="5">person90
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id540" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id541" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id542" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id543" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id544" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id545" x="119" y="-161">
+</branchpoint>
+<init ref="id540"/>
+<transition>
+<source ref="id544"/>
+<target ref="id543"/>
+</transition>
+<transition>
+<source ref="id545"/>
+<target ref="id544"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id545"/>
+<target ref="id543"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id542"/>
+<target ref="id545"/>
+</transition>
+<transition>
+<source ref="id541"/>
+<target ref="id542"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id540"/>
+<target ref="id541"/>
+</transition>
+</template><template>
+<name x="5" y="5">person91
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id546" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id547" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id548" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id549" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id550" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id551" x="119" y="-161">
+</branchpoint>
+<init ref="id546"/>
+<transition>
+<source ref="id550"/>
+<target ref="id549"/>
+</transition>
+<transition>
+<source ref="id551"/>
+<target ref="id550"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id551"/>
+<target ref="id549"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id548"/>
+<target ref="id551"/>
+</transition>
+<transition>
+<source ref="id547"/>
+<target ref="id548"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id546"/>
+<target ref="id547"/>
+</transition>
+</template><template>
+<name x="5" y="5">person92
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id552" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id553" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id554" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id555" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id556" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id557" x="119" y="-161">
+</branchpoint>
+<init ref="id552"/>
+<transition>
+<source ref="id556"/>
+<target ref="id555"/>
+</transition>
+<transition>
+<source ref="id557"/>
+<target ref="id556"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id557"/>
+<target ref="id555"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id554"/>
+<target ref="id557"/>
+</transition>
+<transition>
+<source ref="id553"/>
+<target ref="id554"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id552"/>
+<target ref="id553"/>
+</transition>
+</template><template>
+<name x="5" y="5">person93
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id558" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id559" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id560" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id561" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id562" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id563" x="119" y="-161">
+</branchpoint>
+<init ref="id558"/>
+<transition>
+<source ref="id562"/>
+<target ref="id561"/>
+</transition>
+<transition>
+<source ref="id563"/>
+<target ref="id562"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id563"/>
+<target ref="id561"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id560"/>
+<target ref="id563"/>
+</transition>
+<transition>
+<source ref="id559"/>
+<target ref="id560"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id558"/>
+<target ref="id559"/>
+</transition>
+</template><template>
+<name x="5" y="5">person94
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id564" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id565" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id566" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id567" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id568" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id569" x="119" y="-161">
+</branchpoint>
+<init ref="id564"/>
+<transition>
+<source ref="id568"/>
+<target ref="id567"/>
+</transition>
+<transition>
+<source ref="id569"/>
+<target ref="id568"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id569"/>
+<target ref="id567"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id566"/>
+<target ref="id569"/>
+</transition>
+<transition>
+<source ref="id565"/>
+<target ref="id566"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id564"/>
+<target ref="id565"/>
+</transition>
+</template><template>
+<name x="5" y="5">person95
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id570" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id571" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id572" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id573" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id574" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id575" x="119" y="-161">
+</branchpoint>
+<init ref="id570"/>
+<transition>
+<source ref="id574"/>
+<target ref="id573"/>
+</transition>
+<transition>
+<source ref="id575"/>
+<target ref="id574"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id575"/>
+<target ref="id573"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id572"/>
+<target ref="id575"/>
+</transition>
+<transition>
+<source ref="id571"/>
+<target ref="id572"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id570"/>
+<target ref="id571"/>
+</transition>
+</template><template>
+<name x="5" y="5">person96
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id576" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id577" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id578" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id579" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id580" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id581" x="119" y="-161">
+</branchpoint>
+<init ref="id576"/>
+<transition>
+<source ref="id580"/>
+<target ref="id579"/>
+</transition>
+<transition>
+<source ref="id581"/>
+<target ref="id580"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id581"/>
+<target ref="id579"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id578"/>
+<target ref="id581"/>
+</transition>
+<transition>
+<source ref="id577"/>
+<target ref="id578"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id576"/>
+<target ref="id577"/>
+</transition>
+</template><template>
+<name x="5" y="5">person97
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id582" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id583" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id584" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id585" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id586" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id587" x="119" y="-161">
+</branchpoint>
+<init ref="id582"/>
+<transition>
+<source ref="id586"/>
+<target ref="id585"/>
+</transition>
+<transition>
+<source ref="id587"/>
+<target ref="id586"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id587"/>
+<target ref="id585"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id584"/>
+<target ref="id587"/>
+</transition>
+<transition>
+<source ref="id583"/>
+<target ref="id584"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id582"/>
+<target ref="id583"/>
+</transition>
+</template><template>
+<name x="5" y="5">person98
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id588" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id589" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id590" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id591" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id592" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id593" x="119" y="-161">
+</branchpoint>
+<init ref="id588"/>
+<transition>
+<source ref="id592"/>
+<target ref="id591"/>
+</transition>
+<transition>
+<source ref="id593"/>
+<target ref="id592"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id593"/>
+<target ref="id591"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id590"/>
+<target ref="id593"/>
+</transition>
+<transition>
+<source ref="id589"/>
+<target ref="id590"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id588"/>
+<target ref="id589"/>
+</transition>
+</template><template>
+<name x="5" y="5">person99
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id594" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id595" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id596" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id597" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id598" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id599" x="119" y="-161">
+</branchpoint>
+<init ref="id594"/>
+<transition>
+<source ref="id598"/>
+<target ref="id597"/>
+</transition>
+<transition>
+<source ref="id599"/>
+<target ref="id598"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id599"/>
+<target ref="id597"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id596"/>
+<target ref="id599"/>
+</transition>
+<transition>
+<source ref="id595"/>
+<target ref="id596"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id594"/>
+<target ref="id595"/>
+</transition>
+</template>
+<system>system person0, person1, person2, person3, person4, person5, person6, person7, person8, person9, person10, person11, person12, person13, person14, person15, person16, person17, person18, person19, person20, person21, person22, person23, person24, person25, person26, person27, person28, person29, person30, person31, person32, person33, person34, person35, person36, person37, person38, person39, person40, person41, person42, person43, person44, person45, person46, person47, person48, person49, person50, person51, person52, person53, person54, person55, person56, person57, person58, person59, person60, person61, person62, person63, person64, person65, person66, person67, person68, person69, person70, person71, person72, person73, person74, person75, person76, person77, person78, person79, person80, person81, person82, person83, person84, person85, person86, person87, person88, person89, person90, person91, person92, person93, person94, person95, person96, person97, person98, person99;
+</system>
+<queries>
+<query>
+<formula>simulate[&lt;=100; 1]{inf}
+</formula>
+<comment>
+</comment>
+</query>
+</queries>
+</nta>

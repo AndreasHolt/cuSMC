@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>const int N=10000;
+const double eps = 0.01;
+const double BRN = 2.4;
+const double alpha = 1.0/5.1;
+const double gamma = 1.0/3.4;
+const double beta0 = BRN * gamma;
+const double pH = 9.0/10000.0;
+const double kappa = gamma * pH / (1.0-pH);
+const double tau = 1.0/10.12;
+int S = 9900;
+int E = 100;
+int I = 0;
+int H = 0;
+int R = 0;
+</declaration>
+	<template>
+		<name x="5" y="5">Template</name>
+		<declaration>// Place local declarations here.</declaration>
+		<location id="id0" x="2" y="0">
+			<label kind="exponentialrate" x="-34" y="17">beta0*S*I/N</label>
+		</location>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id0"/>
+			<label kind="guard" x="-34" y="-102">S&gt;0&amp;&amp;I&gt;0</label>
+			<label kind="assignment" x="-42" y="-85">S=S-1, E=E+1</label>
+			<nail x="-49" y="-68"/>
+			<nail x="27" y="-68"/>
+			<nail x="44" y="-68"/>
+		</transition>
+	</template>
+	<template>
+		<name>Template0</name>
+		<location id="id1" x="0" y="0">
+			<label kind="exponentialrate" x="-25" y="17">alpha*E</label>
+		</location>
+		<init ref="id1"/>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id1"/>
+			<label kind="guard" x="-24" y="-102">E&gt;0</label>
+			<label kind="assignment" x="-42" y="-85">E=E-1,I=I+1</label>
+			<nail x="-42" y="-68"/>
+			<nail x="34" y="-68"/>
+		</transition>
+	</template>
+	<template>
+		<name>Template1</name>
+		<location id="id2" x="0" y="0">
+			<label kind="exponentialrate" x="-17" y="17">kappa*I</label>
+		</location>
+		<init ref="id2"/>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-24" y="-110">I&gt;0</label>
+			<label kind="assignment" x="-42" y="-93">I=I-1,H=H+1</label>
+			<nail x="-42" y="-76"/>
+			<nail x="34" y="-76"/>
+		</transition>
+	</template>
+	<template>
+		<name>Template2</name>
+		<location id="id3" x="0" y="0">
+			<label kind="exponentialrate" x="-17" y="17">tau*H</label>
+		</location>
+		<init ref="id3"/>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id3"/>
+			<label kind="guard" x="-17" y="-110">H&gt;0</label>
+			<label kind="assignment" x="-42" y="-93">H=H-1,R=R+1</label>
+			<nail x="-51" y="-76"/>
+			<nail x="51" y="-76"/>
+		</transition>
+	</template>
+	<template>
+		<name>Template3</name>
+		<location id="id4" x="0" y="0">
+			<label kind="exponentialrate" x="-25" y="17">gamma*I</label>
+		</location>
+		<init ref="id4"/>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id4"/>
+			<label kind="guard" x="-17" y="-110">I&gt;0</label>
+			<label kind="assignment" x="-42" y="-93">I=I-1,R=R+1</label>
+			<nail x="-51" y="-76"/>
+			<nail x="42" y="-76"/>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+Process = Template();
+Process0 = Template0();
+Process1 = Template1();
+Process2 = Template2();
+Process3 = Template3();
+// List one or more processes to be composed into a system.
+system Process, Process0, Process1, Process2, Process3;
+    </system>
+	<queries>
+		<query>
+			<formula>Pr[&lt;=100; 11776] (&lt;&gt;I &gt; 1000)</formula>
+			<comment></comment>
+		</query>
+	</queries>
+</nta>

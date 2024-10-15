@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>// Place global declarations here.</declaration>
+	<template>
+		<name x="5" y="5">Rate_test</name>
+		<declaration>// Place local declarations here.</declaration>
+		<location id="id0" x="0" y="0">
+			<label kind="exponentialrate" x="-8" y="17">1</label>
+		</location>
+		<location id="id1" x="59" y="0">
+			<label kind="exponentialrate" x="51" y="17">0</label>
+		</location>
+		<location id="id2" x="59" y="-51">
+			<label kind="exponentialrate" x="51" y="-34">-10</label>
+		</location>
+		<location id="id3" x="59" y="51">
+			<label kind="exponentialrate" x="51" y="68">1</label>
+		</location>
+		<location id="id4" x="119" y="0">
+			<name x="109" y="-34">Goal</name>
+		</location>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id3"/>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id4"/>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id4"/>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id4"/>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id2"/>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+Process = Rate_test();
+// List one or more processes to be composed into a system.
+system Process;
+    </system>
+	<queries>
+		<query>
+			<formula>Pr[&lt;=100; 100000](&lt;&gt; Process.Goal)</formula>
+			<comment></comment>
+		</query>
+	</queries>
+</nta>

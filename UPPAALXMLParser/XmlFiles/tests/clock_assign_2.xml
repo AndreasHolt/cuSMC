@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+clock a = 0.5;
+clock b = 1.0;</declaration>
+	<template>
+		<name x="5" y="5">Template</name>
+		<declaration>// Place local declarations here.</declaration>
+		<location id="id0" x="0" y="0">
+			<label kind="exponentialrate" x="-10" y="34">1</label>
+		</location>
+		<location id="id1" x="178" y="-85">
+			<name x="168" y="-119">Goal</name>
+		</location>
+		<location id="id2" x="178" y="93">
+		</location>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id2"/>
+			<label kind="guard" x="18" y="12">b &gt; 2</label>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="guard" x="18" y="-76">a &gt; 1</label>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+Process = Template();
+// List one or more processes to be composed into a system.
+system Process;
+    </system>
+	<queries>
+		<query>
+			<formula>Pr[&lt;= 100; 10000](&lt;&gt; Process.Goal)</formula>
+			<comment></comment>
+		</query>
+	</queries>
+</nta>

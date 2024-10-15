@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+int a = (1*2)/2+1-1, b = (1*2)/2+1-1;</declaration>
+	<template>
+		<name x="5" y="5">Template</name>
+		<declaration>// Place local declarations here.</declaration>
+		<location id="id0" x="0" y="0">
+			<label kind="exponentialrate" x="0" y="17">1</label>
+		</location>
+		<location id="id1" x="187" y="-110">
+			<name x="177" y="-144">Goal</name>
+		</location>
+		<location id="id2" x="204" y="59">
+		</location>
+		<branchpoint id="id3" x="93" y="-8">
+		</branchpoint>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id2"/>
+			<label kind="probability" x="127" y="25">b</label>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id1"/>
+			<label kind="probability" x="144" y="-59">a</label>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id3"/>
+		</transition>
+	</template>
+	<system>// Place template instantiations here.
+Process = Template();
+// List one or more processes to be composed into a system.
+system Process;
+    </system>
+	<queries>
+		<query>
+			<formula>Pr[&lt;=100; 10000](&lt;&gt; Process.Goal)</formula>
+			<comment></comment>
+		</query>
+		<query>
+			<formula>E[&lt;=100; 10000](max: b)</formula>
+			<comment></comment>
+		</query>
+	</queries>
+</nta>

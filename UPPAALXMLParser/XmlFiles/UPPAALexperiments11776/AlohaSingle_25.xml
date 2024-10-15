@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+	<declaration>const int N=25;
+typedef int[0,N-1] id_t;
+broadcast chan busy;
+clock x;
+int ns;
+int nt;
+const int TransmitProb = 75;</declaration>
+	<template>
+		<name x="5" y="5">Template</name>
+		<parameter>const id_t tid</parameter>
+		<declaration>// Place local declarations here.</declaration>
+		<location id="id0" x="-255" y="-187">
+			<name x="-265" y="-221">INITIAL</name>
+			<label kind="invariant" x="-297" y="-178">x&lt;=1</label>
+		</location>
+		<location id="id1" x="-255" y="-93">
+			<urgent/>
+		</location>
+		<location id="id2" x="-8" y="-93">
+			<name x="-18" y="-127">Transmit</name>
+			<label kind="invariant" x="-18" y="-76">x&lt;=1</label>
+		</location>
+		<location id="id3" x="-8" y="119">
+			<name x="0" y="93">Wait</name>
+			<label kind="invariant" x="-18" y="136">x&lt;=1</label>
+		</location>
+		<branchpoint id="id4" x="-255" y="110">
+		</branchpoint>
+		<init ref="id0"/>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id3"/>
+			<label kind="assignment" x="-245" y="127">x=0</label>
+			<label kind="probability" x="-245" y="144">100-TransmitProb</label>
+			<nail x="-144" y="144"/>
+		</transition>
+		<transition>
+			<source ref="id3"/>
+			<target ref="id4"/>
+			<label kind="guard" x="-118" y="59">x==1</label>
+			<nail x="-136" y="68"/>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id3"/>
+			<label kind="synchronisation" x="-8" y="-4">busy?</label>
+			<label kind="assignment" x="-8" y="13">x=0, nt = nt-1</label>
+		</transition>
+		<transition>
+			<source ref="id2"/>
+			<target ref="id1"/>
+			<label kind="guard" x="-85" y="-51">x==1</label>
+			<label kind="assignment" x="-170" y="-42">ns = ns+1,
+nt=nt-1,
+x=0</label>
+			<nail x="-127" y="-42"/>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-187" y="-178">nt==0</label>
+			<label kind="synchronisation" x="-204" y="-161">busy!</label>
+			<label kind="assignment" x="-161" y="-153">nt=nt+1,
+x=0</label>
+			<nail x="-136" y="-161"/>
+		</transition>
+		<transition>
+			<source ref="id4"/>
+			<target ref="id1"/>
+			<label kind="probability" x="-259" y="25">TransmitProb</label>
+		</transition>
+		<transition>
+			<source ref="id1"/>
+			<target ref="id4"/>
+			<label kind="guard" x="-314" y="-26">nt&gt;0</label>
+			<label kind="synchronisation" x="-314" y="-9">busy!</label>
+			<nail x="-314" y="-93"/>
+			<nail x="-314" y="110"/>
+		</transition>
+		<transition>
+			<source ref="id0"/>
+			<target ref="id1"/>
+		</transition>
+	</template>
+	<system>system Template;</system>
+	<queries>
+		<query>
+			<formula>E[&lt;=100; 11776](max: nt)</formula>
+			<comment></comment>
+		</query>
+	</queries>
+</nta>
