@@ -18,5 +18,3 @@ build
 cmake-build-debug
 *.idea
 idea
-*.xml
-UPPAALXMLParser/
