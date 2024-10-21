@@ -5,7 +5,7 @@
 #include <curand_kernel.h>
 #include <curand_uniform.h>
 
-#include "../common/my_stack.h"
+#include "../include/stack.h"
 #include "Domain.h"
 
 union i_val

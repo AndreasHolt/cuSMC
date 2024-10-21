@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "../common/macro.h"
+#include "../include/common_macros.h"
 #include "Domain.h"
 
 struct model_size

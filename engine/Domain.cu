@@ -1,4 +1,6 @@
 ﻿#include "Domain.h"
+#include "../include/common_macros.h"
+#include "curand.h"
 
 
 //Please do not change the argument names, they are required for JIT compilation 

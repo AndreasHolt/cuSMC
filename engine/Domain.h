@@ -6,8 +6,9 @@ struct edge;
 struct node;
 int min(int, int);
 
-#include "../common/macro.h"
-#include "../common/my_stack.h"
+#include "../include/common_macros.h"
+#include "../include/stack.h"
+
 
 #define HAS_HIT_MAX_STEPS(x) ((x) < 0)
 
