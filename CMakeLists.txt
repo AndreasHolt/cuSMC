@@ -7,7 +7,8 @@ set(CMAKE_CUDA_STANDARD_REQUIRED ON)     # Ensure that the specified standard is
 set(CMAKE_CXX_STANDARD_REQUIRED ON)      # Ensure that the specified standard is required
 
 # Add your source files
-add_executable(CudaIntro parse.cpp
+add_executable(CudaIntro main.cpp
+        cuda_example.cu
         # Parser
         automata_parser/uppaal_xml_parser.cpp automata_parser/uppaal_xml_parser.h
         automata_parser/declaration_parser.h automata_parser/declaration_parser.cpp
@@ -24,7 +25,9 @@ add_executable(CudaIntro parse.cpp
         # Includes
         include/common_macros.h
         include/common_macros.h
-        engine/interpreter.h)
+        engine/interpreter.h
+        automata_parser/instantiate_parser.cpp
+        automata_parser/instantiate_parser.h)
 
 
 # Enable separable compilation (optional, depends on your needs)

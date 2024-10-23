@@ -8,7 +8,7 @@ __global__ void add(int n, float* a, float* b, float* c) {
     }
 }
 
-int main() {
+int lol() {
     int n = 10;
 
     // Allocate memory on the host
