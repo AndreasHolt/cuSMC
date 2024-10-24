@@ -30,7 +30,9 @@ add_executable(CudaIntro main.cpp
         automata_parser/instantiate_parser.h
         simulation/simulation_config.h
         output.h
-        simulation/simulation_file_paths.h)
+        simulation/simulation_file_paths.h
+        simulation/simulation.cu
+        simulation/simulation.cuh)
 
 
 # Enable separable compilation (optional, depends on your needs)

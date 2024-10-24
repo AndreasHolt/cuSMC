@@ -8,7 +8,7 @@
 #include "output.h"
 
 #include <chrono>
-#include <c++/12/unordered_map>
+#include <unordered_map>
 #include <string>
 #include "engine/Domain.h"
 
@@ -21,6 +21,9 @@ struct network_props
     std::unordered_map<int, std::string>* template_names;
     std::unordered_map<int, int>* node_network;
     std::unordered_map<int, node*> node_map;
+    std::unordered_map<int, list<edge>>* node_edge_map;
+
+
 };
 
 

@@ -37,7 +37,7 @@
 
 #include "automata_parser/instantiate_parser.h"
 #include "output.h"
-
+#include "simulation/simulation.cuh"
 
 
 int main()
@@ -51,15 +51,23 @@ int main()
     std::cout << "Parsing successful. Network details:" << std::endl;
 
     network_props properties = {};
+    // properties.node_edge_map = new std::unordered_map<int, std::list<edge>>(*parser->get_node_edge_map());
 
+
+    auto sim = simulation(parser);
+    sim.run_simulation();
+
+
+    cout << "test" << endl;
     // net.print_automatas();
 
     properties.node_names = new std::unordered_map<int, std::string>(*parser->get_nodes_with_name());
-    properties.node_network = new std::unordered_map<int, int>(*parser->get_subsystems());
-    properties.variable_names = new std::unordered_map<int, std::string>(*parser->get_clock_names()); // this can create mem leaks.
-    properties.template_names = new std::unordered_map<int, std::string>(*parser->get_template_names());
-
-    properties.pre_optimisation_start = std::chrono::steady_clock::now();
+    cout << "test" << endl;
+    // properties.node_network = new std::unordered_map<int, int>(*parser->get_subsystems());
+    // properties.variable_names = new std::unordered_map<int, std::string>(*parser->get_clock_names()); // this can create mem leaks.
+    // properties.template_names = new std::unordered_map<int, std::string>(*parser->get_template_names());
+    //
+    // properties.pre_optimisation_start = std::chrono::steady_clock::now();
     delete parser;
 
     std::cout << "TEST";
