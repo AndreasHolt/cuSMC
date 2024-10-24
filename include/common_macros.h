@@ -81,8 +81,7 @@ throw std::runtime_error(std::string("cuda error ") + std::to_string(x) + " in f
 }while(0)
 
 
-__host__ __device__ __forceinline__ void cuda_syncthreads_()
-{
+__host__ __device__ __forceinline__ void cuda_syncthreads_() {
 #ifdef __CUDACC__
 #define cuda_SYNCTHREADS() __syncthreads()
 #else

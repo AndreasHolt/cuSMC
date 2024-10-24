@@ -27,7 +27,10 @@ add_executable(CudaIntro main.cpp
         include/common_macros.h
         engine/interpreter.h
         automata_parser/instantiate_parser.cpp
-        automata_parser/instantiate_parser.h)
+        automata_parser/instantiate_parser.h
+        simulation/simulation_config.h
+        output.h
+        simulation/simulation_file_paths.h)
 
 
 # Enable separable compilation (optional, depends on your needs)

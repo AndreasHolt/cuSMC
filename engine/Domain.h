@@ -1,5 +1,6 @@
 ﻿    #ifndef DOMAIN_H
 #define DOMAIN_H
+#include <vector>
 
 struct state;
 struct edge;
@@ -17,6 +18,15 @@ struct arr
 {
     T* store;
     int size;
+
+    // Operator to support accessing elements by index
+    T& operator[](int index) {
+        return store[index];
+    }
+
+    const T& operator[](int index) const {
+        return store[index];
+    }
 
     static arr<T> empty(){ return arr<T>{nullptr, 0}; }
 };
@@ -137,6 +147,10 @@ struct node
     arr<edge> edges = arr<edge>::empty();
     arr<constraint> invariants = arr<constraint>::empty();
     CPU GPU double max_progression(state* state, bool* is_finite) const;
+
+    // void print() {
+    //     std::cout << "Nod ID: " << id << ", Type: " << type << std::endl;
+    // }
 };
 
 struct update
@@ -213,6 +227,16 @@ struct network
     arr<node*> automatas;
     arr<clock_var> variables;
     // query* query;
+    // void print_automatas() const {
+    //     for (int i = 0; i < automatas.size; ++i) {
+    //         if (automatas[i]) {
+    //             automatas[i]->print();
+    //         } else {
+    //             std::cout << "Null automata encountered!" << std::endl;
+    //         }
+    //     }
+    // }
+
 };
 
 
