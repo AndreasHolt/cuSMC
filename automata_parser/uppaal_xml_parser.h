@@ -76,6 +76,7 @@ private:
 public:
     // virtual std::unordered_map<int, std::list<edge>>* get_node_edge_map() = 0;
     unordered_map<int, std::list<edge>> get_node_edge_map() override { return this->node_edge_map; }
+    list<int>  get_start_nodes() override { return this->start_nodes_; }
 
     unordered_map<int, string>* get_nodes_with_name() override {return this->node_names_;}
     unordered_map<int, string>* get_template_names() override {return this->template_names;}

@@ -17,7 +17,9 @@ public:
     virtual std::unordered_map<int, std::string>* get_clock_names() = 0;
     virtual std::unordered_map<int, int>* get_subsystems() = 0;
     virtual std::unordered_map<int, string>* get_template_names() = 0;
+
     virtual std::unordered_map<int, std::list<edge>> get_node_edge_map() = 0;
+    virtual std::list<int> get_start_nodes() = 0;
 
     static void naive_multiply_instantiation(network* n, const int multiplier)
     {
