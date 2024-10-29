@@ -53,16 +53,16 @@ int main()
     network_props properties = {};
     // properties.node_edge_map = new std::unordered_map<int, std::list<edge>>(*parser->get_node_edge_map());
 
-
     auto sim = simulation(parser);
-    sim.run_simulation();
-
+    sim.runSimulation();
 
     cout << "test" << endl;
     // net.print_automatas();
 
     properties.node_edge_map = new std::unordered_map<int, std::list<edge>>(parser->get_node_edge_map());
     properties.start_nodes = new std::list<int>(parser->get_start_nodes());
+    properties.template_names = new std::unordered_map<int, std::string>(*parser->get_template_names());
+    properties.variable_names = new std::unordered_map<int, std::string>(*parser->get_clock_names());    // this can create mem leaks.
     // properties.clock_names = new std::unordered_map<int, std::string>(*parser->get_nodes_with_name());
     // properties.node_names = new std::unordered_map<int, std::string>(*parser->get_nodes_with_name());
     // properties.clock_names = new std::unordered_map<int, std::string>(*parser->get_nodes_with_name());
@@ -73,10 +73,6 @@ int main()
     // Then we need node_names, to get the name of a node, i.e. 'f2' from the id
     // We also need the start node, to know which nodes a for different automatas/configurations
 
-
-    // properties.variable_names = new std::unordered_map<int, std::string>(*parser->get_clock_names()); // this can create mem leaks.
-    // properties.template_names = new std::unordered_map<int, std::string>(*parser->get_template_names());
-    //
     // properties.pre_optimisation_start = std::chrono::steady_clock::now();
     delete parser;
 

@@ -16,7 +16,7 @@ public:
 
     simulation(abstract_parser* uppaal_xml_parser_instance) { parser = uppaal_xml_parser_instance; }
 
-    void run_simulation();
+    void runSimulation();
 
 };
 
