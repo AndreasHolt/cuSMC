@@ -105,17 +105,16 @@ __global__ void simulateRun() {
     __shared__
 }
 
-__global__ void sortArray(float *input, float *result, int nblocks) {
-    int threadid = blockIdx.x * blockDim.x + threadIdx.x;
-    int nThreads = blockDim.x * nblocks;
-    for (x = 0; i < log2(nThreads); i++) {
-        if (thread) {
-
+__global__ void findSmallestArray(float *input, int input_length, float *result, int nblocks) {
+    const int threadid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int nThreads = blockDim.x * nblocks;
+    for (int i = 0; i < ceil(log2(nThreads)); i++) { //1
+        if (threadid % static_cast<int>(pow(2, i+1)==0)) {
+            const int correspondant = min(static_cast<int>(threadid + pow(2, i)), input_length-1);
+            input[threadid] = min(input[threadid], input[correspondant]);
         }
     }
-
-
-
+    *result = input[0];
 }
 
 
@@ -132,5 +131,8 @@ void simulation::runSimulation() {
     // Take the transition
 
     // We need the state such that we can describe the run afterwards. We add our delays to it.
+
+
+
     cout << "test from run sim" << endl;
 }
