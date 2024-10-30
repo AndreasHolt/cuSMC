@@ -58,7 +58,7 @@ int main()
 
     cout << "test" << endl;
     // net.print_automatas();
-
+    // Optimize by making static size arrays for following data.
     properties.node_edge_map = new std::unordered_map<int, std::list<edge>>(parser->get_node_edge_map());
     properties.start_nodes = new std::list<int>(parser->get_start_nodes());
     properties.template_names = new std::unordered_map<int, std::string>(*parser->get_template_names());
