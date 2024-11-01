@@ -32,7 +32,10 @@ add_executable(CudaIntro main.cpp
         output.h
         simulation/simulation_file_paths.h
         simulation/simulation.cu
-        simulation/simulation.cuh)
+        simulation/simulation.cuh
+        main.cpp
+        simulation/data_structures.cu
+        simulation/data_structures.cuh)
 
 
 # Enable separable compilation (optional, depends on your needs)

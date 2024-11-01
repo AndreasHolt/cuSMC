@@ -56,54 +56,8 @@
 //
 // }
 
-struct SyncRequest {
-    int channel_id; // What channel to synchronize on
-    bool is_sender; // ! or ?
-    int component_id; // ID of the component that made the request
-    bool is_urgent; // Is the channel urgent?
-    bool is_broadcast; // Is the channel a broadcast channel?
-};
-
-// Shared memory synchronization buffer for a single run
-struct SyncBuffer {
-    SyncRequest requests[MAX_COMPONENTS]; // Array of synchronization requests from other components
-
-    int number_of_requests; // Pending request number
-
-    // The result of synchronization. Matched pairs that can synchronize.
-
-    struct {
-        int sender_id;
-        int receiver_id;
-        int channel_id;
-        bool is_broadcast;
-    } matches[MAX_MATCHES];
-    int num_matches;
-
-    // For broadcast channels
-    int num_receivers; // How many received a broadcast
-
-    // https://docs.uppaal.org/language-reference/system-description/templates/edges/
-    // Search for broadcast channels
 
 
-
-};
-
-// We calculate max components by: max instances of all components added together
-
-__global__ void simulateRun() {
-    // Setting up the threads
-    int thread_id = threadIdx.x;
-    int component_id = thread_id / 32; // Since we have a specific component in each warp, we get the component type
-    int warp_offset = thread_id % 32; // The position within the warp
-
-    // Shared memory setup
-
-    __shared__ float shared_delays[MAX_COMPONENTS];
-    __shared__ float min_delay;
-    __shared__
-}
 
 __global__ void findSmallestArray(float *input, int input_length, float *result, int nblocks) {
     const int threadid = blockIdx.x * blockDim.x + threadIdx.x;
