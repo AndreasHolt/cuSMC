@@ -35,7 +35,11 @@ add_executable(CudaIntro main.cpp
         simulation/simulation.cuh
         main.cpp
         simulation/data_structures.cu
-        simulation/data_structures.cuh)
+        simulation/data_structures.cuh
+        network_optimization/domain_optimization_visitor.h
+        network_optimization/domain_optimization_visitor.cpp
+        network_optimization/visitor.cpp
+        network_optimization/pn_compile_visitor.cpp)
 
 
 # Enable separable compilation (optional, depends on your needs)
