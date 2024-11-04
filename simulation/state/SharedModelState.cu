@@ -8,8 +8,8 @@
 SharedModelState* init_shared_model_state(
     const network* cpu_network,
     const std::unordered_map<int, int>& node_subsystems_map,
-    const std::unordered_map<int, node*>& node_map) {
-
+    const std::unordered_map<int, node*>& node_map)
+{
     // First organize nodes by component
     std::vector<std::vector<node*>> components_nodes;
     int max_component_id = -1;
@@ -28,47 +28,62 @@ SharedModelState* init_shared_model_state(
         components_nodes[component_id].push_back(node_ptr);
     }
 
-    // Allocate device memory
-    const node** device_nodes;
-    int* device_starts;
-    int* device_sizes;
-    cudaMalloc(&device_nodes, node_map.size() * sizeof(node*));
-    cudaMalloc(&device_starts, components_nodes.size() * sizeof(int));
-    cudaMalloc(&device_sizes, components_nodes.size() * sizeof(int));
-
-    // Host arrays for component info
-    std::vector<int> component_starts(components_nodes.size());
+    // Find max nodes per component for array sizing
+    int max_nodes_per_component = 0;
     std::vector<int> component_sizes(components_nodes.size());
-
-    // Copy nodes by component
-    int current_index = 0;
     for(int i = 0; i < components_nodes.size(); i++) {
-        component_starts[i] = current_index;
         component_sizes[i] = components_nodes[i].size();
+        max_nodes_per_component = std::max(max_nodes_per_component,
+                                         component_sizes[i]);
+    }
 
-        for(node* n : components_nodes[i]) {
-            // Allocate and copy node
-            node* device_node;
-            cudaMalloc(&device_node, sizeof(node));
-            cudaMemcpy(device_node, n, sizeof(node), cudaMemcpyHostToDevice);
+    // Allocate device memory for component sizes
+    int* device_component_sizes;
+    cudaMalloc(&device_component_sizes,
+               components_nodes.size() * sizeof(int));
+    cudaMemcpy(device_component_sizes, component_sizes.data(),
+               components_nodes.size() * sizeof(int),
+               cudaMemcpyHostToDevice);
 
-            // Store pointer in nodes array
-            cudaMemcpy(&device_nodes[current_index], &device_node,
-                      sizeof(node*), cudaMemcpyHostToDevice);
-            current_index++;
+    // Allocate device memory for NodeInfo array
+    // Organized as: [comp0_node0, comp1_node0, comp2_node0, comp0_node1, ...]
+    const int total_node_slots = max_nodes_per_component * components_nodes.size();
+    NodeInfo* device_nodes;
+    cudaMalloc(&device_nodes, total_node_slots * sizeof(NodeInfo));
+
+    // Create and copy NodeInfo for each node in coalesced layout
+    std::vector<NodeInfo> host_nodes(total_node_slots);
+    for(int node_idx = 0; node_idx < max_nodes_per_component; node_idx++) {
+        for(int comp_idx = 0; comp_idx < components_nodes.size(); comp_idx++) {
+            int array_idx = node_idx * components_nodes.size() + comp_idx;
+
+            if(node_idx < components_nodes[comp_idx].size()) {
+                node* cpu_node = components_nodes[comp_idx][node_idx];
+                host_nodes[array_idx] = NodeInfo(
+                    cpu_node->id,
+                    cpu_node->type,
+                    cpu_node->lamda
+                );
+
+            } else {
+                // Padding for components with fewer nodes
+                host_nodes[array_idx] = NodeInfo{-1, -1, nullptr};
+            }
         }
     }
 
-    // Copy component info to device
-    cudaMemcpy(device_starts, component_starts.data(),
-               component_starts.size() * sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(device_sizes, component_sizes.data(),
-               component_sizes.size() * sizeof(int), cudaMemcpyHostToDevice);
+    // Copy NodeInfo array to device
+    cudaMemcpy(device_nodes, host_nodes.data(),
+               total_node_slots * sizeof(NodeInfo),
+               cudaMemcpyHostToDevice);
 
     // Create and copy SharedModelState
-    SharedModelState host_model(device_nodes, node_map.size(),
-                              components_nodes.size(),
-                              device_starts, device_sizes);
+    SharedModelState host_model{
+        static_cast<int>(components_nodes.size()),     // num_components
+        device_component_sizes,      // component_sizes
+        device_nodes                 // nodes
+        // later add edge info
+    };
 
     SharedModelState* device_model;
     cudaMalloc(&device_model, sizeof(SharedModelState));
@@ -81,17 +96,19 @@ SharedModelState* init_shared_model_state(
 
 __global__ void test_kernel(SharedModelState* model) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
-        printf("Total nodes: %d\n", model->total_nodes);
         printf("Number of components: %d\n", model->num_components);
 
-        for(int c = 0; c < model->num_components; c++) {
-            printf("\nComponent %d:\n", c);
-            int start = model->component_starts[c];
-            int size = model->component_sizes[c];
-
-            for(int i = 0; i < size; i++) {
-                printf("Node %d ID: %d Type: %d\n", i, model->nodes[start + i]->id, model->nodes[start + i]->type);
+        // Print nodes in coalesced layout
+        for(int node_idx = 0; node_idx < model->component_sizes[0]; node_idx++) {
+            printf("\nNode level %d:\n", node_idx);
+            for(int comp = 0; comp < model->num_components; comp++) {
+                if(node_idx < model->component_sizes[comp]) {
+                    const NodeInfo& node = model->nodes[node_idx * model->num_components + comp];
+                    printf("Component %d: ID=%d, Type=%d\n",
+                           comp, node.id, node.type);
+                }
             }
         }
     }
 }
+

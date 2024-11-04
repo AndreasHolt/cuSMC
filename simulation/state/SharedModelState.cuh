@@ -26,19 +26,31 @@
 // };
 
 
-struct SharedModelState {
-    const node** nodes;           // All nodes
-    const int total_nodes;        // Total number of nodes
-    const int num_components;     // Number of components
-    const int* component_starts;  // Index where each component's nodes start
-    const int* component_sizes;   // Number of nodes in each component
+struct NodeInfo {
+    int id;
+    int type;
+    expr* lambda;
 
-    // Constructor
-    CPU GPU SharedModelState(const node** n, int tn, int nc,
-                           const int* cs, const int* csz) :
-        nodes(n), total_nodes(tn), num_components(nc),
-        component_starts(cs), component_sizes(csz) {}
+    CPU GPU NodeInfo() : id(0), type(0), lambda(nullptr) {}
+
+    // Add constructor to allow initialization
+    CPU GPU NodeInfo(int i, int t, expr* l) :
+        id(i), type(t), lambda(l) {}
 };
+
+struct SharedModelState {
+    // component-level information
+    const int num_components;
+    const int* component_sizes;
+    const NodeInfo* nodes;  // [comp0_node0, comp1_node0, comp2_node0, comp0_node1, comp1_node1, ...]
+
+    // constructor to allow const members (attempt to force L1 cache)
+    CPU GPU SharedModelState(int nc, const int* cs, const NodeInfo* n) :
+        num_components(nc),
+        component_sizes(cs),
+        nodes(n) {}
+};
+
 
 SharedModelState* init_shared_model_state(
     const network* cpu_network,

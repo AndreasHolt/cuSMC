@@ -23,18 +23,27 @@ clock y;
 		<location id="id3" x="17" y="85">
 			<name x="7" y="51">g4</name>
 		</location>
+		<location id="id4" x="161" y="119">
+			<name x="151" y="85">g5</name>
+		</location>
+		<location id="id5" x="161" y="119">
+		</location>
 		<init ref="id0"/>
-		<transition id="id4">
+		<transition id="id6">
+			<source ref="id3"/>
+			<target ref="id4"/>
+		</transition>
+		<transition id="id7">
 			<source ref="id0"/>
 			<target ref="id3"/>
 			<label kind="guard" x="-160" y="8">x&gt;20</label>
 		</transition>
-		<transition id="id5">
+		<transition id="id8">
 			<source ref="id0"/>
 			<target ref="id2"/>
 			<label kind="guard" x="-160" y="-42">x&gt;10</label>
 		</transition>
-		<transition id="id6">
+		<transition id="id9">
 			<source ref="id0"/>
 			<target ref="id1"/>
 			<label kind="guard" x="-153" y="-85">x&lt;=1</label>
@@ -45,17 +54,24 @@ clock y;
 		<declaration>// Place local declarations here.
 clock x;
 </declaration>
-		<location id="id7" x="51" y="-8">
+		<location id="id10" x="51" y="-8">
 			<name x="41" y="-42">f1</name>
 			<label kind="invariant" x="42" y="8">x&lt;=1</label>
 		</location>
-		<location id="id8" x="212" y="-8">
+		<location id="id11" x="212" y="-8">
 			<name x="202" y="-42">f2</name>
 		</location>
-		<init ref="id7"/>
-		<transition id="id9">
-			<source ref="id7"/>
-			<target ref="id8"/>
+		<location id="id12" x="348" y="-8">
+			<name x="338" y="-42">f3</name>
+		</location>
+		<init ref="id10"/>
+		<transition id="id13">
+			<source ref="id11"/>
+			<target ref="id12"/>
+		</transition>
+		<transition id="id14">
+			<source ref="id10"/>
+			<target ref="id11"/>
 			<label kind="guard" x="69" y="-42">x &lt; 1</label>
 		</transition>
 	</template>

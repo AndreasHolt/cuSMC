@@ -43,7 +43,9 @@ add_executable(CudaIntro main.cu
         simulation/state/SharedModelState.cu
         simulation/state/SharedModelState.cuh
         main.cu
-        main.cuh)
+        main.cuh
+        simulation/state/aos.cu
+        simulation/state/aos.cuh)
 
 
 # Enable separable compilation (optional, depends on your needs)
