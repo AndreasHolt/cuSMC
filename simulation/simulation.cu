@@ -3,7 +3,7 @@
 #include "simulation.cuh"
 #include <cmath>
 
-#define NUM_RUNS 100
+#define NUM_RUNS 6
 #define NUM_COMPONENTS 2
 #define MAX_COMPONENTS 100
 
@@ -59,23 +59,53 @@
 
 
 
-// __global__ void findSmallestArray(float *input, int input_length, float *result, int nblocks) {
-//     const int threadid = blockIdx.x * blockDim.x + threadIdx.x;
-//     const int nThreads = blockDim.x * nblocks;
-//     for (int i = 0; i < ceil(log2(nThreads)); i++) { //1
-//         if (threadid % static_cast<int>(pow(2, i+1)==0)) {
-//             const int correspondant = min(static_cast<int>(threadid + pow(2, i)), input_length-1);
-//             input[threadid] = min(input[threadid], input[correspondant]);
-//         }
-//     }
-//     *result = input[0];
-// }
+__global__ void findSmallestElementInArray(float *input, int input_length, float *result, int nblocks) {
+    int threadid = blockIdx.x * blockDim.x + threadIdx.x;
+    int nThreads = blockDim.x * nblocks;
+    for (int i = 0; i < ceil(log2f(nThreads)); i++) { //1
+        if (threadid % static_cast<int>(pow(2, i+1)==0)) {
+            int correspondant = min(static_cast<int>(threadid + pow(2, i)), input_length-1);
+            input[threadid] = min(input[threadid], input[correspondant]);
+        }
+    }
+    if (threadid == 0) {
+        *result = input[0];
+    }
 
+}
+void testFunction () {
+    float* h_a = new float[NUM_RUNS];
+    srand( static_cast<unsigned>(time(NULL)));
+    int upper = 3500;
+    int lower = 1230;
+    for (int i = 0; i < NUM_RUNS; i++) {
+
+        h_a[i] = rand() % (upper - lower) + lower;
+        cout << h_a[i] << ", ";
+    }
+    cout << endl;
+
+    float* d_a;
+    float d_result;
+    cudaMalloc(&d_a, NUM_RUNS * sizeof(float));
+
+    cudaMemcpy(d_a, h_a, NUM_RUNS * sizeof(float), cudaMemcpyHostToDevice);
+
+    findSmallestElementInArray<<<1, 128>>>(d_a, NUM_RUNS, &d_result, 1); // 2 blocks (component size), 100 simulations but round up to 128
+
+    cudaMemcpy(h_a, d_a, NUM_RUNS * sizeof(float), cudaMemcpyDeviceToHost);
+
+    for (int i = 0; i < NUM_RUNS; i++) {
+        cout << h_a[i] << ", ";
+    }
+    cout <<endl << "Result = " << d_result << endl;
+}
 
 void simulation::runSimulation() {
     // Problem with models, spawning new components Trains in train gate for example?
     // componentSimulation<<<NUM_COMPONENTS, 128>>>(); // 2 blocks (component size), 100 simulations but round up to 128
 
+    // testFunction();
 
     // Pick delays: implement delay function
     // Find the smallest delay, and which index it has (to find component it belongs to)

@@ -5,6 +5,7 @@
 #ifndef DATA_STRUCTURES_CUH
 #define DATA_STRUCTURES_CUH
 #include <curand_kernel.h>
+#include <stdint.h>
 
 
 class data_structures {
