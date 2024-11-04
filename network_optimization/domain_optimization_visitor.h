@@ -71,6 +71,7 @@ public:
     unsigned get_max_fanout() const;
     unsigned get_node_count() const;
     std::unordered_map<int, node*> get_node_map() const;
+    std::unordered_map<int, int>* get_node_subsystems_map() const;
 };
 
 

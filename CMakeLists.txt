@@ -7,7 +7,7 @@ set(CMAKE_CUDA_STANDARD_REQUIRED ON)     # Ensure that the specified standard is
 set(CMAKE_CXX_STANDARD_REQUIRED ON)      # Ensure that the specified standard is required
 
 # Add your source files
-add_executable(CudaIntro main.cpp
+add_executable(CudaIntro main.cu
         cuda_example.cu
         # Parser
         automata_parser/uppaal_xml_parser.cpp automata_parser/uppaal_xml_parser.h
@@ -39,7 +39,11 @@ add_executable(CudaIntro main.cpp
         network_optimization/domain_optimization_visitor.h
         network_optimization/domain_optimization_visitor.cpp
         network_optimization/visitor.cpp
-        network_optimization/pn_compile_visitor.cpp)
+        network_optimization/pn_compile_visitor.cpp
+        simulation/state/SharedModelState.cu
+        simulation/state/SharedModelState.cuh
+        main.cu
+        main.cuh)
 
 
 # Enable separable compilation (optional, depends on your needs)

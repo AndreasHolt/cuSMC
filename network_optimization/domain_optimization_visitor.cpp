@@ -142,6 +142,10 @@ std::unordered_map<int, node*> domain_optimization_visitor::get_node_map() const
 {
     return {this->node_map_};
 }
+std::unordered_map<int, int>* domain_optimization_visitor::get_node_subsystems_map() const
+{
+    return this->node_subsystems_map_;
+}
 
 
 bool domain_optimization_visitor::is_goal(const int node_id) const
