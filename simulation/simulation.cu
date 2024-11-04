@@ -101,12 +101,11 @@ void testFunction () {
     cout <<endl << "Result = " << d_result << endl;
 }
 
-
 void simulation::runSimulation() {
     // Problem with models, spawning new components Trains in train gate for example?
-    //componentSimulation<<<NUM_COMPONENTS, 128>>>(); // 2 blocks (component size), 100 simulations but round up to 128
+    // componentSimulation<<<NUM_COMPONENTS, 128>>>(); // 2 blocks (component size), 100 simulations but round up to 128
 
-    testFunction();
+    // testFunction();
 
     // Pick delays: implement delay function
     // Find the smallest delay, and which index it has (to find component it belongs to)

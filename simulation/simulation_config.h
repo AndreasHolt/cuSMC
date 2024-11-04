@@ -5,13 +5,14 @@
 #ifndef SIMULATION_CONFIG_H
 #define SIMULATION_CONFIG_H
 
-#include "../main.cpp"
+// #include "../main.cpp"
 #include "../include/common_macros.h"
 #include "../output.h"
 #include "../simulation/simulation_file_paths.h"
 #define SHARED_MEMORY_PR_THREAD 32
 
-struct sim_config
+
+struct simulation_config
 {
     //simulation setup
     unsigned int blocks = 1;
@@ -40,10 +41,8 @@ struct sim_config
     } sim_location = device;
 
     //model parameters (setup using function)
-    bool use_shared_memory = false;
-    bool use_jit = false;
-    bool use_pn = false;
-    unsigned max_backtrace_depth = 1;
+    // bool use_shared_memory = false;
+    // bool use_jit = false;
     unsigned max_expression_depth = 1;
     unsigned max_edge_fanout = 0;
     unsigned tracked_variable_count = 1;
@@ -77,5 +76,29 @@ struct sim_config
         return (static_cast<size_t>(this->threads) * SHARED_MEMORY_PR_THREAD) > (model_size);
     }
 };
+
+void setup_simulation_config(simulation_config* config, const network* model, const unsigned max_expr_depth, const unsigned max_fanout, const unsigned node_count) {
+    unsigned track_count = 0;
+    for (int i = 0; i < model->variables.size; ++i) {
+        if(model->variables.store[i].should_track)
+            track_count++;
+    }
+
+    for (int i = 0; i < model->automatas.size; ++i)
+    {
+        config->initial_urgent += IS_URGENT(model->automatas.store[i]->type);
+        config->initial_committed += model->automatas.store[i]->type == node::committed;
+    }
+
+    config->tracked_variable_count = track_count;
+    config->network_size = model->automatas.size;
+    config->variable_count = model->variables.size;
+
+    // we use PN
+    config->max_expression_depth = max_expr_depth;
+    config->max_edge_fanout = max_fanout;
+    config->node_count = node_count;
+
+}
 
 #endif //SIMULATION_CONFIG_H

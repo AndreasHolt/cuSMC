@@ -226,16 +226,6 @@ struct network
 {
     arr<node*> automatas;
     arr<clock_var> variables;
-    // query* query;
-    // void print_automatas() const {
-    //     for (int i = 0; i < automatas.size; ++i) {
-    //         if (automatas[i]) {
-    //             automatas[i]->print();
-    //         } else {
-    //             std::cout << "Null automata encountered!" << std::endl;
-    //         }
-    //     }
-    // }
 
 };
 
