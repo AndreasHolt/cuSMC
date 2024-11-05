@@ -19,7 +19,7 @@
 int main()
 {
     // Hardcoded path to the XML file
-    std::string filename = "../automata_parser/XmlFiles/UppaalBehaviorTest.xml";
+    std::string filename = "../automata_parser/XmlFiles/UppaalBehaviorTest2.xml";
     string query1 = "c2.g3";
     string query2 = "c2.g4";
     std::unordered_set<std::string>* query_set = new std::unordered_set<std::string>();
@@ -68,7 +68,8 @@ int main()
     setup_simulation_config(&config, &model, optimizer.get_max_expr_depth(), optimizer.get_max_fanout(), optimizer.get_node_count());
 
 
-    SharedModelState* state = init_shared_model_state(&model, *optimizer.get_node_subsystems_map(), optimizer.get_node_map());
+    // SharedModelState* state = init_shared_model_state(&model, *optimizer.get_node_subsystems_map(), optimizer.get_node_map());
+    SharedModelState* state = init_shared_model_state(&model, *optimizer.get_node_subsystems_map(), *properties.node_edge_map);
     test_kernel<<<1, 1>>>(state);
 
 

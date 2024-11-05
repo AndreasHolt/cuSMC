@@ -147,10 +147,6 @@ struct node
     arr<edge> edges = arr<edge>::empty();
     arr<constraint> invariants = arr<constraint>::empty();
     CPU GPU double max_progression(state* state, bool* is_finite) const;
-
-    // void print() {
-    //     std::cout << "Nod ID: " << id << ", Type: " << type << std::endl;
-    // }
 };
 
 struct update
