@@ -91,16 +91,17 @@ struct UpdateInfo {
 struct NodeInfo {
     int id;
     int type;
+    int level;
     expr* lambda;
     int first_edge_index;  // Add these
     int num_edges;        // two fields
 
     CPU GPU NodeInfo() :
-        id(0), type(0), lambda(nullptr),
+        id(0), type(0), level(0), lambda(nullptr),
         first_edge_index(-1), num_edges(0) {}
 
-    CPU GPU NodeInfo(int i, int t, expr* l, int fei, int ne) :
-        id(i), type(t), lambda(l),
+    CPU GPU NodeInfo(int i, int t, int l, expr* lam, int fei, int ne) :
+        id(i), type(t), level(l), lambda(lam),
         first_edge_index(fei), num_edges(ne) {}
 };
 

@@ -206,7 +206,8 @@ SharedModelState* init_shared_model_state(
                // Create NodeInfo with edge index information
                NodeInfo node_info{
                    node_id,                    // id
-                   node::location,             // type (todo: we need to get this from somewhere)
+                   node::location,             // type (todo: we need to get this from somewhere). Remember we have type available, i.e. goal etc.
+                   node_idx,                   // level
                    nullptr,                    // lambda (todo: we need to get this from somewhere)
                    current_edge_index,         // first_edge_index
                    static_cast<int>(edges.size()) // num_edges
@@ -258,6 +259,7 @@ SharedModelState* init_shared_model_state(
                host_nodes.push_back(NodeInfo{
                    -1,                 // id
                    node::location,     // type
+                   -1,                 // level
                    nullptr,            // lambda
                    -1,                 // first_edge_index
                    0                   // num_edges
@@ -328,7 +330,6 @@ __global__ void test_kernel(SharedModelState* model) {
                         printf("Component %d: ID=%d, Type=%d (No edges)\n",
                                comp, node.id, node.type);
                     }
-
 
 
                     // Now use direct edge indexing
