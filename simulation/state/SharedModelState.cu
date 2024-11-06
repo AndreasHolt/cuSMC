@@ -118,204 +118,186 @@ void print_node_info(const node* n, const std::string& prefix = "") {
 
 
 SharedModelState* init_shared_model_state(
-    const network* cpu_network,
-    const std::unordered_map<int, int>& node_subsystems_map,
-    const std::unordered_map<int, std::list<edge>>& node_edge_map)
+   const network* cpu_network,
+   const std::unordered_map<int, int>& node_subsystems_map,
+   const std::unordered_map<int, std::list<edge>>& node_edge_map)
 {
-    // First organize nodes by component
-    std::vector<std::vector<std::pair<int, const std::list<edge>*>>> components_nodes;
-    int max_component_id = -1;
+   // First organize nodes by component
+   std::vector<std::vector<std::pair<int, const std::list<edge>*>>> components_nodes;
+   int max_component_id = -1;
 
-    // Find number of components
-    for(const auto& pair : node_subsystems_map) {
-        max_component_id = std::max(max_component_id, pair.second);
-    }
-    components_nodes.resize(max_component_id + 1);
+   // Find number of components
+   for(const auto& pair : node_subsystems_map) {
+       max_component_id = std::max(max_component_id, pair.second);
+   }
+   components_nodes.resize(max_component_id + 1);
 
-    // Group nodes by component
-    for(const auto& pair : node_edge_map) {
-        int node_id = pair.first;
-        const std::list<edge>& edges = pair.second;
-        int component_id = node_subsystems_map.at(node_id);
-        components_nodes[component_id].push_back({node_id, &edges});
-    }
+   // Group nodes by component
+   for(const auto& pair : node_edge_map) {
+       int node_id = pair.first;
+       const std::list<edge>& edges = pair.second;
+       int component_id = node_subsystems_map.at(node_id);
+       components_nodes[component_id].push_back({node_id, &edges});
+   }
 
-    // Find max nodes per component for array sizing
-    int max_nodes_per_component = 0;
-    std::vector<int> component_sizes(components_nodes.size());
-    for(int i = 0; i < components_nodes.size(); i++) {
-        component_sizes[i] = components_nodes[i].size();
-        max_nodes_per_component = std::max(max_nodes_per_component,
-                                         component_sizes[i]);
-    }
+   // Find max nodes per component for array sizing
+   int max_nodes_per_component = 0;
+   std::vector<int> component_sizes(components_nodes.size());
+   for(int i = 0; i < components_nodes.size(); i++) {
+       component_sizes[i] = components_nodes[i].size();
+       max_nodes_per_component = std::max(max_nodes_per_component,
+                                        component_sizes[i]);
+   }
 
-    // Allocate device memory for component sizes
-    int* device_component_sizes;
-    cudaMalloc(&device_component_sizes,
-               components_nodes.size() * sizeof(int));
-    cudaMemcpy(device_component_sizes, component_sizes.data(),
-               components_nodes.size() * sizeof(int),
-               cudaMemcpyHostToDevice);
+   // Allocate device memory for component sizes
+   int* device_component_sizes;
+   cudaMalloc(&device_component_sizes,
+              components_nodes.size() * sizeof(int));
+   cudaMemcpy(device_component_sizes, component_sizes.data(),
+              components_nodes.size() * sizeof(int),
+              cudaMemcpyHostToDevice);
 
-    // Count total edges and allocate edge info
-    // int total_edges = 0;
-    // for(const auto& pair : node_edge_map) {
-    //     total_edges += pair.second.size();
-    // }
+   // Count total edges, guards and updates
+   int total_edges = 0;
+   int total_guards = 0;
+   int total_updates = 0;
+   for(const auto& pair : node_edge_map) {
+       for(const auto& edge : pair.second) {
+           total_edges++;
+           total_guards += edge.guards.size;
+           total_updates += edge.updates.size;
+       }
+   }
 
-    // // Allocate device memory for NodeInfo and EdgeInfo arrays
-    const int total_node_slots = max_nodes_per_component * components_nodes.size();
-    // NodeInfo* device_nodes;
-    // EdgeInfo* device_edges;
-    // cudaMalloc(&device_nodes, total_node_slots * sizeof(NodeInfo));
-    // cudaMalloc(&device_edges, total_edges * sizeof(EdgeInfo));
-    //
-    // // Create and copy NodeInfo and EdgeInfo in coalesced layout
-    // std::vector<NodeInfo> host_nodes;
-    // std::vector<EdgeInfo> host_edges;
-    // host_nodes.reserve(total_node_slots);
-    // host_edges.reserve(total_edges);
-    //
-    int current_edge_index = 0;
+   // Allocate device memory
+   const int total_node_slots = max_nodes_per_component * components_nodes.size();
+   NodeInfo* device_nodes;
+   EdgeInfo* device_edges;
+   GuardInfo* device_guards;
+   UpdateInfo* device_updates;
+   cudaMalloc(&device_nodes, total_node_slots * sizeof(NodeInfo));
+   cudaMalloc(&device_edges, total_edges * sizeof(EdgeInfo));
+   cudaMalloc(&device_guards, total_guards * sizeof(GuardInfo));
+   cudaMalloc(&device_updates, total_updates * sizeof(UpdateInfo));
 
-    // Count total guards and updates
-    int total_edges = 0;
-    int total_guards = 0;
-    int total_updates = 0;
-    for(const auto& pair : node_edge_map) {
-        for(const auto& edge : pair.second) {
-            total_edges++;
-            total_guards += edge.guards.size;
-            total_updates += edge.updates.size;
-        }
-    }
+   // Create host arrays
+   std::vector<NodeInfo> host_nodes;
+   std::vector<EdgeInfo> host_edges;
+   std::vector<GuardInfo> host_guards;
+   std::vector<UpdateInfo> host_updates;
+   host_nodes.reserve(total_node_slots);
+   host_edges.reserve(total_edges);
+   host_guards.reserve(total_guards);
+   host_updates.reserve(total_updates);
 
-    // Allocate device memory
-    NodeInfo* device_nodes;
-    EdgeInfo* device_edges;
-    GuardInfo* device_guards;
-    UpdateInfo* device_updates;
-    cudaMalloc(&device_nodes, total_node_slots * sizeof(NodeInfo));
-    cudaMalloc(&device_edges, total_edges * sizeof(EdgeInfo));
-    cudaMalloc(&device_guards, total_guards * sizeof(GuardInfo));
-    cudaMalloc(&device_updates, total_updates * sizeof(UpdateInfo));
+   int current_edge_index = 0;
+   int current_guard_index = 0;
+   int current_update_index = 0;
 
-    // Create host arrays
-    std::vector<NodeInfo> host_nodes;
-    std::vector<EdgeInfo> host_edges;
-    std::vector<GuardInfo> host_guards;
-    std::vector<UpdateInfo> host_updates;
-    host_nodes.reserve(total_node_slots);
-    host_edges.reserve(total_edges);
-    host_guards.reserve(total_guards);
-    host_updates.reserve(total_updates);
+   // For each node level
+   for(int node_idx = 0; node_idx < max_nodes_per_component; node_idx++) {
+       // For each component at this level
+       for(int comp_idx = 0; comp_idx < components_nodes.size(); comp_idx++) {
+           if(node_idx < components_nodes[comp_idx].size()) {
+               const auto& node_pair = components_nodes[comp_idx][node_idx];
+               int node_id = node_pair.first;
+               const std::list<edge>& edges = *node_pair.second;
 
-    int current_guard_index = 0;
-    int current_update_index = 0;
+               // Create NodeInfo with edge index information
+               NodeInfo node_info{
+                   node_id,                    // id
+                   node::location,             // type (todo: we need to get this from somewhere)
+                   nullptr,                    // lambda (todo: we need to get this from somewhere)
+                   current_edge_index,         // first_edge_index
+                   static_cast<int>(edges.size()) // num_edges
+               };
+               host_nodes.push_back(node_info);
 
-    // for each node level
-    for(int node_idx = 0; node_idx < max_nodes_per_component; node_idx++) {
-        // for each component at this node level
-        for(int comp_idx = 0; comp_idx < components_nodes.size(); comp_idx++) {
-            if(node_idx < components_nodes[comp_idx].size()) {
-                const auto& node_pair = components_nodes[comp_idx][node_idx];
-                int node_id = node_pair.first;
-                const std::list<edge>& edges = *node_pair.second;
+               // Add edges and their guards/updates
+               for(const edge& e : edges) {
+                   // Store guards
+                   int guards_start = current_guard_index;
+                   for(int g = 0; g < e.guards.size; g++) {
+                       const constraint& guard = e.guards[g];
+                       host_guards.push_back(GuardInfo{
+                           guard.operand,
+                           guard.uses_variable,
+                           guard.value,
+                           guard.expression
+                       });
+                       current_guard_index++;
+                   }
 
-                // Get node info from first edge's dest if available
-                node::node_types node_type = node::location; // default
-                expr* node_lambda = nullptr;
-                if(!edges.empty()) {
-                    const node* dest_node = edges.front().dest;
-                    if(dest_node->id == node_id) {
-                        node_type = dest_node->type;
-                        node_lambda = dest_node->lamda;
-                    }
-                }
+                   // Store updates
+                   int updates_start = current_update_index;
+                   for(int u = 0; u < e.updates.size; u++) {
+                       const update& upd = e.updates[u];
+                       host_updates.push_back(UpdateInfo{
+                           upd.variable_id,
+                           upd.expression
+                       });
+                       current_update_index++;
+                   }
 
-                // Create NodeInfo
-                NodeInfo node_info{node_id, node_type, node_lambda};
-                host_nodes.push_back(node_info);
+                   // Create edge info
+                   EdgeInfo edge_info{
+                       node_id,
+                       e.dest->id,
+                       e.channel,
+                       e.weight,
+                       e.guards.size,
+                       guards_start,
+                       e.updates.size,
+                       updates_start
+                   };
+                   host_edges.push_back(edge_info);
+                   current_edge_index++;
+               }
+           } else {
+               // Padding for components with fewer nodes
+               host_nodes.push_back(NodeInfo{
+                   -1,                 // id
+                   node::location,     // type
+                   nullptr,            // lambda
+                   -1,                 // first_edge_index
+                   0                   // num_edges
+               });
+           }
+       }
+   }
 
-                // Add edges and their guards/updates
-                for(const edge& e : edges) {
-                    // Store guards
-                    int guards_start = current_guard_index;
-                    for(int g = 0; g < e.guards.size; g++) {
-                        const constraint& guard = e.guards[g];
-                        host_guards.push_back(GuardInfo{
-                            guard.operand,
-                            guard.uses_variable,
-                            guard.value,
-                            guard.expression
-                        });
-                        current_guard_index++;
-                    }
+   // Copy everything to device
+   cudaMemcpy(device_nodes, host_nodes.data(),
+              total_node_slots * sizeof(NodeInfo),
+              cudaMemcpyHostToDevice);
+   cudaMemcpy(device_edges, host_edges.data(),
+              total_edges * sizeof(EdgeInfo),
+              cudaMemcpyHostToDevice);
+   cudaMemcpy(device_guards, host_guards.data(),
+              total_guards * sizeof(GuardInfo),
+              cudaMemcpyHostToDevice);
+   cudaMemcpy(device_updates, host_updates.data(),
+              total_updates * sizeof(UpdateInfo),
+              cudaMemcpyHostToDevice);
 
-                    // Store updates
-                    int updates_start = current_update_index;
-                    for(int u = 0; u < e.updates.size; u++) {
-                        const update& upd = e.updates[u];
-                        host_updates.push_back(UpdateInfo{
-                            upd.variable_id,
-                            upd.expression
-                        });
-                        current_update_index++;
-                    }
+   // Create and copy SharedModelState
+   SharedModelState host_model{
+       static_cast<int>(components_nodes.size()),
+       device_component_sizes,
+       device_nodes,
+       device_edges,
+       device_guards,
+       device_updates
+   };
 
-                    // Create edge info
-                    EdgeInfo edge_info{
-                        node_id,
-                        e.dest->id,
-                        e.channel,
-                        e.weight,
-                        e.guards.size,
-                        guards_start,
-                        e.updates.size,
-                        updates_start
-                    };
-                    host_edges.push_back(edge_info);
-                }
-            } else {
-                // Padding for components with fewer nodes
-                host_nodes.push_back(NodeInfo{-1, node::location, nullptr});
-            }
-        }
-    }
+   SharedModelState* device_model;
+   cudaMalloc(&device_model, sizeof(SharedModelState));
+   cudaMemcpy(device_model, &host_model, sizeof(SharedModelState),
+              cudaMemcpyHostToDevice);
 
-    // Copy everything to device
-    cudaMemcpy(device_nodes, host_nodes.data(),
-               total_node_slots * sizeof(NodeInfo),
-               cudaMemcpyHostToDevice);
-    cudaMemcpy(device_edges, host_edges.data(),
-               total_edges * sizeof(EdgeInfo),
-               cudaMemcpyHostToDevice);
-    cudaMemcpy(device_guards, host_guards.data(),
-               total_guards * sizeof(GuardInfo),
-               cudaMemcpyHostToDevice);
-    cudaMemcpy(device_updates, host_updates.data(),
-               total_updates * sizeof(UpdateInfo),
-               cudaMemcpyHostToDevice);
-
-    // Create and copy SharedModelState
-    SharedModelState host_model{
-        static_cast<int>(components_nodes.size()),
-        device_component_sizes,
-        device_nodes,
-        device_edges,
-        nullptr,  // todo: remove edges_per_node no longer needed
-        nullptr,  // todo: remove node_edge_starts no longer needed
-        device_guards,
-        device_updates
-    };
-
-    SharedModelState* device_model;
-    cudaMalloc(&device_model, sizeof(SharedModelState));
-    cudaMemcpy(device_model, &host_model, sizeof(SharedModelState),
-               cudaMemcpyHostToDevice);
-
-    return device_model;
+   return device_model;
 }
+
 
 
 
@@ -337,46 +319,40 @@ __global__ void test_kernel(SharedModelState* model) {
                     if(node.id == -1) continue;
 
                     // Print node info
-                    printf("Component %d: ID=%d, Type=%d\n",
-                           comp, node.id, node.type);
+                    if(node.num_edges > 0) {
+                        printf("Component %d: ID=%d, Type=%d (Edges: %d-%d)\n",
+                               comp, node.id, node.type,
+                               node.first_edge_index,
+                               node.first_edge_index + node.num_edges - 1);
+                    } else {
+                        printf("Component %d: ID=%d, Type=%d (No edges)\n",
+                               comp, node.id, node.type);
+                    }
 
-                    // Find edges for this node
-                    int edge_idx = 0;
-                    const EdgeInfo* edge;
-                    while((edge = &model->edges[edge_idx]) != nullptr) {
-                        // More strict validation of edge data
-                        if(edge->source_node_id <= 0 || edge->dest_node_id <= 0 ||
-                           edge->channel < 0 || edge->channel > 100 ||  // Assuming reasonable channel range
-                           edge->num_guards < 0 || edge->num_guards > 10 ||  // Assuming reasonable guard count
-                           edge->num_updates < 0 || edge->num_updates > 10) {  // Assuming reasonable update count
-                            break;
+
+
+                    // Now use direct edge indexing
+                    for(int e = 0; e < node.num_edges; e++) {
+                        const EdgeInfo& edge = model->edges[node.first_edge_index + e];
+                        printf("  Edge %d: %d -> %d (channel: %d)\n",
+                               node.first_edge_index + e, edge.source_node_id,
+                               edge.dest_node_id, edge.channel);
+
+                        // Print guards
+                        printf("    Guards (%d):\n", edge.num_guards);
+                        for(int g = 0; g < edge.num_guards; g++) {
+                            const GuardInfo& guard = model->guards[edge.guards_start_index + g];
+                            printf("      Guard %d: op=%d, uses_var=%d\n",
+                                   g, guard.operand, guard.uses_variable);
                         }
 
-                        if(edge->source_node_id == node.id) {
-                            printf("  Edge %d: %d -> %d (channel: %d)\n",
-                                   edge_idx, edge->source_node_id,
-                                   edge->dest_node_id, edge->channel);
-
-                            // Print guards
-                            printf("    Guards (%d):\n", edge->num_guards);
-                            for(int g = 0; g < edge->num_guards; g++) {
-                                const GuardInfo& guard = model->guards[edge->guards_start_index + g];
-                                printf("      Guard %d: op=%d, uses_var=%d\n",
-                                       g, guard.operand, guard.uses_variable);
-                            }
-
-                            // Print updates
-                            printf("    Updates (%d):\n", edge->num_updates);
-                            for(int u = 0; u < edge->num_updates; u++) {
-                                const UpdateInfo& update = model->updates[edge->updates_start_index + u];
-                                printf("      Update %d: var_id=%d\n",
-                                       u, update.variable_id);
-                            }
+                        // Print updates
+                        printf("    Updates (%d):\n", edge.num_updates);
+                        for(int u = 0; u < edge.num_updates; u++) {
+                            const UpdateInfo& update = model->updates[edge.updates_start_index + u];
+                            printf("      Update %d: var_id=%d\n",
+                                   u, update.variable_id);
                         }
-                        edge_idx++;
-
-                        // Additional safety check
-                        if(edge_idx > 100) break;  // Assuming no more than 100 edges total
                     }
                 }
             }
@@ -384,6 +360,54 @@ __global__ void test_kernel(SharedModelState* model) {
     }
 }
 
+
+
+__global__ void validate_edge_indices(SharedModelState* model) {
+    if (threadIdx.x == 0 && blockIdx.x == 0) {
+        int total_edges = 0;
+        bool indices_valid = true;
+
+        // Validate each node's edge indices
+        for(int level = 0; level < model->component_sizes[0]; level++) {
+            for(int comp = 0; comp < model->num_components; comp++) {
+                if(level < model->component_sizes[comp]) {
+                    const NodeInfo& node = model->nodes[level * model->num_components + comp];
+                    if(node.id != -1) {
+                        // Check edge indices are in range
+                        if(node.first_edge_index < 0) {
+                            printf("Error: Node %d has negative edge index\n", node.id);
+                            indices_valid = false;
+                        }
+
+                        // Check edges are sequential
+                        if(node.first_edge_index < total_edges) {
+                            printf("Error: Node %d edges overlap with previous node\n", node.id);
+                            indices_valid = false;
+                        }
+
+                        // Verify all edges belong to this node
+                        for(int e = 0; e < node.num_edges; e++) {
+                            const EdgeInfo& edge = model->edges[node.first_edge_index + e];
+                            if(edge.source_node_id != node.id) {
+                                printf("Error: Edge %d doesn't belong to node %d\n",
+                                       node.first_edge_index + e, node.id);
+                                indices_valid = false;
+                            }
+                        }
+
+                        total_edges += node.num_edges;
+                    }
+                }
+            }
+        }
+
+        printf("\n");
+        printf("==========================================\n");
+        printf("Edge index validation %s\n", indices_valid ? "PASSED" : "FAILED");
+        printf("Total edges: %d\n", total_edges);
+        printf("==========================================\n");
+    }
+}
 
 
 

@@ -15,6 +15,8 @@
 #include "simulation/simulation.cuh"
 #include "simulation/simulation_config.h"
 #include "simulation/state/SharedModelState.cuh"
+#define VERBOSE 1
+#include "simulation/simulation.cuh"
 
 int main()
 {
@@ -70,13 +72,18 @@ int main()
 
     // SharedModelState* state = init_shared_model_state(&model, *optimizer.get_node_subsystems_map(), optimizer.get_node_map());
     SharedModelState* state = init_shared_model_state(&model, *optimizer.get_node_subsystems_map(), *properties.node_edge_map);
-    test_kernel<<<1, 1>>>(state);
-
-
-
     cout << "test" << endl;
 
-    properties.node_network = new std::unordered_map<int, int>(*parser->get_subsystems());
+    sim.run_statistical_model_checking(state, 0.05, 0.01);
+
+    if (VERBOSE) {
+        test_kernel<<<1, 1>>>(state);
+        validate_edge_indices<<<1, 1>>>(state);
+    }
+
+
+
+    // properties.node_network = new std::unordered_map<int, int>(*parser->get_subsystems());
 
     // We need a vars_list_: This has all the vars, their ids and their types.
     // Then we need node_names, to get the name of a node, i.e. 'f2' from the id

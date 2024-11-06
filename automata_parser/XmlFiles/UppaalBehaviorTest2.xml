@@ -26,29 +26,45 @@ clock y;
 		<location id="id4" x="263" y="110">
 			<name x="253" y="76">g5</name>
 		</location>
+		<location id="id5" x="408" y="110">
+		</location>
+		<location id="id6" x="510" y="119">
+		</location>
 		<init ref="id0"/>
-		<transition id="id5">
+		<transition id="id7">
+			<source ref="id2"/>
+			<target ref="id6"/>
+		</transition>
+		<transition id="id8">
+			<source ref="id5"/>
+			<target ref="id6"/>
+		</transition>
+		<transition id="id9">
+			<source ref="id4"/>
+			<target ref="id5"/>
+		</transition>
+		<transition id="id10">
 			<source ref="id4"/>
 			<target ref="id3"/>
 			<label kind="guard" x="120" y="38">x &lt; 3</label>
 			<nail x="102" y="34"/>
 		</transition>
-		<transition id="id6">
+		<transition id="id11">
 			<source ref="id3"/>
 			<target ref="id4"/>
 			<label kind="assignment" x="35" y="97">x=x+1</label>
 		</transition>
-		<transition id="id7">
+		<transition id="id12">
 			<source ref="id0"/>
 			<target ref="id3"/>
 			<label kind="guard" x="-160" y="8">x&gt;20</label>
 		</transition>
-		<transition id="id8">
+		<transition id="id13">
 			<source ref="id0"/>
 			<target ref="id2"/>
 			<label kind="guard" x="-160" y="-42">x&gt;10</label>
 		</transition>
-		<transition id="id9">
+		<transition id="id14">
 			<source ref="id0"/>
 			<target ref="id1"/>
 			<label kind="guard" x="-153" y="-85">x&lt;=1</label>
@@ -59,24 +75,24 @@ clock y;
 		<declaration>// Place local declarations here.
 clock x;
 </declaration>
-		<location id="id10" x="51" y="-8">
+		<location id="id15" x="51" y="-8">
 			<name x="41" y="-42">f1</name>
 			<label kind="invariant" x="42" y="8">x&lt;=1</label>
 		</location>
-		<location id="id11" x="212" y="-8">
+		<location id="id16" x="212" y="-8">
 			<name x="202" y="-42">f2</name>
 		</location>
-		<location id="id12" x="348" y="-8">
+		<location id="id17" x="348" y="-8">
 			<name x="338" y="-42">f3</name>
 		</location>
-		<init ref="id10"/>
-		<transition id="id13">
-			<source ref="id11"/>
-			<target ref="id12"/>
+		<init ref="id15"/>
+		<transition id="id18">
+			<source ref="id16"/>
+			<target ref="id17"/>
 		</transition>
-		<transition id="id14">
-			<source ref="id10"/>
-			<target ref="id11"/>
+		<transition id="id19">
+			<source ref="id15"/>
+			<target ref="id16"/>
 			<label kind="guard" x="69" y="-42">x &lt; 1</label>
 		</transition>
 	</template>

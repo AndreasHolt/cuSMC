@@ -3,58 +3,86 @@
 #include "simulation.cuh"
 #include <cmath>
 
+#include "state/SharedModelState.cuh"
+#include "state/SharedRunState.cuh"
+
 #define NUM_RUNS 6
 #define NUM_COMPONENTS 2
 #define MAX_COMPONENTS 100
+#define TIME_BOUND 1.0
 
 // Et array af locations for et specifikt component
 // En funktion der mapper en værdi i det array til den relevante node
 
 
-// struct ComponentState {
-//     struct RunState {
-//         float current_time;
-//         bool needs_sync;
-//         float proposed_delay; // The sampled delay
-//     };
-//
-//     __shared__ struct {
-//         unordered_map<int, std::list<edge> > component_node_edge_map;
-//         int component_start_node;
-//         string template_name;
-//     } component_data;
-// };
-//
-// struct SimulationState {
-//     ComponentState component_states[NUM_COMPONENTS][NUM_RUNS];
-//
-//     RunState run_states[NUM_RUNS];
-// };
+
+int get_total_runs(float confidence, float precision) {
+    // confidence level = alpha, i.e. 0.05 for 95% confidence
+    // precision = epsilon, i.e. 0.01 for +-1% error
+
+    // int total_runs = (int)ceil(log(2.0/confidence)/log(2.0*precision*precision));
+    // int total_runs = static_cast<int>(ceil(log(2.0 / confidence) / log(2.0 * precision * precision)));
+    int total_runs = static_cast<size_t>(ceil((log(2.0) - log(confidence)) / (2*pow(precision, 2))));
+    return total_runs;
+}
+
+__global__ void simulation_kernel(SharedModelState* model, bool* results, int runs_per_block, float time_bound, float confidence, float precision) {
+    const int block_id = blockIdx.x;
+    const int thread_id = threadIdx.x;
 
 
-// __global__ void componentSimulation(SimulationState state) {
-//     int component_id = blockIdx.x;
-//     int run_id = threadIdx.x;
-//
-//     if (run_id >= NUM_COMPONENTS) return;
-//
-//     __shared__ ComponentInfo component_info;
-//
-//     if (threadIdx.x == 0) {
-//         loadComponentInfo(&component_info, component_id);
-//     }
-//     __syncthreads(); // sync all the threads
-//
-//     while (!isSimulationDone(run_id)) {
-//         // sim logic
-//     }
-//
+    // Pattern used to initialize shared memory for more complex data structures
+    __shared__ char shared_mem[]; // flexible, dynamically-sized array
+    SharedRunState* run_state = (SharedRunState*)shared_mem; // cast base address of shared_mem array to a pointer of type SharedRunState. Effectively maps it to type of SharedRunState
+    // run_state now points to the start of the shared memory
 
-//
-//
-//
-//
-// }
+    for (int run = 0; run < runs_per_block; run++) {
+        // Initialize the state for a run
+        run_state->init(model);
+
+        // Main simulation loop for the current run
+        while (run_state->global_time < time_bound) {
+            // Each thread (component) computes its own delay
+            run_state->compute_delays(model);
+        }
+    }
+
+
+
+
+}
+
+void simulation::run_statistical_model_checking(SharedModelState* model, float confidence, float precision) {
+    int total_runs = get_total_runs(confidence, precision);
+    cout << "total_runs = " << total_runs << endl;
+
+    // Kernel launch params
+    int threads_per_block = 128;
+    int runs_per_block = 1;
+    int num_blocks = (total_runs + runs_per_block - 1) / runs_per_block; // + runs_per_block - 1 to round up (ensure enough blocks)
+    // ---
+
+    bool* device_results;
+    cudaMalloc(&device_results, total_runs * sizeof(bool));
+
+    // Main simulation kernel
+    simulation_kernel<<<num_blocks, threads_per_block>>>(model, device_results, runs_per_block, TIME_BOUND, confidence, precision);
+
+
+    // Collect results so we can later analyze them and compute statistics
+    bool* host_results = new bool[total_runs];
+    cudaMemcpy(host_results, device_results, total_runs * sizeof(bool),
+               cudaMemcpyDeviceToHost);
+
+    // Compute statistics
+    //TODO: analyze_results(host_results, total_runs, confidence, precision);
+
+
+
+
+
+}
+
 
 
 
@@ -71,8 +99,8 @@ __global__ void findSmallestElementInArray(float *input, int input_length, float
     if (threadid == 0) {
         *result = input[0];
     }
-
 }
+
 void testFunction () {
     float* h_a = new float[NUM_RUNS];
     srand( static_cast<unsigned>(time(NULL)));

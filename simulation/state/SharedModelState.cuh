@@ -92,35 +92,38 @@ struct NodeInfo {
     int id;
     int type;
     expr* lambda;
+    int first_edge_index;  // Add these
+    int num_edges;        // two fields
 
-    CPU GPU NodeInfo() : id(0), type(0), lambda(nullptr) {}
+    CPU GPU NodeInfo() :
+        id(0), type(0), lambda(nullptr),
+        first_edge_index(-1), num_edges(0) {}
 
-    // Add constructor to allow initialization
-    CPU GPU NodeInfo(int i, int t, expr* l) :
-        id(i), type(t), lambda(l) {}
+    CPU GPU NodeInfo(int i, int t, expr* l, int fei, int ne) :
+        id(i), type(t), lambda(l),
+        first_edge_index(fei), num_edges(ne) {}
 };
 
+
+
 struct SharedModelState {
-    // Existing members
     const int num_components;
     const int* component_sizes;
     const NodeInfo* nodes;
+    const EdgeInfo* edges;
+    const GuardInfo* guards;
+    const UpdateInfo* updates;
 
-    // New edge-related members
-    const EdgeInfo* edges;           // Coalesced edge information
-    const int* edges_per_node;       // Number of edges for each node
-    const int* node_edge_starts;     // Starting index for each node's edges
-    const GuardInfo* guards;         // All guards
-    const UpdateInfo* updates;       // All updates
-
-    // Updated constructor
     CPU GPU SharedModelState(
-        int nc, const int* cs, const NodeInfo* n,
-        const EdgeInfo* e, const int* epn, const int* nes,
+        int nc, const int* cs,
+        const NodeInfo* n, const EdgeInfo* e,
         const GuardInfo* g, const UpdateInfo* u) :
-            num_components(nc), component_sizes(cs), nodes(n),
-            edges(e), edges_per_node(epn), node_edge_starts(nes),
-            guards(g), updates(u) {}
+            num_components(nc),
+            component_sizes(cs),
+            nodes(n),
+            edges(e),
+            guards(g),
+            updates(u) {}
 };
 
 
@@ -137,6 +140,6 @@ SharedModelState* init_shared_model_state(
 
 
 __global__ void test_kernel(SharedModelState* model);
-
+__global__ void validate_edge_indices(SharedModelState* model);
 
 #endif //SHAREDMODELSTATE_CUH
