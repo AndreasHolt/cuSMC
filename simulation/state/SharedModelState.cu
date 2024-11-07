@@ -8,101 +8,37 @@
 
 #define MAX_NODES_PER_COMPONENT 5
 
-void count_edges_and_constraints(
-    const std::vector<std::vector<node*>>& components_nodes,
-    int& total_edges,
-    int& total_guards,
-    int& total_updates,
-    std::vector<int>& edges_per_node,
-    std::vector<int>& node_edge_starts)
-{
-    total_edges = 0;
-    total_guards = 0;
-    total_updates = 0;
+std::vector<expr*> allocated_expressions;  // Global to track allocations
 
-    // For each node level
-    for(int node_idx = 0; node_idx < MAX_NODES_PER_COMPONENT; node_idx++) {
-        // For each component
-        for(int comp_idx = 0; comp_idx < components_nodes.size(); comp_idx++) {
-            if(node_idx < components_nodes[comp_idx].size()) {
-                node* current_node = components_nodes[comp_idx][node_idx];
 
-                // Store start index for this node's edges
-                node_edge_starts.push_back(total_edges);
-                edges_per_node.push_back(current_node->edges.size);
+expr* create_variable_expr(int variable_id) {
+    printf("Creating variable expression for id: %d\n", variable_id);
 
-                // Count guards and updates for each edge
-                for(int e = 0; e < current_node->edges.size; e++) {
-                    total_edges++;
-                    total_guards += current_node->edges[e].guards.size;
-                    total_updates += current_node->edges[e].updates.size;
-                }
-            }
-        }
+    expr* device_expr;
+    cudaError_t err = cudaMalloc(&device_expr, sizeof(expr));
+    if(err != cudaSuccess) {
+        printf("cudaMalloc failed in create_variable_expr: %s\n", cudaGetErrorString(err));
+        return nullptr;
     }
-}
+    allocated_expressions.push_back(device_expr);
 
-void fill_edge_arrays(
-    const std::vector<std::vector<node*>>& components_nodes,
-    std::vector<EdgeInfo>& host_edges,
-    std::vector<GuardInfo>& host_guards,
-    std::vector<UpdateInfo>& host_updates)
-{
-    int current_guard_index = 0;
-    int current_update_index = 0;
+    expr temp_expr;
+    memset(&temp_expr, 0, sizeof(expr));  // Initialize to zero
+    temp_expr.operand = expr::clock_variable_ee;
+    temp_expr.value = static_cast<double>(variable_id);
+    temp_expr.left = nullptr;
+    temp_expr.right = nullptr;
 
-    // For each node level
-    for(int node_idx = 0; node_idx < MAX_NODES_PER_COMPONENT; node_idx++) {
-        // For each component
-        for(int comp_idx = 0; comp_idx < components_nodes.size(); comp_idx++) {
-            if(node_idx < components_nodes[comp_idx].size()) {
-                node* current_node = components_nodes[comp_idx][node_idx];
-
-                // Add edges for this node in coalesced layout
-                for(int e = 0; e < current_node->edges.size; e++) {
-                    const edge& current_edge = current_node->edges[e];
-
-                    // Store edge info
-                    host_edges.emplace_back(
-                        current_node->id,              // source_node_id
-                        current_edge.dest->id,         // dest_node_id
-                        current_edge.channel,          // channel
-                        current_edge.weight,           // weight
-                        current_edge.guards.size,      // num_guards
-                        current_guard_index,           // guards_start_index
-                        current_edge.updates.size,     // num_updates
-                        current_update_index           // updates_start_index
-                    );
-
-                    // Store guards
-                    for(int g = 0; g < current_edge.guards.size; g++) {
-                        const constraint& guard = current_edge.guards[g];
-                        host_guards.push_back(GuardInfo{
-                            guard.operand,
-                            guard.uses_variable,
-                            guard.value,
-                            guard.expression
-                        });
-                        current_guard_index++;
-                    }
-
-                    // Store updates
-                    for(int u = 0; u < current_edge.updates.size; u++) {
-                        const update& upd = current_edge.updates[u];
-                        host_updates.push_back(UpdateInfo{
-                            upd.variable_id,
-                            upd.expression
-                        });
-                        current_update_index++;
-                    }
-                }
-            }
-        }
+    err = cudaMemcpy(device_expr, &temp_expr, sizeof(expr), cudaMemcpyHostToDevice);
+    if(err != cudaSuccess) {
+        printf("cudaMemcpy failed in create_variable_expr: %s\n", cudaGetErrorString(err));
+        cudaFree(device_expr);
+        return nullptr;
     }
+
+    printf("Successfully created variable expression\n");
+    return device_expr;
 }
-
-
-
 
 
 void print_node_info(const node* n, const std::string& prefix = "") {
@@ -117,10 +53,81 @@ void print_node_info(const node* n, const std::string& prefix = "") {
 
 
 
+
+
+expr* copy_expression_to_device(const expr* host_expr) {
+    printf("Entering copy_expression_to_device with expr: %p\n", static_cast<const void*>(host_expr));
+
+    // Check for invalid pointer (like 0x1, 0x2, 0x3)
+    if(reinterpret_cast<uintptr_t>(host_expr) < 1000) {
+        printf("Skipping invalid pointer: %p\n", static_cast<const void*>(host_expr));
+        return nullptr;
+    }
+
+    if(host_expr == nullptr) {
+        printf("Null expression, returning nullptr\n");
+        return nullptr;
+    }
+
+    try {
+        // Allocate device memory for this node
+        expr* device_expr;
+        cudaError_t err = cudaMalloc(&device_expr, sizeof(expr));
+        if(err != cudaSuccess) {
+            printf("cudaMalloc failed: %s\n", cudaGetErrorString(err));
+            return nullptr;
+        }
+        printf("Allocated device memory at: %p\n", static_cast<void*>(device_expr));
+        allocated_expressions.push_back(device_expr);
+
+        // Create temporary host copy
+        expr temp_expr;
+        memset(&temp_expr, 0, sizeof(expr));  // Initialize to zero
+
+        // Carefully copy each field
+        temp_expr.operand = host_expr->operand;
+        temp_expr.value = host_expr->value;
+        temp_expr.left = nullptr;   // Will set these after recursion
+        temp_expr.right = nullptr;
+
+        printf("Successfully copied basic fields. Operand: %d\n", temp_expr.operand);
+
+        // Recursively copy left and right if they exist
+        if(host_expr->left != nullptr) {
+            printf("Copying left subtree\n");
+            temp_expr.left = copy_expression_to_device(host_expr->left);
+        }
+
+        if(host_expr->right != nullptr) {
+            printf("Copying right subtree\n");
+            temp_expr.right = copy_expression_to_device(host_expr->right);
+        }
+
+        // Copy to device
+        err = cudaMemcpy(device_expr, &temp_expr, sizeof(expr), cudaMemcpyHostToDevice);
+        if(err != cudaSuccess) {
+            printf("cudaMemcpy failed: %s\n", cudaGetErrorString(err));
+            cudaFree(device_expr);
+            return nullptr;
+        }
+
+        printf("Successfully copied expression to device\n");
+        return device_expr;
+    }
+    catch(...) {
+        printf("Exception in copy_expression_to_device\n");
+        return nullptr;
+    }
+}
+
+
+
+
 SharedModelState* init_shared_model_state(
    const network* cpu_network,
    const std::unordered_map<int, int>& node_subsystems_map,
-   const std::unordered_map<int, std::list<edge>>& node_edge_map, const std::unordered_map<int, node*>& node_map)
+   const std::unordered_map<int, std::list<edge>>& node_edge_map,
+   const std::unordered_map<int, node*>& node_map)
 {
    // First organize nodes by component
    std::vector<std::vector<std::pair<int, const std::list<edge>*>>> components_nodes;
@@ -170,8 +177,7 @@ SharedModelState* init_shared_model_state(
            total_updates += edge.updates.size;
        }
 
-       // Count invariants from nodes
-       node* current_node = node_map.at(pair.first);  // Now we can get the node!
+       node* current_node = node_map.at(pair.first);
        total_invariants += current_node->invariants.size;
    }
 
@@ -215,25 +221,42 @@ SharedModelState* init_shared_model_state(
                const std::list<edge>& edges = *node_pair.second;
                node* current_node = node_map.at(node_id);
 
-               // Store invariants
+
+               // Store invariants with deep copy of expressions
                int invariants_start = current_invariant_index;
                for(int i = 0; i < current_node->invariants.size; i++) {
                    const constraint& inv = current_node->invariants[i];
+                   printf("Processing invariant %d for node %d\n", i, node_id);
+                   printf("Value pointer: %p\n", static_cast<const void*>(inv.value));
+                   printf("Expression pointer: %p\n", static_cast<const void*>(inv.expression));
+
+                   expr* device_expression = copy_expression_to_device(inv.expression);
+                   expr* left_expr = nullptr;
+
+                   if(inv.uses_variable) {
+                       left_expr = create_variable_expr(inv.variable_id);
+                   }
+
+                   printf("Creating GuardInfo with: operand=%d, uses_variable=%d\n",
+                          inv.operand, inv.uses_variable);
+
                    host_invariants.push_back(GuardInfo{
                        inv.operand,
                        inv.uses_variable,
-                       inv.value,
-                       inv.expression
+                       left_expr,
+                       device_expression
                    });
+
+                   printf("Successfully added invariant\n");
                    current_invariant_index++;
                }
 
                // Create NodeInfo with edge and invariant information
                NodeInfo node_info{
                    node_id,                    // id
-                   current_node->type,         // type (now using actual node type)
+                   current_node->type,         // type
                    node_idx,                   // level
-                   current_node->lamda,        // lambda (using node's lambda)
+                   copy_expression_to_device(current_node->lamda), // Deep copy lambda
                    current_edge_index,         // first_edge_index
                    static_cast<int>(edges.size()), // num_edges
                    invariants_start,           // first_invariant_index
@@ -243,26 +266,32 @@ SharedModelState* init_shared_model_state(
 
                // Add edges and their guards/updates
                for(const edge& e : edges) {
-                   // Store guards
+                   // Store guards with deep copy of expressions
                    int guards_start = current_guard_index;
                    for(int g = 0; g < e.guards.size; g++) {
                        const constraint& guard = e.guards[g];
+
+                       expr* device_value = copy_expression_to_device(guard.value);
+                       expr* device_expression = copy_expression_to_device(guard.expression);
+
                        host_guards.push_back(GuardInfo{
                            guard.operand,
                            guard.uses_variable,
-                           guard.value,
-                           guard.expression
+                           device_value,
+                           device_expression
                        });
                        current_guard_index++;
                    }
 
-                   // Store updates
+                   // Store updates with deep copy of expressions
                    int updates_start = current_update_index;
                    for(int u = 0; u < e.updates.size; u++) {
                        const update& upd = e.updates[u];
+                       expr* device_expression = copy_expression_to_device(upd.expression);
+
                        host_updates.push_back(UpdateInfo{
                            upd.variable_id,
-                           upd.expression
+                           device_expression
                        });
                        current_update_index++;
                    }
@@ -272,7 +301,7 @@ SharedModelState* init_shared_model_state(
                        node_id,
                        e.dest->id,
                        e.channel,
-                       e.weight,
+                       copy_expression_to_device(e.weight), // Deep copy weight
                        e.guards.size,
                        guards_start,
                        e.updates.size,
@@ -322,7 +351,7 @@ SharedModelState* init_shared_model_state(
        device_edges,
        device_guards,
        device_updates,
-       device_invariants    // Add invariants to constructor
+       device_invariants
    };
 
    SharedModelState* device_model;
@@ -334,6 +363,169 @@ SharedModelState* init_shared_model_state(
 }
 
 
+
+
+
+
+__device__ void debug_print_expression(const expr* e, int depth = 0) {
+    if(depth > 10) {
+        printf("[max_depth]");
+        return;
+    }
+
+    if(e == nullptr) {
+        printf("null");
+        return;
+    }
+
+    switch(e->operand) {
+        case expr::literal_ee:
+            printf("%f", e->value);
+            break;
+        case expr::clock_variable_ee:
+            printf("var_%d", static_cast<int>(e->value));
+            break;
+        case expr::plus_ee:
+            printf("(");
+            debug_print_expression(e->left, depth + 1);
+            printf(" + ");
+            debug_print_expression(e->right, depth + 1);
+            printf(")");
+            break;
+        case expr::minus_ee:
+            printf("(");
+            debug_print_expression(e->left, depth + 1);
+            printf(" - ");
+            debug_print_expression(e->right, depth + 1);
+            printf(")");
+            break;
+        case expr::multiply_ee:
+            printf("(");
+            debug_print_expression(e->left, depth + 1);
+            printf(" * ");
+            debug_print_expression(e->right, depth + 1);
+            printf(")");
+            break;
+        case expr::division_ee:
+            printf("(");
+            debug_print_expression(e->left, depth + 1);
+            printf(" / ");
+            debug_print_expression(e->right, depth + 1);
+            printf(")");
+            break;
+        default:
+            if(e->operand < expr::random_ee) {
+                // It's a value type
+                if(e->operand == expr::literal_ee) {
+                    printf("%f", e->value);
+                } else if(e->operand == expr::clock_variable_ee) {
+                    printf("var_%d", static_cast<int>(e->value));
+                }
+            } else {
+                printf("op_%d", e->operand);
+            }
+    }
+}
+
+
+__global__ void verify_expressions_kernel(SharedModelState* model) {
+    if (threadIdx.x == 0 && blockIdx.x == 0) {
+        printf("\nVerifying Model Structure with Expressions:\n");
+        printf("==========================================\n");
+
+        for(int node_idx = 0; node_idx < model->component_sizes[0]; node_idx++) {
+            printf("\nNode Level %d:\n", node_idx);
+
+            for(int comp = 0; comp < model->num_components; comp++) {
+                if(node_idx < model->component_sizes[comp]) {
+                    const NodeInfo& node = model->nodes[node_idx * model->num_components + comp];
+                    if(node.id == -1) continue;
+
+                    printf("\nComponent %d, Node ID %d:\n", comp, node.id);
+                    printf("  Type: %d\n", node.type);
+
+                    // Print invariants
+                    printf("  Invariants (%d):\n", node.num_invariants);
+                    for(int i = 0; i < node.num_invariants; i++) {
+                        const GuardInfo& inv = model->invariants[node.first_invariant_index + i];
+                        printf("    Invariant %d: ", i);
+
+                        // Print left side (variable)
+                        if(inv.uses_variable) {
+                            printf("var_%d ", inv.variable_id);
+                        }
+
+                        // Print operator
+                        switch(inv.operand) {
+                            case constraint::less_equal_c: printf("<= "); break;
+                            case constraint::less_c: printf("< "); break;
+                            case constraint::greater_equal_c: printf(">= "); break;
+                            case constraint::greater_c: printf("> "); break;
+                            case constraint::equal_c: printf("== "); break;
+                            case constraint::not_equal_c: printf("!= "); break;
+                            default: printf("op_%d ", inv.operand);
+                        }
+
+                        // Print right side expression
+                        debug_print_expression(inv.expression);
+                        printf("\n");
+                    }
+
+                    // Print edges
+                    if(node.num_edges > 0) {
+                        printf("  Edges (%d-%d):\n",
+                               node.first_edge_index,
+                               node.first_edge_index + node.num_edges - 1);
+
+                        for(int e = 0; e < node.num_edges; e++) {
+                            const EdgeInfo& edge = model->edges[node.first_edge_index + e];
+                            printf("    Edge %d: %d -> %d (channel: %d)\n",
+                                   node.first_edge_index + e,
+                                   edge.source_node_id,
+                                   edge.dest_node_id,
+                                   edge.channel);
+
+                            // Print guards
+                            printf("      Guards (%d):\n", edge.num_guards);
+                            for(int g = 0; g < edge.num_guards; g++) {
+                                const GuardInfo& guard = model->guards[edge.guards_start_index + g];
+                                printf("        Guard %d: ", g);
+                                if(guard.uses_variable) {
+                                    printf("var_%d ", guard.variable_id);
+                                }
+
+                                switch(guard.operand) {
+                                    case constraint::less_equal_c: printf("<= "); break;
+                                    case constraint::less_c: printf("< "); break;
+                                    case constraint::greater_equal_c: printf(">= "); break;
+                                    case constraint::greater_c: printf("> "); break;
+                                    case constraint::equal_c: printf("== "); break;
+                                    case constraint::not_equal_c: printf("!= "); break;
+                                    default: printf("op_%d ", guard.operand);
+                                }
+
+                                debug_print_expression(guard.expression);
+                                printf("\n");
+                            }
+
+                            // Print updates
+                            printf("      Updates (%d):\n", edge.num_updates);
+                            for(int u = 0; u < edge.num_updates; u++) {
+                                const UpdateInfo& update = model->updates[edge.updates_start_index + u];
+                                printf("        Update %d: var_%d = ", u, update.variable_id);
+                                debug_print_expression(update.expression);
+                                printf("\n");
+                            }
+                        }
+                    } else {
+                        printf("  No edges\n");
+                    }
+                }
+            }
+        }
+        printf("\n==========================================\n");
+    }
+}
 
 
 
@@ -445,49 +637,64 @@ __global__ void validate_edge_indices(SharedModelState* model) {
 }
 
 
-__global__ void verify_invariants_kernel(SharedModelState* model) {
-    if (threadIdx.x == 0 && blockIdx.x == 0) {  // Single thread for debugging output
-        printf("\nVerifying Invariants:\n");
-        printf("==========================================\n");
+// __global__ void verify_invariants_kernel(SharedModelState* model) {
+//     if (threadIdx.x == 0 && blockIdx.x == 0) {
+//         printf("\nVerifying Invariants:\n");
+//         printf("==========================================\n");
+//
+//         for(int node_idx = 0; node_idx < model->component_sizes[0]; node_idx++) {
+//             printf("\nNode Level %d:\n", node_idx);
+//
+//             for(int comp = 0; comp < model->num_components; comp++) {
+//                 if(node_idx < model->component_sizes[comp]) {
+//                     const NodeInfo& node = model->nodes[node_idx * model->num_components + comp];
+//                     if(node.id == -1) continue;
+//
+//                     printf("\nComponent %d, Node ID %d:\n", comp, node.id);
+//                     printf("  Type: %d\n", node.type);
+//                     printf("  Invariants: %d\n", node.num_invariants);
+//
+//                     for(int i = 0; i < node.num_invariants; i++) {
+//                         const GuardInfo& inv = model->invariants[node.first_invariant_index + i];
+//                         printf("    Invariant %d:\n", i);
+//                         printf("      Guard Info: uses_var=%d, op=%d\n",
+//                                inv.uses_variable, inv.operand);
+//
+//                         // Left side (usually variable)
+//                         if(inv.uses_variable) {
+//                             printf("      Left side: var_%d\n", inv.variable_id);
+//                         }
+//
+//                         // Operator
+//                         printf("      Operator: ");
+//                         switch(inv.operand) {
+//                             case constraint::less_equal_c: printf("<=\n"); break;
+//                             case constraint::less_c: printf("<\n"); break;
+//                             case constraint::greater_equal_c: printf(">=\n"); break;
+//                             case constraint::greater_c: printf(">\n"); break;
+//                             case constraint::equal_c: printf("==\n"); break;
+//                             case constraint::not_equal_c: printf("!=\n"); break;
+//                             default: printf("op_%d\n", inv.operand);
+//                         }
+//
+//                         // Right side (expression)
+//                         printf("      Right side expression ptr: %p\n",
+//                                static_cast<void*>(inv.expression));
+//                         if(inv.expression != nullptr) {
+//                             printf("      Expression details: ");
+//                             print_expression_tree(inv.expression);
+//                             printf("\n");
+//                         }
+//                         printf("\n");
+//                     }
+//                 }
+//             }
+//         }
+//         printf("\n==========================================\n");
+//     }
+// }
 
-        // For each node level
-        for(int node_idx = 0; node_idx < model->component_sizes[0]; node_idx++) {
-            printf("\nNode Level %d:\n", node_idx);
 
-            // For each component
-            for(int comp = 0; comp < model->num_components; comp++) {
-                if(node_idx < model->component_sizes[comp]) {
-                    const NodeInfo& node = model->nodes[node_idx * model->num_components + comp];
-
-                    // Skip padding nodes
-                    if(node.id == -1) continue;
-
-                    printf("\nComponent %d, Node ID %d:\n", comp, node.id);
-                    printf("  Type: %d\n", node.type);
-                    printf("  Invariants: %d\n", node.num_invariants);
-
-                    // Print each invariant
-                    for(int i = 0; i < node.num_invariants; i++) {
-                        const GuardInfo& inv = model->invariants[node.first_invariant_index + i];
-                        printf("    Invariant %d:\n", i);
-                        printf("      Operator: %d\n", inv.operand);
-                        printf("      Uses Variable: %d\n", inv.uses_variable);
-                        // Can add more detailed invariant info here
-                    }
-
-                    // Verify indices are valid
-                    if(node.num_invariants > 0) {
-                        if(node.first_invariant_index < 0) {
-                            printf("ERROR: Invalid invariant index %d for node %d\n",
-                                   node.first_invariant_index, node.id);
-                        }
-                    }
-                }
-            }
-        }
-        printf("\n==========================================\n");
-    }
-}
 
 
 

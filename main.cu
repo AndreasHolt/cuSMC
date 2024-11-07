@@ -75,8 +75,11 @@ int main()
 
     sim.run_statistical_model_checking(state, 0.05, 0.01);
 
+
     if (VERBOSE) {
-        verify_invariants_kernel<<<1, 1>>>(state);
+        verify_expressions_kernel<<<1,1>>>(state);
+        // cudaDeviceSynchronize();
+        // verify_invariants_kernel<<<1, 1>>>(state);
         test_kernel<<<1, 1>>>(state);
         validate_edge_indices<<<1, 1>>>(state);
     }
