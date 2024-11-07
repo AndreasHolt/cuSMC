@@ -13,7 +13,7 @@ add_executable(CudaIntro main.cu
         automata_parser/uppaal_xml_parser.cpp automata_parser/uppaal_xml_parser.h
         automata_parser/declaration_parser.h automata_parser/declaration_parser.cpp
         automata_parser/string_extractor.h automata_parser/string_extractor.cpp
-        automata_parser/pugixml.cpp automata_parser automata_parser/smacc_parser.cpp
+        #automata_parser/pugixml.cpp automata_parser automata_parser/smacc_parser.cpp
         automata_parser/variable_expression_evaluator.cpp automata_parser/variable_expression_evaluator.h
 
         # Engine
