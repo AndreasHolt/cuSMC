@@ -32,20 +32,20 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results, int ru
 
 
     // Pattern used to initialize shared memory for more complex data structures
-    __shared__ char shared_mem[]; // flexible, dynamically-sized array
-    SharedRunState* run_state = (SharedRunState*)shared_mem; // cast base address of shared_mem array to a pointer of type SharedRunState. Effectively maps it to type of SharedRunState
+    // __shared__ char shared_mem[]; // flexible, dynamically-sized array
+    // SharedRunState* run_state = (SharedRunState*)shared_mem; // cast base address of shared_mem array to a pointer of type SharedRunState. Effectively maps it to type of SharedRunState
     // run_state now points to the start of the shared memory
 
-    for (int run = 0; run < runs_per_block; run++) {
-        // Initialize the state for a run
-        run_state->init(model);
-
-        // Main simulation loop for the current run
-        while (run_state->global_time < time_bound) {
-            // Each thread (component) computes its own delay
-            run_state->compute_delays(model);
-        }
-    }
+    // for (int run = 0; run < runs_per_block; run++) {
+    //     // Initialize the state for a run
+    //     run_state->init(model);
+    //
+    //     // Main simulation loop for the current run
+    //     while (run_state->global_time < time_bound) {
+    //         // Each thread (component) computes its own delay
+    //         run_state->compute_delays(model);
+    //     }
+    // }
 
 
 

@@ -120,7 +120,7 @@ void print_node_info(const node* n, const std::string& prefix = "") {
 SharedModelState* init_shared_model_state(
    const network* cpu_network,
    const std::unordered_map<int, int>& node_subsystems_map,
-   const std::unordered_map<int, std::list<edge>>& node_edge_map)
+   const std::unordered_map<int, std::list<edge>>& node_edge_map, const std::unordered_map<int, node*>& node_map)
 {
    // First organize nodes by component
    std::vector<std::vector<std::pair<int, const std::list<edge>*>>> components_nodes;
@@ -157,16 +157,22 @@ SharedModelState* init_shared_model_state(
               components_nodes.size() * sizeof(int),
               cudaMemcpyHostToDevice);
 
-   // Count total edges, guards and updates
+   // Count total edges, guards, updates and invariants
    int total_edges = 0;
    int total_guards = 0;
    int total_updates = 0;
+   int total_invariants = 0;
    for(const auto& pair : node_edge_map) {
+       // Count edges, guards and updates
        for(const auto& edge : pair.second) {
            total_edges++;
            total_guards += edge.guards.size;
            total_updates += edge.updates.size;
        }
+
+       // Count invariants from nodes
+       node* current_node = node_map.at(pair.first);  // Now we can get the node!
+       total_invariants += current_node->invariants.size;
    }
 
    // Allocate device memory
@@ -175,24 +181,29 @@ SharedModelState* init_shared_model_state(
    EdgeInfo* device_edges;
    GuardInfo* device_guards;
    UpdateInfo* device_updates;
+   GuardInfo* device_invariants;
    cudaMalloc(&device_nodes, total_node_slots * sizeof(NodeInfo));
    cudaMalloc(&device_edges, total_edges * sizeof(EdgeInfo));
    cudaMalloc(&device_guards, total_guards * sizeof(GuardInfo));
    cudaMalloc(&device_updates, total_updates * sizeof(UpdateInfo));
+   cudaMalloc(&device_invariants, total_invariants * sizeof(GuardInfo));
 
    // Create host arrays
    std::vector<NodeInfo> host_nodes;
    std::vector<EdgeInfo> host_edges;
    std::vector<GuardInfo> host_guards;
    std::vector<UpdateInfo> host_updates;
+   std::vector<GuardInfo> host_invariants;
    host_nodes.reserve(total_node_slots);
    host_edges.reserve(total_edges);
    host_guards.reserve(total_guards);
    host_updates.reserve(total_updates);
+   host_invariants.reserve(total_invariants);
 
    int current_edge_index = 0;
    int current_guard_index = 0;
    int current_update_index = 0;
+   int current_invariant_index = 0;
 
    // For each node level
    for(int node_idx = 0; node_idx < max_nodes_per_component; node_idx++) {
@@ -202,15 +213,31 @@ SharedModelState* init_shared_model_state(
                const auto& node_pair = components_nodes[comp_idx][node_idx];
                int node_id = node_pair.first;
                const std::list<edge>& edges = *node_pair.second;
+               node* current_node = node_map.at(node_id);
 
-               // Create NodeInfo with edge index information
+               // Store invariants
+               int invariants_start = current_invariant_index;
+               for(int i = 0; i < current_node->invariants.size; i++) {
+                   const constraint& inv = current_node->invariants[i];
+                   host_invariants.push_back(GuardInfo{
+                       inv.operand,
+                       inv.uses_variable,
+                       inv.value,
+                       inv.expression
+                   });
+                   current_invariant_index++;
+               }
+
+               // Create NodeInfo with edge and invariant information
                NodeInfo node_info{
                    node_id,                    // id
-                   node::location,             // type (todo: we need to get this from somewhere). Remember we have type available, i.e. goal etc.
+                   current_node->type,         // type (now using actual node type)
                    node_idx,                   // level
-                   nullptr,                    // lambda (todo: we need to get this from somewhere)
+                   current_node->lamda,        // lambda (using node's lambda)
                    current_edge_index,         // first_edge_index
-                   static_cast<int>(edges.size()) // num_edges
+                   static_cast<int>(edges.size()), // num_edges
+                   invariants_start,           // first_invariant_index
+                   static_cast<int>(current_node->invariants.size) // num_invariants
                };
                host_nodes.push_back(node_info);
 
@@ -262,7 +289,9 @@ SharedModelState* init_shared_model_state(
                    -1,                 // level
                    nullptr,            // lambda
                    -1,                 // first_edge_index
-                   0                   // num_edges
+                   0,                  // num_edges
+                   -1,                 // first_invariant_index
+                   0                   // num_invariants
                });
            }
        }
@@ -281,6 +310,9 @@ SharedModelState* init_shared_model_state(
    cudaMemcpy(device_updates, host_updates.data(),
               total_updates * sizeof(UpdateInfo),
               cudaMemcpyHostToDevice);
+   cudaMemcpy(device_invariants, host_invariants.data(),
+              total_invariants * sizeof(GuardInfo),
+              cudaMemcpyHostToDevice);
 
    // Create and copy SharedModelState
    SharedModelState host_model{
@@ -289,7 +321,8 @@ SharedModelState* init_shared_model_state(
        device_nodes,
        device_edges,
        device_guards,
-       device_updates
+       device_updates,
+       device_invariants    // Add invariants to constructor
    };
 
    SharedModelState* device_model;
@@ -299,6 +332,7 @@ SharedModelState* init_shared_model_state(
 
    return device_model;
 }
+
 
 
 
@@ -410,6 +444,50 @@ __global__ void validate_edge_indices(SharedModelState* model) {
     }
 }
 
+
+__global__ void verify_invariants_kernel(SharedModelState* model) {
+    if (threadIdx.x == 0 && blockIdx.x == 0) {  // Single thread for debugging output
+        printf("\nVerifying Invariants:\n");
+        printf("==========================================\n");
+
+        // For each node level
+        for(int node_idx = 0; node_idx < model->component_sizes[0]; node_idx++) {
+            printf("\nNode Level %d:\n", node_idx);
+
+            // For each component
+            for(int comp = 0; comp < model->num_components; comp++) {
+                if(node_idx < model->component_sizes[comp]) {
+                    const NodeInfo& node = model->nodes[node_idx * model->num_components + comp];
+
+                    // Skip padding nodes
+                    if(node.id == -1) continue;
+
+                    printf("\nComponent %d, Node ID %d:\n", comp, node.id);
+                    printf("  Type: %d\n", node.type);
+                    printf("  Invariants: %d\n", node.num_invariants);
+
+                    // Print each invariant
+                    for(int i = 0; i < node.num_invariants; i++) {
+                        const GuardInfo& inv = model->invariants[node.first_invariant_index + i];
+                        printf("    Invariant %d:\n", i);
+                        printf("      Operator: %d\n", inv.operand);
+                        printf("      Uses Variable: %d\n", inv.uses_variable);
+                        // Can add more detailed invariant info here
+                    }
+
+                    // Verify indices are valid
+                    if(node.num_invariants > 0) {
+                        if(node.first_invariant_index < 0) {
+                            printf("ERROR: Invalid invariant index %d for node %d\n",
+                                   node.first_invariant_index, node.id);
+                        }
+                    }
+                }
+            }
+        }
+        printf("\n==========================================\n");
+    }
+}
 
 
 

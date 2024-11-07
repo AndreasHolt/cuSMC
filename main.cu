@@ -71,12 +71,13 @@ int main()
 
 
     // SharedModelState* state = init_shared_model_state(&model, *optimizer.get_node_subsystems_map(), optimizer.get_node_map());
-    SharedModelState* state = init_shared_model_state(&model, *optimizer.get_node_subsystems_map(), *properties.node_edge_map);
+    SharedModelState* state = init_shared_model_state(&model, *optimizer.get_node_subsystems_map(), *properties.node_edge_map, optimizer.get_node_map());
     cout << "test" << endl;
 
     sim.run_statistical_model_checking(state, 0.05, 0.01);
 
     if (VERBOSE) {
+        verify_invariants_kernel<<<1, 1>>>(state);
         test_kernel<<<1, 1>>>(state);
         validate_edge_indices<<<1, 1>>>(state);
     }

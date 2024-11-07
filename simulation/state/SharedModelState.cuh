@@ -93,16 +93,18 @@ struct NodeInfo {
     int type;
     int level;
     expr* lambda;
-    int first_edge_index;  // Add these
-    int num_edges;        // two fields
+    int first_edge_index;
+    int num_edges;
+    int first_invariant_index;
+    int num_invariants;
 
     CPU GPU NodeInfo() :
         id(0), type(0), level(0), lambda(nullptr),
-        first_edge_index(-1), num_edges(0) {}
+        first_edge_index(-1), num_edges(0), first_invariant_index(-1), num_invariants(0) {}
 
-    CPU GPU NodeInfo(int i, int t, int l, expr* lam, int fei, int ne) :
+    CPU GPU NodeInfo(int i, int t, int l, expr* lam, int fei, int ne, int fii, int ni) :
         id(i), type(t), level(l), lambda(lam),
-        first_edge_index(fei), num_edges(ne) {}
+        first_edge_index(fei), num_edges(ne), first_invariant_index(fii), num_invariants(ni) {}
 };
 
 
@@ -114,17 +116,19 @@ struct SharedModelState {
     const EdgeInfo* edges;
     const GuardInfo* guards;
     const UpdateInfo* updates;
+    const GuardInfo* invariants;
 
     CPU GPU SharedModelState(
         int nc, const int* cs,
         const NodeInfo* n, const EdgeInfo* e,
-        const GuardInfo* g, const UpdateInfo* u) :
+        const GuardInfo* g, const UpdateInfo* u, const GuardInfo* i) :
             num_components(nc),
             component_sizes(cs),
             nodes(n),
             edges(e),
             guards(g),
-            updates(u) {}
+            updates(u),
+            invariants(i) {}
 };
 
 
@@ -137,10 +141,11 @@ struct SharedModelState {
 SharedModelState* init_shared_model_state(
     const network* cpu_network,
     const std::unordered_map<int, int>& node_subsystems_map,
-    const std::unordered_map<int, std::list<edge>>& node_edge_map);
+    const std::unordered_map<int, std::list<edge>>& node_edge_map, const std::unordered_map<int, node*>& node_map);
 
 
 __global__ void test_kernel(SharedModelState* model);
 __global__ void validate_edge_indices(SharedModelState* model);
+__global__ void verify_invariants_kernel(SharedModelState* model);
 
 #endif //SHAREDMODELSTATE_CUH
