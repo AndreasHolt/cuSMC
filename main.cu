@@ -8,7 +8,6 @@
 #include "engine/Domain.h"
 #include "automata_parser/uppaal_xml_parser.h"
 #include <iostream>
-#include "automata_parser/instantiate_parser.h"
 #include "output.h"
 #include "network_optimization/domain_optimization_visitor.h"
 #include "network_optimization/pn_compile_visitor.h"
@@ -28,7 +27,7 @@ int main()
     query_set->insert(query1);
     query_set->insert(query2);
 
-    abstract_parser* parser = instantiate_parser(filename);
+    abstract_parser* parser = new uppaal_xml_parser();
 
     network model = parser->parse(filename);
     std::cout << "Parsing successful. Network details:" << std::endl;
