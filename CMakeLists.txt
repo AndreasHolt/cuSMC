@@ -26,8 +26,6 @@ add_executable(CudaIntro main.cu
         include/common_macros.h
         include/common_macros.h
         engine/interpreter.h
-        automata_parser/instantiate_parser.cpp
-        automata_parser/instantiate_parser.h
         simulation/simulation_config.h
         output.h
         simulation/simulation_file_paths.h
@@ -44,8 +42,6 @@ add_executable(CudaIntro main.cu
         simulation/state/SharedModelState.cuh
         main.cu
         main.cuh
-        simulation/state/aos.cu
-        simulation/state/aos.cuh
         simulation/state/SharedRunState.cu
         simulation/state/SharedRunState.cuh)
 
