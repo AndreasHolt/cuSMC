@@ -4,7 +4,7 @@
 
 #include "SharedModelState.cuh"
 
-#include <iostream>
+
 
 #define MAX_NODES_PER_COMPONENT 5
 

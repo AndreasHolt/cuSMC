@@ -1,13 +1,16 @@
 //
 // Created by andwh on 04/11/2024.
 //
-#include "../../engine/Domain.h"
+
 
 #ifndef SHAREDMODELSTATE_CUH
 #define SHAREDMODELSTATE_CUH
 
 
 
+#include "../../engine/Domain.h"
+#include <list>
+#include <iostream>
 
 // struct SharedModelState {
 //     const node** nodes;           // Array of automata nodes
