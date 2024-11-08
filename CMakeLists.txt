@@ -16,7 +16,7 @@ add_executable(CudaIntro main.cu
         #automata_parser/pugixml.cpp automata_parser automata_parser/smacc_parser.cpp
         automata_parser/variable_expression_evaluator.cpp automata_parser/variable_expression_evaluator.h
 
-        # Engine
+        # engine
         engine/Domain.cu engine/Domain.h
         engine/model_oracle.cu engine/model_oracle.h
         engine/automata_engine.cu
@@ -47,7 +47,7 @@ add_executable(CudaIntro main.cu
 
 
 # Enable separable compilation (optional, depends on your needs)
-set_target_properties(CudaIntro PROPERTIES CUDA_SEPARABLE_COMPILATION ON COMPILE_OPTIONS -G)
+set_target_properties(CudaIntro PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 # Add include directories if needed
 # target_include_directories(CudaIntro PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

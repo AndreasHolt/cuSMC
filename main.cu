@@ -3,7 +3,12 @@
 //
 
 
-//Hey hiii
+// ---
+// SMAcc Relevant
+
+// # include "SMAcc/run_SMAcc.cu" //Temporarily out cause has bugs atm
+
+// ---
 
 #include "main.cuh"
 
@@ -20,8 +25,14 @@
 #define VERBOSE 1
 #include "simulation/simulation.cuh"
 
+
+
+
 int main()
 {
+
+    bool RUN_SMACC = false;
+
     // Hardcoded path to the XML file
     std::string filename = "../automata_parser/XmlFiles/UppaalBehaviorTest2.xml";
     string query1 = "c2.g3";
@@ -70,6 +81,10 @@ int main()
     pn_compiler.visit(&model);
 
     setup_simulation_config(&config, &model, optimizer.get_max_expr_depth(), optimizer.get_max_fanout(), optimizer.get_node_count());
+
+    if (RUN_SMACC) {
+        //run_SMAcc(&config, &model);
+    }
 
 
     // SharedModelState* state = init_shared_model_state(&model, *optimizer.get_node_subsystems_map(), optimizer.get_node_map());
