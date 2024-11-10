@@ -4,15 +4,20 @@
 	<declaration>// Place global declarations here.
 
 clock y;
+const int S = 5;
+int crit = 5;
+clock x;
 
 //const int N = 1;         // # 
 //typedef int[0,N-1] id_t;</declaration>
 	<template>
 		<name>c2</name>
-		<declaration>clock x;</declaration>
+		<declaration>clock x;
+
+int l = 1;</declaration>
 		<location id="id0" x="-178" y="0">
 			<name x="-188" y="-34">g1</name>
-			<label kind="invariant" x="-188" y="17">x&lt;=100</label>
+			<label kind="invariant" x="-280" y="51">x&lt;=100 &amp;&amp; y &lt;= 50</label>
 		</location>
 		<location id="id1" x="17" y="-110">
 			<name x="7" y="-144">g2</name>
@@ -34,6 +39,7 @@ clock y;
 		<transition id="id7">
 			<source ref="id2"/>
 			<target ref="id6"/>
+			<label kind="guard" x="76" y="-34">y &lt; 5</label>
 		</transition>
 		<transition id="id8">
 			<source ref="id5"/>
@@ -42,6 +48,7 @@ clock y;
 		<transition id="id9">
 			<source ref="id4"/>
 			<target ref="id5"/>
+			<label kind="guard" x="281" y="76">l &lt; 5</label>
 		</transition>
 		<transition id="id10">
 			<source ref="id4"/>
@@ -52,7 +59,7 @@ clock y;
 		<transition id="id11">
 			<source ref="id3"/>
 			<target ref="id4"/>
-			<label kind="assignment" x="35" y="97">x=x+1</label>
+			<label kind="assignment" x="35" y="97">l=l+1</label>
 		</transition>
 		<transition id="id12">
 			<source ref="id0"/>
@@ -62,12 +69,12 @@ clock y;
 		<transition id="id13">
 			<source ref="id0"/>
 			<target ref="id2"/>
-			<label kind="guard" x="-160" y="-42">x&gt;10</label>
+			<label kind="guard" x="-127" y="-34">x&gt;10</label>
 		</transition>
 		<transition id="id14">
 			<source ref="id0"/>
 			<target ref="id1"/>
-			<label kind="guard" x="-153" y="-85">x&lt;=1</label>
+			<label kind="guard" x="-153" y="-85">x&lt;=10 + y + l</label>
 		</transition>
 	</template>
 	<template>

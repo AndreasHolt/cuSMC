@@ -1,12 +1,15 @@
 //
 // Created by andwh on 04/11/2024.
 //
-#include "../../engine/Domain.h"
+
+
 
 #ifndef SHAREDMODELSTATE_CUH
 #define SHAREDMODELSTATE_CUH
 
-
+#include "../../include/VariableTypes.h"
+#include "../../engine/Domain.h"
+#include "../../automata_parser/VariableUsageVisitor.h"
 
 
 // struct SharedModelState {
@@ -24,6 +27,33 @@
 //     const unsigned max_backtrace_depth;
 //     const unsigned max_edge_fanout; // Maximum outgoing edges
 // };
+
+class abstract_parser;
+class uppaal_xml_parser;
+
+
+
+#define MAX_VAR_NAME_LENGTH 128
+
+
+
+struct VariableInfo {
+    int variable_id;
+    VariableKind type;
+    char name[MAX_VAR_NAME_LENGTH];
+
+    CPU GPU VariableInfo(int id, VariableKind t, const char* n)
+        : variable_id(id), type(t) {
+        strncpy(name, n, MAX_VAR_NAME_LENGTH - 1);
+        name[MAX_VAR_NAME_LENGTH - 1] = '\0';
+    }
+
+    CPU GPU VariableInfo()
+        : variable_id(0), type(VariableKind::INT) {
+        name[0] = '\0';
+    }
+};
+
 
 struct EdgeInfo {
     int source_node_id;       // ID of source node
@@ -49,43 +79,60 @@ struct EdgeInfo {
         num_updates(nu), updates_start_index(us) {}
 };
 
+
 struct GuardInfo {
     constraint::operators operand;
     bool uses_variable;
     union {
-        expr* value;
-        int variable_id;
-        int compile_id;
+        VariableInfo var_info;
+        struct {
+            expr* value;
+            expr* expression;
+        };
     };
-    expr* expression;
 
-    // Default constructor
-    CPU GPU GuardInfo() : operand(constraint::less_equal_c),
-                         uses_variable(false), value(nullptr),
-                         expression(nullptr) {}
-
-    // Constructor for initialization with all fields
-    CPU GPU GuardInfo(constraint::operators op, bool uv, expr* v, expr* exp) :
-        operand(op),
-        uses_variable(uv),
-        expression(exp)
-    {
-        value = v;  // Sets the union's value field
+    // Constructor for variable-based guard
+    CPU GPU GuardInfo(constraint::operators op, const VariableInfo& var, expr* expr)
+    : operand(op), uses_variable(true) {
+        var_info = var;
+        expression = expr;  // Need to set this after var_info since they share a union
     }
+
+
+
+    // Constructor for value-based guard
+    CPU GPU GuardInfo(constraint::operators op, bool uses_var, expr* val, expr* expr)
+        : operand(op), uses_variable(uses_var), value(val), expression(expr) {}
+
+
+    // Default constructor needed for vector
+    CPU GPU GuardInfo() : operand(constraint::less_equal_c), uses_variable(false), value(nullptr), expression(nullptr) {}
 };
 
 struct UpdateInfo {
     int variable_id;
     expr* expression;
+    VariableKind kind;  // Add variable kind
 
     // Default constructor
-    CPU GPU UpdateInfo() : variable_id(0), expression(nullptr) {}
+    CPU GPU UpdateInfo() :
+        variable_id(0),
+        expression(nullptr),
+        kind(VariableKind::INT) {}  // Default to INT_LOCAL
 
     // Constructor for initialization with all fields
+    CPU GPU UpdateInfo(int vid, expr* exp, VariableKind k) :
+        variable_id(vid),
+        expression(exp),
+        kind(k) {}
+
+    // Keep old constructor for backward compatibility if needed
     CPU GPU UpdateInfo(int vid, expr* exp) :
         variable_id(vid),
-        expression(exp) {}
+        expression(exp),
+        kind(VariableKind::INT) {}  // Default to INT_LOCAL
 };
+
 
 
 struct NodeInfo {
@@ -141,12 +188,19 @@ struct SharedModelState {
 SharedModelState* init_shared_model_state(
     const network* cpu_network,
     const std::unordered_map<int, int>& node_subsystems_map,
-    const std::unordered_map<int, std::list<edge>>& node_edge_map, const std::unordered_map<int, node*>& node_map);
+    const std::unordered_map<int, std::list<edge>>& node_edge_map,
+    const std::unordered_map<int, node*>& node_map,
+    const std::unordered_map<int, VariableTrackingVisitor::VariableUsage>& variable_registry,
+    const abstract_parser* parser);
+
+
 
 
 __global__ void test_kernel(SharedModelState* model);
 __global__ void validate_edge_indices(SharedModelState* model);
 // __global__ void verify_invariants_kernel(SharedModelState* model);
 __global__ void verify_expressions_kernel(SharedModelState* model);
+
+
 
 #endif //SHAREDMODELSTATE_CUH

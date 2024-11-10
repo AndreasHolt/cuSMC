@@ -78,6 +78,33 @@ public:
     unordered_map<int, std::list<edge>> get_node_edge_map() override { return this->node_edge_map; }
     list<int>  get_start_nodes() override { return this->start_nodes_; }
 
+    // VariableKind get_variable_kind(int var_id) const override {
+    //     // Helper to check if value exists in map
+    //     auto has_value = [](const unordered_map<string, int>& map, int value) {
+    //         for(const auto& pair : map) {
+    //             if(pair.second == value) {
+    //                 return true;
+    //             }
+    //         }
+    //         return false;
+    //     };
+    //
+    //     if(has_value(global_timers_map_, var_id)) {
+    //         return VariableKind::CLOCK_GLOBAL;
+    //     }
+    //     if(has_value(global_vars_map_, var_id)) {
+    //         return VariableKind::INT_GLOBAL;
+    //     }
+    //     if(has_value(timers_map_, var_id)) {
+    //         return VariableKind::CLOCK_LOCAL;
+    //     }
+    //     if(has_value(vars_map_, var_id)) {
+    //         return VariableKind::INT_LOCAL;
+    //     }
+    //     return VariableKind::CLOCK_LOCAL;  // Default
+    // }
+
+
     unordered_map<int, string>* get_nodes_with_name() override {return this->node_names_;}
     unordered_map<int, string>* get_template_names() override {return this->template_names;}
     unordered_map<int, int>* get_subsystems() override {return this->nodes_map_;}

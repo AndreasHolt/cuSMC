@@ -7,6 +7,7 @@
 
 #include "helper_methods.h"
 #include "../engine/Domain.h"
+#include "../simulation/state/SharedModelState.cuh"
 
 class abstract_parser
 {
@@ -20,6 +21,7 @@ public:
 
     virtual std::unordered_map<int, std::list<edge>> get_node_edge_map() = 0;
     virtual std::list<int> get_start_nodes() = 0;
+    // virtual VariableKind get_variable_kind(int var_id) const = 0;
 
     static void naive_multiply_instantiation(network* n, const int multiplier)
     {

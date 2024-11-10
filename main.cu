@@ -16,6 +16,8 @@
 #include "simulation/simulation_config.h"
 #include "simulation/state/SharedModelState.cuh"
 #define VERBOSE 1
+#include "automata_parser/VariableUsageVisitor.h"
+
 #include "simulation/simulation.cuh"
 
 int main()
@@ -69,20 +71,40 @@ int main()
 
     setup_simulation_config(&config, &model, optimizer.get_max_expr_depth(), optimizer.get_max_fanout(), optimizer.get_node_count());
 
+    VariableTrackingVisitor var_tracker;
+    var_tracker.visit(&model);
+    var_tracker.print_variable_usage();
+
 
     // SharedModelState* state = init_shared_model_state(&model, *optimizer.get_node_subsystems_map(), optimizer.get_node_map());
-    SharedModelState* state = init_shared_model_state(&model, *optimizer.get_node_subsystems_map(), *properties.node_edge_map, optimizer.get_node_map());
+    // SharedModelState* init_shared_model_state(
+    // const network* cpu_network,
+    // const std::unordered_map<int, int>& node_subsystems_map,
+    // const std::unordered_map<int, std::list<edge>>& node_edge_map,
+    // const std::unordered_map<int, node*>& node_map,
+    // const std::unordered_map<int, VariableTrackingVisitor::VariableUsage>& variable_registry,
+    // const abstract_parser* parser);
+
+    SharedModelState* state = init_shared_model_state(
+    &model,  // cpu_network
+    *optimizer.get_node_subsystems_map(),
+    *properties.node_edge_map,
+    optimizer.get_node_map(),
+    var_tracker.get_variable_registry(),
+    parser
+    );
+    // SharedModelState* state = init_shared_model_state(&model, *optimizer.get_node_subsystems_map(), *properties.node_edge_map, optimizer.get_node_map(), properties.variable_names, static_cast<const uppaal_xml_parser*>(parser));
     cout << "test" << endl;
 
-    sim.run_statistical_model_checking(state, 0.05, 0.01);
+    // sim.run_statistical_model_checking(state, 0.05, 0.01);
 
 
     if (VERBOSE) {
         verify_expressions_kernel<<<1,1>>>(state);
         // cudaDeviceSynchronize();
         // verify_invariants_kernel<<<1, 1>>>(state);
-        test_kernel<<<1, 1>>>(state);
-        validate_edge_indices<<<1, 1>>>(state);
+        // test_kernel<<<1, 1>>>(state);
+        // validate_edge_indices<<<1, 1>>>(state);
     }
 
 
