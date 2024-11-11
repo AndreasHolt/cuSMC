@@ -12,109 +12,6 @@
 
 class uppaal_xml_parser;
 
-// VariableKind get_variable_kind(int var_id,
-//                              const std::unordered_map<int, std::string>& clock_names,
-//                              const abstract_parser* parser) {
-//     return parser->get_variable_kind(var_id);
-// }
-
-void count_edges_and_constraints(
-    const std::vector<std::vector<node*>>& components_nodes,
-    int& total_edges,
-    int& total_guards,
-    int& total_updates,
-    std::vector<int>& edges_per_node,
-    std::vector<int>& node_edge_starts)
-{
-    total_edges = 0;
-    total_guards = 0;
-    total_updates = 0;
-
-    // For each node level
-    for(int node_idx = 0; node_idx < MAX_NODES_PER_COMPONENT; node_idx++) {
-        // For each component
-        for(int comp_idx = 0; comp_idx < components_nodes.size(); comp_idx++) {
-            if(node_idx < components_nodes[comp_idx].size()) {
-                node* current_node = components_nodes[comp_idx][node_idx];
-
-                // Store start index for this node's edges
-                node_edge_starts.push_back(total_edges);
-                edges_per_node.push_back(current_node->edges.size);
-
-                // Count guards and updates for each edge
-                for(int e = 0; e < current_node->edges.size; e++) {
-                    total_edges++;
-                    total_guards += current_node->edges[e].guards.size;
-                    total_updates += current_node->edges[e].updates.size;
-                }
-            }
-        }
-    }
-}
-
-void fill_edge_arrays(
-    const std::vector<std::vector<node*>>& components_nodes,
-    std::vector<EdgeInfo>& host_edges,
-    std::vector<GuardInfo>& host_guards,
-    std::vector<UpdateInfo>& host_updates)
-{
-    int current_guard_index = 0;
-    int current_update_index = 0;
-
-    // For each node level
-    for(int node_idx = 0; node_idx < MAX_NODES_PER_COMPONENT; node_idx++) {
-        // For each component
-        for(int comp_idx = 0; comp_idx < components_nodes.size(); comp_idx++) {
-            if(node_idx < components_nodes[comp_idx].size()) {
-                node* current_node = components_nodes[comp_idx][node_idx];
-
-                // Add edges for this node in coalesced layout
-                for(int e = 0; e < current_node->edges.size; e++) {
-                    const edge& current_edge = current_node->edges[e];
-
-                    // Store edge info
-                    host_edges.emplace_back(
-                        current_node->id,              // source_node_id
-                        current_edge.dest->id,         // dest_node_id
-                        current_edge.channel,          // channel
-                        current_edge.weight,           // weight
-                        current_edge.guards.size,      // num_guards
-                        current_guard_index,           // guards_start_index
-                        current_edge.updates.size,     // num_updates
-                        current_update_index           // updates_start_index
-                    );
-
-                    // Store guards
-                    for(int g = 0; g < current_edge.guards.size; g++) {
-                        const constraint& guard = current_edge.guards[g];
-                        host_guards.push_back(GuardInfo{
-                            guard.operand,
-                            guard.uses_variable,
-                            guard.value,
-                            guard.expression
-                        });
-                        current_guard_index++;
-                    }
-
-                    // Store updates
-                    for(int u = 0; u < current_edge.updates.size; u++) {
-                        const update& upd = current_edge.updates[u];
-                        host_updates.push_back(UpdateInfo{
-                            upd.variable_id,
-                            upd.expression
-                        });
-                        current_update_index++;
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-
-
-
 void print_node_info(const node* n, const std::string& prefix = "") {
     std::cout << prefix << "Node ID: " << n->id << " Type: " << n->type << "\n";
     std::cout << prefix << "Edges:\n";
@@ -214,7 +111,7 @@ SharedModelState* init_shared_model_state(
     }
     components_nodes.resize(max_component_id + 1);
 
-// Group nodes by component
+    // Group nodes by component
     for(const auto& pair : node_edge_map) {
         int node_id = pair.first;
         const std::list<edge>& edges = pair.second;
@@ -285,6 +182,7 @@ SharedModelState* init_shared_model_state(
     int current_guard_index = 0;
     int current_update_index = 0;
     int current_invariant_index = 0;
+
 
     // Helper function for creating variable-based guards
     auto create_variable_guard = [&](const constraint& guard) -> GuardInfo {

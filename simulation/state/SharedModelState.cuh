@@ -165,6 +165,16 @@ struct SharedModelState {
     const UpdateInfo* updates;
     const GuardInfo* invariants;
 
+    // Default constructor
+    CPU GPU SharedModelState() :
+        num_components(0),
+        component_sizes(nullptr),
+        nodes(nullptr),
+        edges(nullptr),
+        guards(nullptr),
+        updates(nullptr),
+        invariants(nullptr) {}
+
     CPU GPU SharedModelState(
         int nc, const int* cs,
         const NodeInfo* n, const EdgeInfo* e,

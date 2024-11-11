@@ -96,7 +96,7 @@ int main()
     // SharedModelState* state = init_shared_model_state(&model, *optimizer.get_node_subsystems_map(), *properties.node_edge_map, optimizer.get_node_map(), properties.variable_names, static_cast<const uppaal_xml_parser*>(parser));
     cout << "test" << endl;
 
-    // sim.run_statistical_model_checking(state, 0.05, 0.01);
+    sim.run_statistical_model_checking(state, 0.05, 0.01);
 
 
     if (VERBOSE) {
