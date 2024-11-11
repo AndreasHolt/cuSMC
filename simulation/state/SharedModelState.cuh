@@ -41,15 +41,16 @@ struct VariableInfo {
     int variable_id;
     VariableKind type;
     char name[MAX_VAR_NAME_LENGTH];
+    double initial_value;
 
-    CPU GPU VariableInfo(int id, VariableKind t, const char* n)
-        : variable_id(id), type(t) {
+    CPU GPU VariableInfo(int id, VariableKind t, const char* n, double val = 0.0)
+        : variable_id(id), type(t), initial_value(val) {
         strncpy(name, n, MAX_VAR_NAME_LENGTH - 1);
         name[MAX_VAR_NAME_LENGTH - 1] = '\0';
     }
 
     CPU GPU VariableInfo()
-        : variable_id(0), type(VariableKind::INT) {
+        : variable_id(0), type(VariableKind::INT), initial_value(0.0) {
         name[0] = '\0';
     }
 };

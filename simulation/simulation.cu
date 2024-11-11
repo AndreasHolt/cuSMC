@@ -7,11 +7,9 @@
 #include "state/SharedRunState.cuh"
 
 #define NUM_RUNS 6
-// #define NUM_COMPONENTS 2
-// #define MAX_COMPONENTS 100
 #define TIME_BOUND 1.0
 
-#define MAX_VARIABLES 5
+#define MAX_VARIABLES 8
 
 
 // Et array af locations for et specifikt component
@@ -31,76 +29,67 @@ __device__ void compute_possible_delay(
     ComponentState* my_state,
     SharedBlockMemory* shared,
     SharedModelState* model,
-    BlockSimulationState* block_state)  // Add this
+    BlockSimulationState* block_state)
 {
-    // Add debug prints
-    printf("Thread %d: Computing delay for node %d\n",
-           threadIdx.x, my_state->current_node->id);
-
-    my_state->has_delay = false;
-
     const NodeInfo& node = *my_state->current_node;
-
-    // Debug print invariants
-    printf("Thread %d: Node has %d invariants starting at index %d\n",
-           threadIdx.x, node.num_invariants, node.first_invariant_index);
-
-    // Rest same as before but with more debug prints
-    if (node.type == node::urgent || node.type == node::committed) {
-        printf("Thread %d: Urgent/committed node - delay=0\n", threadIdx.x);
-        my_state->next_delay = 0.0;
-        my_state->has_delay = true;
-        return;
-    }
+    printf("Thread %d: Processing node %d with %d invariants\n",
+           threadIdx.x, node.id, node.num_invariants);
 
     double min_delay = 0.0;
     double max_delay = DBL_MAX;
     bool is_bounded = false;
 
+    // Process invariants
     for(int i = 0; i < node.num_invariants; i++) {
         const GuardInfo& inv = model->invariants[node.first_invariant_index + i];
+
         if(inv.uses_variable) {
-            const auto& var = shared->variables[inv.var_info.variable_id];
-            printf("Thread %d: Checking invariant %d for variable %d (value=%f, rate=%d)\n",
-                   threadIdx.x, i, inv.var_info.variable_id, var.value, var.rate);
+            // Use var_info since we're working with GuardInfo now
+            int var_id = inv.var_info.variable_id;
+            printf("Thread %d: Checking invariant %d: var_id=%d\n",
+                   threadIdx.x, i, var_id);
 
-            double curr_val = var.value;
-            double rate = var.rate;
+            if(var_id < MAX_VARIABLES) {
+                auto& var = shared->variables[var_id];
 
-            if(rate == 0) {
-                printf("Thread %d: Skipping invariant %d - rate is 0\n",
-                       threadIdx.x, i);
-                continue;
-            }
+                // For now treat all variables as clocks
+                var.rate = 1;
+                var.kind = VariableKind::CLOCK;
 
-            if(inv.operand == constraint::less_equal_c ||
-               inv.operand == constraint::less_c) {
-                double bound = 5.0; // TODO: evaluate expression
-                double time_to_bound = (bound - curr_val) / rate;
-                if(inv.operand == constraint::less_c) {
-                    time_to_bound -= 1e-6;
+                // Use fixed bound of 5 for now
+                // Later we'll evaluate inv.expression
+                double bound = 5.0;
+                double time_to_bound = (bound - var.value) / var.rate;
+                printf("Thread %d: Clock var %d: value=%f, rate=%d, bound=%f\n",
+                       threadIdx.x, var_id, var.value, var.rate, bound);
+
+                if(time_to_bound >= 0) {
+                    max_delay = min(max_delay, time_to_bound);
+                    is_bounded = true;
                 }
-                printf("Thread %d: Invariant %d gives bound %f\n",
-                       threadIdx.x, i, time_to_bound);
-
-                max_delay = min(max_delay, time_to_bound);
-                is_bounded = true;
+            } else {
+                printf("Thread %d: Variable ID %d exceeds MAX_VARIABLES\n",
+                       threadIdx.x, var_id);
             }
         }
     }
 
+    // Sample delay if bounded
     if(is_bounded && min_delay < max_delay) {
-        curandState* rng = block_state->random;
-        double rand = curand_uniform(rng);
+        double rand = curand_uniform(block_state->random);
         my_state->next_delay = min_delay + (max_delay - min_delay) * rand;
         my_state->has_delay = true;
-        printf("Thread %d: Sampled delay %f (min=%f, max=%f, rand=%f)\n",
-               threadIdx.x, my_state->next_delay, min_delay, max_delay, rand);
+        printf("Thread %d: Sampled delay %f (min=%f, max=%f)\n",
+               threadIdx.x, my_state->next_delay, min_delay, max_delay);
     } else {
-        printf("Thread %d: No delay computed (bounded=%d, min=%f, max=%f)\n",
-               threadIdx.x, is_bounded, min_delay, max_delay);
+        printf("Thread %d: No valid delay computed\n", threadIdx.x);
+        my_state->has_delay = false;
     }
 }
+
+
+
+
 
 
 
@@ -168,6 +157,37 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
     __shared__ SharedBlockMemory shared_mem;
     __shared__ ComponentState components[MAX_COMPONENTS];
     __shared__ curandState rng_states[MAX_COMPONENTS];
+
+    if (threadIdx.x == 0) {
+        // Initialize variables with default values
+        for(int i = 0; i < MAX_VARIABLES; i++) {
+            shared_mem.variables[i].value = 0.0;
+            shared_mem.variables[i].rate = 0;  // Will be set when needed based on guards
+            shared_mem.variables[i].kind = VariableKind::INT;  // Default
+            shared_mem.variables[i].last_writer = -1;
+        }
+
+        // Initialize variables from all invariants in model
+        for(int comp = 0; comp < model->num_components; comp++) {
+            const NodeInfo& node = model->nodes[comp];
+            for(int i = 0; i < node.num_invariants; i++) {
+                const GuardInfo& inv = model->invariants[node.first_invariant_index + i];
+                if(inv.uses_variable) {
+                    int var_id = inv.var_info.variable_id;
+                    if(var_id < MAX_VARIABLES) {
+                        printf("Block %d: Initializing variable %d from invariant: value=%f, type=%d\n",
+                               blockIdx.x, var_id, inv.var_info.initial_value,
+                               (int)inv.var_info.type);
+                        shared_mem.variables[var_id].value = inv.var_info.initial_value;
+                        shared_mem.variables[var_id].kind = inv.var_info.type;
+                    }
+                }
+            }
+        }
+
+    }
+
+    __syncthreads();
 
     CHECK_ERROR("after shared memory declaration");
 

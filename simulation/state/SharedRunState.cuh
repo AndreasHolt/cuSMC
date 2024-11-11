@@ -12,6 +12,12 @@ constexpr int MAX_VALUE_STACK_SIZE = 64;  // Can handle deeply nested expression
 constexpr int MAX_CHANNELS = 32;          // Can handle many channels
 constexpr int MAX_VARIABLES = 32;         // Can handle many variables
 
+
+namespace Constants {
+    constexpr int MAX_VARIABLES = 32;
+
+}
+
 //class SharedRunState {
 //
 //};
@@ -65,11 +71,21 @@ struct SharedBlockMemory {
         shared->has_urgent = false;
         shared->has_committed = false;
 
+        // Initialize variables explicitly
+        for(int i = 0; i < Constants::MAX_VARIABLES; i++) {
+            shared->variables[i].value = 0.0;
+            shared->variables[i].rate = 0;
+            shared->variables[i].kind = VariableKind::INT;
+            shared->variables[i].last_writer = -1;
+        }
+
+        // Clear channels
         for(int i = 0; i < MAX_CHANNELS; i++) {
             shared->channel_active[i] = false;
             shared->channel_sender[i] = -1;
         }
     }
+
 };
 
 // This becomes simpler as it just points to everything needed

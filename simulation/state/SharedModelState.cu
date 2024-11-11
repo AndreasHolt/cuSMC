@@ -190,10 +190,20 @@ SharedModelState* init_shared_model_state(
         if(var_it != variable_registry.end()) {
             const auto& var_usage = var_it->second;
 
+            // Get initial value from network/parser
+            double initial_value = 0.0;
+            for(int i = 0; i < cpu_network->variables.size; i++) {
+                if(cpu_network->variables.store[i].id == guard.variable_id) {
+                    initial_value = cpu_network->variables.store[i].value;
+                    break;
+                }
+            }
+
             VariableInfo var_info{
                 guard.variable_id,
                 var_usage.kind,
-                var_usage.name.c_str()
+                var_usage.name.c_str(),
+                initial_value // Initial value of variable
             };
 
             expr* device_expression = copy_expression_to_device(guard.expression);
@@ -254,7 +264,10 @@ SharedModelState* init_shared_model_state(
                     printf("Processing invariant %d for node %d\n", i, node_id);
 
                     if(inv.uses_variable) {
+                        printf("Creating guard for node %d with variable ID %d\n",
+       node_id, inv.variable_id);
                         host_invariants.push_back(create_variable_guard(inv));
+
                     } else {
                         expr* device_value = copy_expression_to_device(inv.value);
                         expr* device_expression = copy_expression_to_device(inv.expression);
