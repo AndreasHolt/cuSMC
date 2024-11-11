@@ -1,8 +1,8 @@
 #pragma once
 #include <unordered_map>
 #include <list>
-#include "visitor.h"
-#include "../engine/model_oracle.h"
+#include "../../network_optimization/visitor.h"
+#include "../../engine/model_oracle.h"
 
 
 

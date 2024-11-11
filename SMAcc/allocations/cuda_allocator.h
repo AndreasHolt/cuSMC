@@ -2,7 +2,7 @@
 #include <unordered_map>
 
 #include "memory_allocator.h"
-#include "../engine/Domain.h"
+#include "../../engine/Domain.h"
 #include "../visitors/memory_alignment_visitor.h"
 
 class cuda_allocator

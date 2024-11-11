@@ -1,7 +1,7 @@
 #ifndef MEMORY_ALLOCATOR_CU
 #define MEMORY_ALLOCATOR_CU
 
-#include "../common/macro.h"
+#include "../../include/common_macros.h"
 #include <list>
 class memory_allocator
 {

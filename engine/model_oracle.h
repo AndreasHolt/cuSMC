@@ -1,4 +1,7 @@
-﻿#pragma once
+﻿#ifndef MODEL_ORACLE
+#define MODEL_ORACLE
+
+#pragma once
 #include "../include/common_macros.h"
 #include "Domain.h"
 
@@ -62,3 +65,5 @@ CPU GPU T* model_oracle::get_diff(void* p1, T* p2, char* source) const
 
     return static_cast<T*>(static_cast<void*>(&source[(c2 - c1)]));
 }
+
+#endif

@@ -1,4 +1,6 @@
-#include "macro.h"
+# pragma  once
+
+# include "../../include/common_macros.h"
 
 template<typename T>
 class my_stack

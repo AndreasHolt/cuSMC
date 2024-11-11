@@ -21,6 +21,34 @@ add_executable(CudaIntro main.cu
         engine/model_oracle.cu engine/model_oracle.h
         engine/automata_engine.cu
 
+        # SMAcc
+        SMAcc/run_SMAcc.cu
+        SMAcc/run_SMAcc.cuh
+        SMAcc/simulation_runner.cu
+        SMAcc/simulation_runner.h
+        SMAcc/SMAcc_Tools.cu
+        SMAcc/SMAcc_Tools.cuh
+        SMAcc/visitors/domain_optimization.visitor.cpp
+        SMAcc/visitors/domain_optimization_visitor.h
+        SMAcc/visitors/memory_alignment_visitor.cpp
+        SMAcc/visitors/memory_alignment_visitor.h
+        SMAcc/visitors/model_count_visitor.cpp
+        SMAcc/visitors/model_count_visitor.h
+        SMAcc/results/output_write.cu
+        SMAcc/results/output_write.h
+        SMAcc/results/result_store.cu
+        SMAcc/results/result_store.h
+        SMAcc/engine/automata_engine.cu
+        SMAcc/common/io_paths.h
+        SMAcc/common/my_stack.h
+        SMAcc/common/sim_config.h
+        SMAcc/common/thread_pool.cu
+        SMAcc/common/thread_pool.h
+        SMAcc/allocations/cuda_allocator.cpp
+        SMAcc/allocations/cuda_allocator.h
+        SMAcc/allocations/memory_allocator.cpp
+        SMAcc/allocations/memory_allocator.h
+
 
         # Includes
         include/common_macros.h

@@ -1,7 +1,4 @@
-#include "common/sim_config.h"
-
-#include "../simulation/simulation_config.h"
-#include "results/result_store.h"
+#include "SMAcc_Tools.cuh"
 
 //Based on https://github.com/Baksling/P7-SMAcc/blob/main/src2/Cuda/main.cu
 void convert_config(sim_config* config, const simulation_config* in_config) {
@@ -54,17 +51,23 @@ void convert_config(sim_config* config, const simulation_config* in_config) {
     config->cache = in_config->cache;
     config->random_state_arr = in_config->random_state_arr;
 
+    io_paths paths = {};
+    output_properties properties = {};
+
+    config->properties = &properties;
+    config->paths = &paths;
+
     //Copy properties
-    config->properties->node_map = in_config->properties->node_map;
-    config->properties->node_names = in_config->properties->node_names;
-    config->properties->node_network = in_config->properties->node_network;
-    config->properties->post_optimisation_start = in_config->properties->post_optimisation_start;
-    config->properties->pre_optimisation_start = in_config->properties->pre_optimisation_start;
-    config->properties->template_names = in_config->properties->template_names;
-    config->properties->variable_names = in_config->properties->variable_names;
+    properties.node_map = in_config->properties->node_map;
+    properties.node_names = in_config->properties->node_names;
+    properties.node_network = in_config->properties->node_network;
+    properties.post_optimisation_start = in_config->properties->post_optimisation_start;
+    properties.pre_optimisation_start = in_config->properties->pre_optimisation_start;
+    properties.template_names = in_config->properties->template_names;
+    properties.variable_names = in_config->properties->variable_names;
 
     //Copy paths
-    config->paths->model_path = in_config->paths->model_path;
-    config->paths->model_path = in_config->paths->output_path;
-    config->paths->query = in_config->paths->query;
+    paths.model_path = in_config->paths->model_path;
+    paths.output_path = in_config->paths->output_path;
+    paths.query = in_config->paths->query;
 }

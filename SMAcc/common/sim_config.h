@@ -4,7 +4,7 @@
 
 #define SHARED_MEMORY_PR_THREAD 32
 
-#include "macro.h"
+#include "../../include/common_macros.h"
 struct io_paths;
 struct output_properties;
 #include "io_paths.h"

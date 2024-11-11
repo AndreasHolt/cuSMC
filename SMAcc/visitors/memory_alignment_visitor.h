@@ -1,9 +1,9 @@
 ﻿#pragma once
 
-#include "visitor.h"
+#include "../../network_optimization/visitor.h"
 #include "domain_optimization_visitor.h"
 #include "../allocations/memory_allocator.h"
-#include "../engine/model_oracle.h"
+#include "../../engine/model_oracle.h"
 
 
 class memory_alignment_visitor : public visitor

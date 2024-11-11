@@ -1,11 +1,4 @@
 #include "simulation_runner.h"
-#include "results/output_write.h"
-#include "allocations/cuda_allocator.h"
-#include "allocations/memory_allocator.h"
-#include "engine/automata_engine.cu"
-#include "common/macro.h"
-#include "common/thread_pool.h"
-#include "visitors/model_count_visitor.h"
 
 using namespace std::chrono;
 
@@ -95,48 +88,3 @@ void simulation_runner::simulate_gpu(network* model, sim_config* config)
     allocator.free_allocations();
 }
 
-
-void simulation_runner::simulate_cpu(const network* model, sim_config* config)
-{
-    memory_allocator allocator = memory_allocator(false);
-
-    const size_t n_parallelism = config->cpu_threads;
-    const size_t total_simulations = config->total_simulations();
-
-    const result_store store = result_store(
-    static_cast<unsigned>(total_simulations),
-    config->tracked_variable_count,
-    config->node_count,
-    static_cast<int>(n_parallelism),
-    &allocator);
-
-
-    output_writer writer = output_writer(config, model);
-
-    CUDA_CHECK(allocator.allocate_host(&config->cache, n_parallelism*thread_heap_size(config)));
-    CUDA_CHECK(allocator.allocate_host(&config->random_state_arr, n_parallelism*sizeof(curandState)));
-
-    if(config->verbose) std::cout << "CPU simulation started\n";
-    const steady_clock::time_point global_start = steady_clock::now();
-    for (unsigned r = 0; r < config->simulation_repetitions; ++r)
-    {
-        const steady_clock::time_point local_start = steady_clock::now();
-        thread_pool pool = {config->cpu_threads};
-
-        for (size_t i = 0; i < n_parallelism; ++i)
-        {
-            int idx = static_cast<int>(i);
-            pool.queue_job([model, &store, config, idx]()
-            {
-                simulate_automata(idx, model, &store, config);
-            });
-        }
-        pool.await_run();
-
-        writer.write(&store, std::chrono::duration_cast<milliseconds>(steady_clock::now() - local_start));
-    }
-    if(config->verbose) std::cout << "CPU simulation finished\n";
-    writer.write_summary(std::chrono::duration_cast<milliseconds>(steady_clock::now() - global_start));
-
-    allocator.free_allocations();
-}

@@ -1,9 +1,4 @@
-#include "../common/macro.h"
-#include "Domain.cu"
-#include "model_oracle.cu"
-#include "../common/sim_config.h"
-#include "../results/result_store.h"
-#include "device_launch_parameters.h"
+#include "automata_engine.cuh"
 
 CPU GPU size_t thread_heap_size(const sim_config* config)
 {
@@ -69,8 +64,6 @@ CPU GPU inline bool is_winning_process(
     //                 && current->type == node::committed));
 }
 
-#define NO_PROCESS (-1)
-#define IS_NO_PROCESS(x) ((x) < 0)
 CPU GPU int progress_sim(state* sim_state, const sim_config* config)
 {
     //determine if sim is done

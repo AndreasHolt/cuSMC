@@ -1,7 +1,7 @@
 #pragma once
 
-#include "visitor.h"
-#include "../engine/model_oracle.h"
+#include "../../network_optimization/visitor.h"
+#include "../../engine/model_oracle.h"
 
 class model_count_visitor : public visitor
 {

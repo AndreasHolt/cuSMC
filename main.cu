@@ -6,7 +6,7 @@
 // ---
 // SMAcc Relevant
 
-// # include "SMAcc/run_SMAcc.cu" //Temporarily out cause has bugs atm
+# include "SMAcc/run_SMAcc.cuh" //Temporarily out cause has bugs atm
 
 // ---
 
@@ -83,7 +83,7 @@ int main()
     setup_simulation_config(&config, &model, optimizer.get_max_expr_depth(), optimizer.get_max_fanout(), optimizer.get_node_count());
 
     if (RUN_SMACC) {
-        //run_SMAcc(&config, &model);
+        run_SMAcc(&config, &model);
     }
 
 
