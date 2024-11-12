@@ -7,13 +7,41 @@
 #include "state/SharedRunState.cuh"
 
 #define NUM_RUNS 6
-#define TIME_BOUND 1.0
+#define TIME_BOUND 100.0
 
 #define MAX_VARIABLES 8
 
 
 // Et array af locations for et specifikt component
 // En funktion der mapper en værdi i det array til den relevante node
+
+__device__ double evaluate_expression(const expr* e, BlockSimulationState* block_state) {
+    if(e == nullptr) {
+        printf("Warning: Null expression in evaluate_expression\n");
+        return 0.0;
+    }
+
+    // Handle literals directly
+    if(e->operand == expr::literal_ee) {
+        return e->value;
+    }
+
+    // Handle variable references
+    if(e->operand == expr::clock_variable_ee) {
+        if(e->variable_id < MAX_VARIABLES) {
+            return block_state->shared->variables[e->variable_id].value;
+        }
+        printf("Warning: Invalid variable ID %d in expression\n", e->variable_id);
+        return 0.0;
+    }
+
+    // Just return the raw value for now - we'll implement full expression
+    // evaluation later when basic timing works
+    printf("Warning: Non-literal expression (op=%d), using value directly\n",
+           e->operand);
+    return e->value;
+}
+
 
 __device__ void check_cuda_error(const char* location) {
     cudaError_t error = cudaGetLastError();
@@ -23,6 +51,7 @@ __device__ void check_cuda_error(const char* location) {
 }
 
 #define CHECK_ERROR(loc) check_cuda_error(loc)
+
 
 
 __device__ void compute_possible_delay(
@@ -38,54 +67,90 @@ __device__ void compute_possible_delay(
     double min_delay = 0.0;
     double max_delay = DBL_MAX;
     bool is_bounded = false;
+    if(threadIdx.x == 0) {  // TODO: REMOVE
+        for(int i = 0; i < MAX_VARIABLES; i++) {
+            if(shared->variables[i].kind == VariableKind::CLOCK) {
+                shared->variables[i].rate = 1;
+            }
+        }
+    }
+
+    __syncthreads();
+
+    // Debug current variable values
+    printf("Thread %d: Current variable values:\n", threadIdx.x);
+    for(int i = 0; i < MAX_VARIABLES; i++) {
+        printf("  var[%d] = %f (rate=%d)\n", i,
+               shared->variables[i].value,
+               shared->variables[i].rate);
+    }
+
+
 
     // Process invariants
     for(int i = 0; i < node.num_invariants; i++) {
         const GuardInfo& inv = model->invariants[node.first_invariant_index + i];
 
         if(inv.uses_variable) {
-            // Use var_info since we're working with GuardInfo now
             int var_id = inv.var_info.variable_id;
-            printf("Thread %d: Checking invariant %d: var_id=%d\n",
-                   threadIdx.x, i, var_id);
+            if(var_id >= MAX_VARIABLES) {
+                printf("Thread %d: Invalid variable ID %d\n", threadIdx.x, var_id);
+                continue;
+            }
 
-            if(var_id < MAX_VARIABLES) {
-                auto& var = shared->variables[var_id];
+            auto& var = shared->variables[var_id];
+            double current_val = var.value;
 
-                // For now treat all variables as clocks
+            // Set rate to 1 for clocks
+            if(inv.var_info.type == VariableKind::CLOCK) {
                 var.rate = 1;
-                var.kind = VariableKind::CLOCK;
+            }
 
-                // Use fixed bound of 5 for now
-                // Later we'll evaluate inv.expression
-                double bound = 5.0;
-                double time_to_bound = (bound - var.value) / var.rate;
-                printf("Thread %d: Clock var %d: value=%f, rate=%d, bound=%f\n",
-                       threadIdx.x, var_id, var.value, var.rate, bound);
+            // Evaluate bound expression
+            double bound = evaluate_expression(inv.expression, block_state);
+            printf("Thread %d: Clock %d invariant: current=%f, bound=%f, rate=%d\n",
+                   threadIdx.x, var_id, current_val, bound, var.rate);
 
-                if(time_to_bound >= 0) {
-                    max_delay = min(max_delay, time_to_bound);
-                    is_bounded = true;
+            // Only handle upper bounds
+            if(inv.operand == constraint::less_c ||
+               inv.operand == constraint::less_equal_c) {
+
+                if(var.rate > 0) {  // Only if clock increases
+                    double time_to_bound = (bound - current_val) / var.rate;
+
+                    // Add small epsilon for strict inequality
+                    if(inv.operand == constraint::less_c) {
+                        time_to_bound -= 1e-6;
+                    }
+
+                    printf("Thread %d: Computed time_to_bound=%f\n",
+                           threadIdx.x, time_to_bound);
+
+                    if(time_to_bound >= 0) {
+                        max_delay = min(max_delay, time_to_bound);
+                        is_bounded = true;
+                        printf("Thread %d: Updated max_delay to %f\n",
+                               threadIdx.x, max_delay);
+                    }
                 }
-            } else {
-                printf("Thread %d: Variable ID %d exceeds MAX_VARIABLES\n",
-                       threadIdx.x, var_id);
             }
         }
     }
 
     // Sample delay if bounded
-    if(is_bounded && min_delay < max_delay) {
+    if(is_bounded) {
         double rand = curand_uniform(block_state->random);
         my_state->next_delay = min_delay + (max_delay - min_delay) * rand;
         my_state->has_delay = true;
-        printf("Thread %d: Sampled delay %f (min=%f, max=%f)\n",
-               threadIdx.x, my_state->next_delay, min_delay, max_delay);
+        printf("Thread %d: Sampled delay %f in [%f, %f] (rand=%f)\n",
+               threadIdx.x, my_state->next_delay, min_delay, max_delay, rand);
     } else {
-        printf("Thread %d: No valid delay computed\n", threadIdx.x);
-        my_state->has_delay = false;
+        printf("Thread %d: No delay bounds, using 1.0\n", threadIdx.x);
+        my_state->next_delay = 1.0;  // Default step if no bounds
+        my_state->has_delay = true;
     }
 }
+
 
 
 
@@ -97,36 +162,93 @@ __device__ void compute_possible_delay(
 __device__ double find_minimum_delay(
     ComponentState* my_state,
     SharedBlockMemory* shared,
-    const int num_components)
+    int num_components)
 {
-    // Each thread stores its delay in shared memory array
     __shared__ double delays[MAX_COMPONENTS];
     __shared__ int component_indices[MAX_COMPONENTS];
 
-    // Store my delay if I have one
-    if(my_state->has_delay) {
+    // Initialize to infinity for inactive threads
+    delays[threadIdx.x] = DBL_MAX;
+    component_indices[threadIdx.x] = -1;
+
+    // Only active components set their delays
+    if(threadIdx.x < num_components && my_state->has_delay) {
         delays[threadIdx.x] = my_state->next_delay;
         component_indices[threadIdx.x] = my_state->component_id;
+        printf("Thread %d (component %d): Initial delay %f\n",
+               threadIdx.x, my_state->component_id, my_state->next_delay);
     } else {
-        delays[threadIdx.x] = DBL_MAX;
-        component_indices[threadIdx.x] = -1;
+        printf("Thread %d: Inactive (has_delay=%d, within_components=%d)\n",
+               threadIdx.x, my_state->has_delay, threadIdx.x < num_components);
     }
     __syncthreads();
 
-    // Parallel reduction to find minimum
+    // Debug print initial state
+    if(threadIdx.x == 0) {
+        printf("Initial delays: ");
+        for(int i = 0; i < num_components; i++) {
+            printf("[%d]=%f ", i, delays[i]);
+        }
+        printf("\n");
+    }
+    __syncthreads();
+
+    // Find minimum - only active threads participate
     for(int stride = blockDim.x/2; stride > 0; stride >>= 1) {
-        if(threadIdx.x < stride) {
-            if(delays[threadIdx.x + stride] < delays[threadIdx.x]) {
-                delays[threadIdx.x] = delays[threadIdx.x + stride];
-                component_indices[threadIdx.x] = component_indices[threadIdx.x + stride];
+        if(threadIdx.x < stride && threadIdx.x < num_components) {
+            int compare_idx = threadIdx.x + stride;
+            printf("Thread %d comparing with position %d: %f vs %f\n",
+                   threadIdx.x, compare_idx, delays[threadIdx.x],
+                   delays[compare_idx]);
+
+            if(delays[compare_idx] < delays[threadIdx.x]) {
+                delays[threadIdx.x] = delays[compare_idx];
+                component_indices[threadIdx.x] = component_indices[compare_idx];
+                printf("Thread %d: Updated minimum to %f from component %d\n",
+                       threadIdx.x, delays[threadIdx.x],
+                       component_indices[threadIdx.x]);
             }
         }
         __syncthreads();
     }
 
-    // Result is in delays[0] and winning component in component_indices[0]
-    return delays[0];
+    // Only thread 0 processes the result
+    double min_delay = delays[0];
+    if(threadIdx.x == 0) {
+        if(min_delay < DBL_MAX) {
+            printf("\nFinal result:\n");
+            printf("  Minimum delay: %f\n", min_delay);
+            printf("  Winning component: %d\n", component_indices[0]);
+            printf("\nUpdating clocks:\n");
+
+            // Update all clock values
+            for(int i = 0; i < MAX_VARIABLES; i++) {
+                if(shared->variables[i].kind == VariableKind::CLOCK) {
+                    double old_value = shared->variables[i].value;
+                    shared->variables[i].rate = 1;
+                    shared->variables[i].value += min_delay;
+                    printf("  Clock %d: %f -> %f (advanced by %f)\n",
+                           i, old_value, shared->variables[i].value, min_delay);
+                }
+            }
+        } else {
+            printf("\nNo valid delays found (all DBL_MAX)\n");
+        }
+    }
+    __syncthreads();
+
+    // Remember who won
+    if(min_delay < DBL_MAX && component_indices[0] == my_state->component_id) {
+        printf("\nThread %d (component %d) won race with delay %f\n",
+               threadIdx.x, my_state->component_id, min_delay);
+    }
+
+    return min_delay;
 }
+
+
+
+
 
 
 int get_total_runs(float confidence, float precision) {
@@ -305,7 +427,7 @@ void simulation::run_statistical_model_checking(SharedModelState* model, float c
     }
 
     // Launch configuration
-    int threads_per_block = 8;
+    int threads_per_block = 2;
     int runs_per_block = 1;
     int num_blocks = 1;
 
