@@ -35,8 +35,8 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
         return 0.0;
     }
 
-    // Just return the raw value for now - we'll implement full expression
-    // evaluation later when basic timing works
+    // Just return the raw value for now
+    // TODO: implement full expression evaluation later when basic timing works
     printf("Warning: Non-literal expression (op=%d), using value directly\n",
            e->operand);
     return e->value;

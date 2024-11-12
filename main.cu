@@ -75,6 +75,7 @@ int main()
     var_tracker.visit(&model);
     var_tracker.print_variable_usage();
 
+    cout << "test" << endl;
 
     // SharedModelState* state = init_shared_model_state(&model, *optimizer.get_node_subsystems_map(), optimizer.get_node_map());
     // SharedModelState* init_shared_model_state(
