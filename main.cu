@@ -83,7 +83,7 @@ int main()
     setup_simulation_config(&config, &model, optimizer.get_max_expr_depth(), optimizer.get_max_fanout(), optimizer.get_node_count());
 
     if (RUN_SMACC) {
-        run_SMAcc(&config, &model);
+        SMAcc_Runner::run_SMAcc(&config, &model);
     }
 
 

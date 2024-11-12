@@ -6,5 +6,14 @@
 #include "SMAcc_Tools.cuh"
 #include "simulation_runner.h"
 
+class SMAcc_Runner{
+    public:
+        static void run_SMAcc(simulation_config* input_config, network* model){
+                sim_config SMAcc_config = {};
 
-void run_SMAcc(simulation_config* input_config, network* model);
+                convert_config(&SMAcc_config, input_config);
+
+                // simulation_runner::simulate_gpu(model, &SMAcc_config);
+                simulation_runner::simulate_gpu(model, &SMAcc_config);
+            }   
+};
