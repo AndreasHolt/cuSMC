@@ -36,11 +36,96 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
     }
 
     // Just return the raw value for now
-    // TODO: implement full expression evaluation later when basic timing works
+    // TODO: implement full expression evaluation later when basic timing works. We need to support variables i.e. x <= l, where l is not const
     printf("Warning: Non-literal expression (op=%d), using value directly\n",
            e->operand);
     return e->value;
 }
+
+__device__ bool check_edge_enabled(const EdgeInfo& edge,
+                                 const SharedBlockMemory* shared,
+                                 SharedModelState* model,
+                                 BlockSimulationState* block_state) {
+    printf("\nThread %d: Checking edge %d->%d with %d guards\n",
+           threadIdx.x, edge.source_node_id, edge.dest_node_id, edge.num_guards);
+
+    // Check all guards on the edge
+    for(int i = 0; i < edge.num_guards; i++) {
+        const GuardInfo& guard = model->guards[edge.guards_start_index + i];
+
+        if(guard.uses_variable) {
+            int var_id = guard.var_info.variable_id;
+            double var_value = shared->variables[var_id].value;
+            double bound = evaluate_expression(guard.expression, block_state);
+
+            printf("  Guard %d: var_%d (%s) = %f %s %f\n",
+                   i, var_id,
+                   guard.var_info.type == VariableKind::CLOCK ? "clock" : "int",
+                   var_value,
+                   guard.operand == constraint::less_equal_c ? "<=" :
+                   guard.operand == constraint::less_c ? "<" :
+                   guard.operand == constraint::greater_equal_c ? ">=" :
+                   guard.operand == constraint::greater_c ? ">" : "?",
+                   bound);
+
+            bool satisfied = false;
+            switch(guard.operand) {
+                case constraint::less_c:
+                    satisfied = var_value < bound; break;
+                case constraint::less_equal_c:
+                    satisfied = var_value <= bound; break;
+                case constraint::greater_c:
+                    satisfied = var_value > bound; break;
+                case constraint::greater_equal_c:
+                    satisfied = var_value >= bound; break;
+                default:
+                    printf("  Warning: Unknown operator %d\n", guard.operand);
+                    return false;
+            }
+
+            if(!satisfied) {
+                printf("  Guard not satisfied - edge disabled\n");
+                return false;
+            }
+        }
+    }
+
+    printf("  All guards satisfied - edge enabled!\n");
+    return true;
+}
+
+__device__ void check_enabled_edges(ComponentState* my_state,
+                                  SharedBlockMemory* shared,
+                                  SharedModelState* model,
+                                  BlockSimulationState* block_state,
+                                  bool is_race_winner) {
+    if (!is_race_winner) {
+        printf("Thread %d: Skipping edge check (didn't win race)\n", threadIdx.x);
+        return;
+    }
+
+    printf("\nThread %d: Checking enabled edges for node %d\n",
+           threadIdx.x, my_state->current_node->id);
+
+    const NodeInfo& node = *my_state->current_node;
+    my_state->num_enabled_edges = 0;  // Reset counter
+
+    // Check each outgoing edge
+    for(int i = 0; i < node.num_edges; i++) {
+        const EdgeInfo& edge = model->edges[node.first_edge_index + i];
+        if(check_edge_enabled(edge, shared, model, block_state)) {
+            // Store enabled edge for later selection
+            my_state->enabled_edges[my_state->num_enabled_edges++] = i;
+            printf("Thread %d: Edge %d is enabled (total enabled: %d)\n",
+                   threadIdx.x, i, my_state->num_enabled_edges);
+        }
+    }
+
+    printf("Thread %d: Found %d enabled edges\n",
+           threadIdx.x, my_state->num_enabled_edges);
+}
+
+
 
 
 __device__ void check_cuda_error(const char* location) {
@@ -155,13 +240,11 @@ __device__ void compute_possible_delay(
 
 
 
-
-
-
-
 __device__ double find_minimum_delay(
     ComponentState* my_state,
     SharedBlockMemory* shared,
+    SharedModelState* model,
+    BlockSimulationState* block_state,
     int num_components)
 {
     __shared__ double delays[MAX_COMPONENTS];
@@ -237,14 +320,26 @@ __device__ double find_minimum_delay(
     }
     __syncthreads();
 
-    // Remember who won
-    if(min_delay < DBL_MAX && component_indices[0] == my_state->component_id) {
+    // Remember who won and check edges only for winner
+    bool is_race_winner = (min_delay < DBL_MAX &&
+                          component_indices[0] == my_state->component_id);
+
+    if(is_race_winner) {
         printf("\nThread %d (component %d) won race with delay %f\n",
                threadIdx.x, my_state->component_id, min_delay);
     }
 
+    // Check enabled edges only for the winning component
+    check_enabled_edges(my_state, shared, model, block_state, is_race_winner);
+    __syncthreads();
+
     return min_delay;
 }
+
+
+
+
+
 
 
 
@@ -372,7 +467,13 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
         CHECK_ERROR("after compute delay");
         __syncthreads();
 
-        double min_delay = find_minimum_delay(my_state, &shared_mem, blockDim.x);
+        double min_delay = find_minimum_delay(
+    block_state.my_component,  // ComponentState*
+    &shared_mem,              // SharedBlockMemory*
+    model,                    // SharedModelState*
+    &block_state,            // BlockSimulationState*
+    model->num_components    // int num_components
+);
         CHECK_ERROR("after find minimum");
         printf("Thread %d: Minimum delay = %f\n", threadIdx.x, min_delay);
 

@@ -12,12 +12,12 @@ clock x;
 //typedef int[0,N-1] id_t;</declaration>
 	<template>
 		<name>c2</name>
-		<declaration>clock x = 2;
+		<declaration>clock x;
 
 int l = 1;</declaration>
 		<location id="id0" x="-178" y="0">
 			<name x="-188" y="-34">g1</name>
-			<label kind="invariant" x="-229" y="34">x &lt;= 5 + 2 * 4</label>
+			<label kind="invariant" x="-187" y="34">x &lt;= 5</label>
 		</location>
 		<location id="id1" x="17" y="-110">
 			<name x="7" y="-144">g2</name>

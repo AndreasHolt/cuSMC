@@ -11,6 +11,7 @@
 constexpr int MAX_VALUE_STACK_SIZE = 64;  // Can handle deeply nested expressions
 constexpr int MAX_CHANNELS = 32;          // Can handle many channels
 constexpr int MAX_VARIABLES = 32;         // Can handle many variables
+#define MAX_EDGES_PER_NODE 10
 
 
 namespace Constants {
@@ -27,6 +28,8 @@ struct ComponentState {
     const NodeInfo* current_node;
     double next_delay;
     bool has_delay;
+    int enabled_edges[MAX_EDGES_PER_NODE];  // Store indices of enabled edges TODO: replace with max fanout that we get with optimizer
+    int num_enabled_edges;                  // Number of currently enabled edges
 };
 
 // This replaces both SharedSimState and SharedBlockMemory
