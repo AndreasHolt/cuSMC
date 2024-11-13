@@ -1,0 +1,99 @@
+cmake_minimum_required(VERSION 3.18)  # Minimum version for CUDA support
+project(CudaIntro LANGUAGES CUDA CXX)   # Specify CUDA and C++ as the primary languages
+
+set(CMAKE_CUDA_STANDARD 20)              # Set the CUDA standard to C++17
+set(CMAKE_CXX_STANDARD 20)               # Set the C++ standard to C++17
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)     # Ensure that the specified standard is required
+set(CMAKE_CXX_STANDARD_REQUIRED ON)      # Ensure that the specified standard is required
+
+# Add your source files
+add_executable(CudaIntro main.cu
+        cuda_example.cu
+        # Parser
+        automata_parser/uppaal_xml_parser.cpp automata_parser/uppaal_xml_parser.h
+        automata_parser/declaration_parser.h automata_parser/declaration_parser.cpp
+        automata_parser/string_extractor.h automata_parser/string_extractor.cpp
+        automata_parser/pugixml.cpp automata_parser
+        automata_parser/variable_expression_evaluator.cpp automata_parser/variable_expression_evaluator.h
+
+        # engine
+        engine/Domain.cu engine/Domain.h
+        engine/model_oracle.cu engine/model_oracle.h
+        engine/automata_engine.cu
+
+        # SMAcc
+        SMAcc/run_SMAcc.cu
+        SMAcc/run_SMAcc.cuh
+        SMAcc/simulation_runner.cu
+        SMAcc/simulation_runner.h
+        SMAcc/SMAcc_Tools.cu
+        SMAcc/SMAcc_Tools.cuh
+        SMAcc/visitors/domain_optimization.visitor.cpp
+        SMAcc/visitors/domain_optimization_visitor.h
+        SMAcc/visitors/memory_alignment_visitor.cpp
+        SMAcc/visitors/memory_alignment_visitor.h
+        SMAcc/visitors/model_count_visitor.cpp
+        SMAcc/visitors/model_count_visitor.h
+        SMAcc/results/output_write.cu
+        SMAcc/results/output_write.h
+        SMAcc/results/result_store.cu
+        SMAcc/results/result_store.h
+        SMAcc/engine/automata_engine.cu
+        SMAcc/common/io_paths.h
+        SMAcc/common/my_stack.h
+        SMAcc/common/sim_config.h
+        SMAcc/common/thread_pool.cu
+        SMAcc/common/thread_pool.h
+        SMAcc/allocations/cuda_allocator.cpp
+        SMAcc/allocations/cuda_allocator.h
+        SMAcc/allocations/memory_allocator.cpp
+        SMAcc/allocations/memory_allocator.h
+
+
+        # Includes
+        include/common_macros.h
+        include/common_macros.h
+        engine/interpreter.h
+        simulation/simulation_config.h
+        output.h
+        simulation/simulation_file_paths.h
+        simulation/simulation.cu
+        simulation/simulation.cuh
+        main.cpp
+        simulation/data_structures.cu
+        simulation/data_structures.cuh
+        network_optimization/domain_optimization_visitor.h
+        network_optimization/domain_optimization_visitor.cpp
+        network_optimization/visitor.cpp
+        network_optimization/pn_compile_visitor.cpp
+        simulation/state/SharedModelState.cu
+        simulation/state/SharedModelState.cuh
+        main.cu
+        main.cuh
+        simulation/state/SharedRunState.cu
+        simulation/state/SharedRunState.cuh)
+
+
+# Enable separable compilation (optional, depends on your needs)
+set_target_properties(CudaIntro PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+
+# Add include directories if needed
+# target_include_directories(CudaIntro PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+#target_include_directories(CudaIntro PRIVATE ${CMAKE_SOURCE_DIR}/UPPAALXMLParser)
+
+# Below doesn't work for now
+#find_package(CUDA REQUIRED)
+#target_include_directories(CudaIntro PRIVATE ${CUDA_INCLUDE_DIRS})
+
+target_include_directories(CudaIntro PRIVATE "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.8/include")
+
+
+# Link libraries if needed
+# target_link_libraries(CudaIntro PRIVATE some_library)
+
+# Set compile options for CUDA and C++
+target_compile_options(CudaIntro PRIVATE
+        $<$<COMPILE_LANGUAGE:CUDA>:--extended-lambda>
+        #    $<$<COMPILE_LANGUAGE:CXX>:-Wall -pedantic>
+        $<$<COMPILE_LANGUAGE:CXX>:-Wall>
+)
