@@ -247,55 +247,50 @@ __device__ double find_minimum_delay(
     BlockSimulationState* block_state,
     int num_components)
 {
-    __shared__ double delays[MAX_COMPONENTS];
+    __shared__ double delays[MAX_COMPONENTS];  // Only need MAX_COMPONENTS slots, not full warp size
     __shared__ int component_indices[MAX_COMPONENTS];
 
-    // Initialize to infinity for inactive threads
-    delays[threadIdx.x] = DBL_MAX;
-    component_indices[threadIdx.x] = -1;
-
-    // Only active components set their delays
-    if(threadIdx.x < num_components && my_state->has_delay) {
-        delays[threadIdx.x] = my_state->next_delay;
+    // Initialize only for active threads (components)
+    if(threadIdx.x < num_components) {
+        delays[threadIdx.x] = my_state->has_delay ? my_state->next_delay : DBL_MAX;
         component_indices[threadIdx.x] = my_state->component_id;
         printf("Thread %d (component %d): Initial delay %f\n",
-               threadIdx.x, my_state->component_id, my_state->next_delay);
-    } else {
-        printf("Thread %d: Inactive (has_delay=%d, within_components=%d)\n",
-               threadIdx.x, my_state->has_delay, threadIdx.x < num_components);
+               threadIdx.x, my_state->component_id, delays[threadIdx.x]);
     }
     __syncthreads();
 
     // Debug print initial state
     if(threadIdx.x == 0) {
         printf("Initial delays: ");
-        for(int i = 0; i < num_components; i++) {
+        for(int i = 0; i < num_components; i++) {  // Only print actual components
             printf("[%d]=%f ", i, delays[i]);
         }
         printf("\n");
     }
     __syncthreads();
 
-    // Find minimum - only active threads participate
-    for(int stride = blockDim.x/2; stride > 0; stride >>= 1) {
+    // Find minimum - only compare actual components
+    for(int stride = (num_components + 1)/2; stride > 0; stride >>= 1) {
         if(threadIdx.x < stride && threadIdx.x < num_components) {
             int compare_idx = threadIdx.x + stride;
-            printf("Thread %d comparing with position %d: %f vs %f\n",
-                   threadIdx.x, compare_idx, delays[threadIdx.x],
-                   delays[compare_idx]);
+            if(compare_idx < num_components) {  // Only compare if within valid components
+                printf("Thread %d comparing with position %d: %f vs %f\n",
+                       threadIdx.x, compare_idx, delays[threadIdx.x],
+                       delays[compare_idx]);
 
-            if(delays[compare_idx] < delays[threadIdx.x]) {
-                delays[threadIdx.x] = delays[compare_idx];
-                component_indices[threadIdx.x] = component_indices[compare_idx];
-                printf("Thread %d: Updated minimum to %f from component %d\n",
-                       threadIdx.x, delays[threadIdx.x],
-                       component_indices[threadIdx.x]);
+                if(delays[compare_idx] < delays[threadIdx.x]) {
+                    delays[threadIdx.x] = delays[compare_idx];
+                    component_indices[threadIdx.x] = component_indices[compare_idx];
+                    printf("Thread %d: Updated minimum to %f from component %d\n",
+                           threadIdx.x, delays[threadIdx.x],
+                           component_indices[threadIdx.x]);
+                }
             }
         }
         __syncthreads();
     }
 
-    // Only thread 0 processes the result
+    // Rest of the function same as before, but only thread 0 processes result
     double min_delay = delays[0];
     if(threadIdx.x == 0) {
         if(min_delay < DBL_MAX) {
@@ -304,7 +299,6 @@ __device__ double find_minimum_delay(
             printf("  Winning component: %d\n", component_indices[0]);
             printf("\nUpdating clocks:\n");
 
-            // Update all clock values
             for(int i = 0; i < MAX_VARIABLES; i++) {
                 if(shared->variables[i].kind == VariableKind::CLOCK) {
                     double old_value = shared->variables[i].value;
@@ -314,27 +308,30 @@ __device__ double find_minimum_delay(
                            i, old_value, shared->variables[i].value, min_delay);
                 }
             }
-        } else {
-            printf("\nNo valid delays found (all DBL_MAX)\n");
         }
     }
     __syncthreads();
 
     // Remember who won and check edges only for winner
-    bool is_race_winner = (min_delay < DBL_MAX &&
-                          component_indices[0] == my_state->component_id);
-
-    if(is_race_winner) {
-        printf("\nThread %d (component %d) won race with delay %f\n",
-               threadIdx.x, my_state->component_id, min_delay);
+    bool is_race_winner = false;
+    if(threadIdx.x < num_components) {  // Only check for actual components
+        is_race_winner = (min_delay < DBL_MAX &&
+                         component_indices[0] == my_state->component_id);
+        if(is_race_winner) {
+            printf("\nThread %d (component %d) won race with delay %f\n",
+                   threadIdx.x, my_state->component_id, min_delay);
+        }
     }
 
-    // Check enabled edges only for the winning component
-    check_enabled_edges(my_state, shared, model, block_state, is_race_winner);
+    // Check enabled edges for winning component
+    if(threadIdx.x < num_components) {  // Only process for actual components
+        check_enabled_edges(my_state, shared, model, block_state, is_race_winner);
+    }
     __syncthreads();
 
     return min_delay;
 }
+
 
 
 
@@ -495,31 +492,57 @@ void simulation::run_statistical_model_checking(SharedModelState* model, float c
     int total_runs = 1;
     cout << "total_runs = " << total_runs << endl;
 
-    // Detailed model validation
+    // Validate parameters
     if(model == nullptr) {
         cout << "Error: NULL model pointer" << endl;
         return;
     }
 
-    // Print model pointer address
-    cout << "Model pointer address: " << model << endl;
-
-    // Try to access model components safely
-    cudaError_t error;
-    SharedModelState host_model;
-    error = cudaMemcpy(&host_model, model, sizeof(SharedModelState), cudaMemcpyDeviceToHost);
+    // Get device properties and validate configuration
+    cudaDeviceProp deviceProp;
+    cudaError_t error = cudaGetDeviceProperties(&deviceProp, 0);
     if(error != cudaSuccess) {
-        cout << "CUDA error copying model: " << cudaGetErrorString(error) << endl;
+        cout << "Error getting device properties: " << cudaGetErrorString(error) << endl;
         return;
     }
 
-    cout << "Model components: " << host_model.num_components << endl;
+    // Adjust threads to be multiple of warp size
+    int warp_size = deviceProp.warpSize;
+    int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
+    int runs_per_block = 1;
+    int num_blocks = 1;
 
-    // Print more model details
-    cout << "Component sizes array at: " << host_model.component_sizes << endl;
-    cout << "Nodes array at: " << host_model.nodes << endl;
-    cout << "Edges array at: " << host_model.edges << endl;
+    // Print detailed device information
+    cout << "Device details:" << endl
+         << "  Name: " << deviceProp.name << endl
+         << "  Warp size: " << warp_size << endl
+         << "  Max threads per block: " << deviceProp.maxThreadsPerBlock << endl
+         << "  Max block dimensions: " << deviceProp.maxThreadsDim[0] << " x "
+         << deviceProp.maxThreadsDim[1] << " x " << deviceProp.maxThreadsDim[2] << endl
+         << "  Adjusted threads per block: " << threads_per_block << endl;
 
+    // Validate configuration
+    if (threads_per_block > deviceProp.maxThreadsPerBlock) {
+        cout << "Error: threads_per_block (" << threads_per_block
+             << ") exceeds device maximum (" << deviceProp.maxThreadsPerBlock << ")" << endl;
+        return;
+    }
+
+    if (num_blocks > deviceProp.maxGridSize[0]) {
+        cout << "Error: num_blocks (" << num_blocks
+             << ") exceeds device maximum (" << deviceProp.maxGridSize[0] << ")" << endl;
+        return;
+    }
+
+    // Verify shared memory size is sufficient
+    size_t shared_mem_per_block = sizeof(SharedBlockMemory);
+    if(shared_mem_per_block > deviceProp.sharedMemPerBlock) {
+        cout << "Error: Required shared memory (" << shared_mem_per_block
+             << ") exceeds device capability (" << deviceProp.sharedMemPerBlock << ")" << endl;
+        return;
+    }
+
+    // Allocate and validate device results array
     bool* device_results;
     error = cudaMalloc(&device_results, total_runs * sizeof(bool));
     if(error != cudaSuccess) {
@@ -527,23 +550,36 @@ void simulation::run_statistical_model_checking(SharedModelState* model, float c
         return;
     }
 
-    // Launch configuration
-    int threads_per_block = 2;
-    int runs_per_block = 1;
-    int num_blocks = 1;
-
-    cout << "Launching kernel with configuration:" << endl;
+    cout << "Launch configuration validated:" << endl;
     cout << "  Blocks: " << num_blocks << endl;
     cout << "  Threads per block: " << threads_per_block << endl;
+    cout << "  Shared memory per block: " << shared_mem_per_block << endl;
     cout << "  Time bound: " << TIME_BOUND << endl;
 
-    // Launch kernel
+    // Verify model is accessible
+    SharedModelState host_model;
+    error = cudaMemcpy(&host_model, model, sizeof(SharedModelState), cudaMemcpyDeviceToHost);
+    if(error != cudaSuccess) {
+        cout << "Error copying model: " << cudaGetErrorString(error) << endl;
+        cudaFree(device_results);
+        return;
+    }
+
+    cout << "Model verified accessible with " << host_model.num_components << " components" << endl;
+
+    // Launch kernel with error checking
     simulation_kernel<<<num_blocks, threads_per_block>>>(
         model, device_results, runs_per_block, TIME_BOUND);
 
     error = cudaGetLastError();
     if(error != cudaSuccess) {
-        cout << "Kernel launch error: " << cudaGetErrorString(error) << endl;
+        cout << "Kernel launch error: " << cudaGetErrorString(error) << "\n"
+             << "Error code: " << error << endl
+             << "Launch parameters:" << endl
+             << "  Blocks: " << num_blocks << endl
+             << "  Threads per block: " << threads_per_block << endl
+             << "  Shared memory per block: " << shared_mem_per_block << endl;
+        cudaFree(device_results);
         return;
     }
 
@@ -552,11 +588,15 @@ void simulation::run_statistical_model_checking(SharedModelState* model, float c
     error = cudaDeviceSynchronize();
     if(error != cudaSuccess) {
         cout << "Kernel execution error: " << cudaGetErrorString(error) << endl;
+        cudaFree(device_results);
         return;
     }
 
-    cout << "Kernel execution complete" << endl;
+    // Cleanup
+    cudaFree(device_results);
 }
+
+
 
 
 
