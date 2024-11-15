@@ -372,6 +372,18 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
     __shared__ ComponentState components[MAX_COMPONENTS];
     __shared__ curandState rng_states[MAX_COMPONENTS];
 
+    if(threadIdx.x < model->num_components) {  // Only debug print for actual components
+        printf("Thread %d: Model details:\n"
+               "  Num components: %d\n"
+               "  First node invariant index: %d\n"
+               "  Num invariants in first node: %d\n",
+               threadIdx.x,
+               model->num_components,
+               model->nodes[threadIdx.x].first_invariant_index,
+               model->nodes[threadIdx.x].num_invariants);
+    }
+
+
     if (threadIdx.x == 0) {
         // Initialize variables with default values
         for(int i = 0; i < MAX_VARIABLES; i++) {
@@ -382,22 +394,26 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
         }
 
         // Initialize variables from all invariants in model
-        for(int comp = 0; comp < model->num_components; comp++) {
-            const NodeInfo& node = model->nodes[comp];
-            for(int i = 0; i < node.num_invariants; i++) {
-                const GuardInfo& inv = model->invariants[node.first_invariant_index + i];
-                if(inv.uses_variable) {
-                    int var_id = inv.var_info.variable_id;
-                    if(var_id < MAX_VARIABLES) {
-                        printf("Block %d: Initializing variable %d from invariant: value=%f, type=%d\n",
-                               blockIdx.x, var_id, inv.var_info.initial_value,
-                               (int)inv.var_info.type);
-                        shared_mem.variables[var_id].value = inv.var_info.initial_value;
-                        shared_mem.variables[var_id].kind = inv.var_info.type;
-                    }
+        if(threadIdx.x == 0) {
+            printf("\nInitializing variables from model invariants:\n");
+            for(int comp = 0; comp < model->num_components; comp++) {
+                const NodeInfo& node = model->nodes[comp];
+                printf("Component %d has %d invariants starting at index %d\n",
+                       comp, node.num_invariants, node.first_invariant_index);
+
+                for(int i = 0; i < node.num_invariants; i++) {
+                    const GuardInfo& inv = model->invariants[node.first_invariant_index + i];
+                    printf("  Invariant %d:\n"
+                           "    Uses variable: %d\n"
+                           "    Variable ID: %d\n"
+                           "    Initial value: %f\n",
+                           i, inv.uses_variable,
+                           inv.uses_variable ? inv.var_info.variable_id : -1,
+                           inv.uses_variable ? inv.var_info.initial_value : 0.0);
                 }
             }
         }
+
 
     }
 
@@ -426,7 +442,7 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
                 &rng_states[threadIdx.x]);
     block_state.random = &rng_states[threadIdx.x];
 
-    printf("Thread %d: RNG initialized\n", threadIdx.x);
+    // printf("Thread %d: RNG initialized\n", threadIdx.x);
     CHECK_ERROR("after RNG init");
 
     // Initialize shared state
@@ -489,112 +505,154 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
 
 
 void simulation::run_statistical_model_checking(SharedModelState* model, float confidence, float precision) {
-    int total_runs = 1;
-    cout << "total_runs = " << total_runs << endl;
+   int total_runs = 1;
+   cout << "total_runs = " << total_runs << endl;
 
-    // Validate parameters
-    if(model == nullptr) {
-        cout << "Error: NULL model pointer" << endl;
-        return;
-    }
+   // Validate parameters
+   if(model == nullptr) {
+       cout << "Error: NULL model pointer" << endl;
+       return;
+   }
 
-    // Get device properties and validate configuration
-    cudaDeviceProp deviceProp;
-    cudaError_t error = cudaGetDeviceProperties(&deviceProp, 0);
-    if(error != cudaSuccess) {
-        cout << "Error getting device properties: " << cudaGetErrorString(error) << endl;
-        return;
-    }
+   // Get device properties and validate configuration
+   cudaDeviceProp deviceProp;
+   cudaError_t error = cudaGetDeviceProperties(&deviceProp, 0);
+   if(error != cudaSuccess) {
+       cout << "Error getting device properties: " << cudaGetErrorString(error) << endl;
+       return;
+   }
 
-    // Adjust threads to be multiple of warp size
-    int warp_size = deviceProp.warpSize;
-    int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
-    int runs_per_block = 1;
-    int num_blocks = 1;
+   // Adjust threads to be multiple of warp size
+   int warp_size = deviceProp.warpSize;
+   int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
+   int runs_per_block = 1;
+   int num_blocks = 1;
 
-    // Print detailed device information
-    cout << "Device details:" << endl
-         << "  Name: " << deviceProp.name << endl
-         << "  Warp size: " << warp_size << endl
-         << "  Max threads per block: " << deviceProp.maxThreadsPerBlock << endl
-         << "  Max block dimensions: " << deviceProp.maxThreadsDim[0] << " x "
-         << deviceProp.maxThreadsDim[1] << " x " << deviceProp.maxThreadsDim[2] << endl
-         << "  Adjusted threads per block: " << threads_per_block << endl;
+   // Print detailed device information
+   cout << "Device details:" << endl
+        << "  Name: " << deviceProp.name << endl
+        << "  Warp size: " << warp_size << endl
+        << "  Max threads per block: " << deviceProp.maxThreadsPerBlock << endl
+        << "  Max block dimensions: " << deviceProp.maxThreadsDim[0] << " x "
+        << deviceProp.maxThreadsDim[1] << " x " << deviceProp.maxThreadsDim[2] << endl
+        << "  Adjusted threads per block: " << threads_per_block << endl;
 
-    // Validate configuration
-    if (threads_per_block > deviceProp.maxThreadsPerBlock) {
-        cout << "Error: threads_per_block (" << threads_per_block
-             << ") exceeds device maximum (" << deviceProp.maxThreadsPerBlock << ")" << endl;
-        return;
-    }
+   // Validate configuration
+   if (threads_per_block > deviceProp.maxThreadsPerBlock) {
+       cout << "Error: threads_per_block (" << threads_per_block
+            << ") exceeds device maximum (" << deviceProp.maxThreadsPerBlock << ")" << endl;
+       return;
+   }
 
-    if (num_blocks > deviceProp.maxGridSize[0]) {
-        cout << "Error: num_blocks (" << num_blocks
-             << ") exceeds device maximum (" << deviceProp.maxGridSize[0] << ")" << endl;
-        return;
-    }
+   if (num_blocks > deviceProp.maxGridSize[0]) {
+       cout << "Error: num_blocks (" << num_blocks
+            << ") exceeds device maximum (" << deviceProp.maxGridSize[0] << ")" << endl;
+       return;
+   }
 
-    // Verify shared memory size is sufficient
-    size_t shared_mem_per_block = sizeof(SharedBlockMemory);
-    if(shared_mem_per_block > deviceProp.sharedMemPerBlock) {
-        cout << "Error: Required shared memory (" << shared_mem_per_block
-             << ") exceeds device capability (" << deviceProp.sharedMemPerBlock << ")" << endl;
-        return;
-    }
+   // Verify shared memory size is sufficient
+   size_t shared_mem_per_block = sizeof(SharedBlockMemory);
+   if(shared_mem_per_block > deviceProp.sharedMemPerBlock) {
+       cout << "Error: Required shared memory (" << shared_mem_per_block
+            << ") exceeds device capability (" << deviceProp.sharedMemPerBlock << ")" << endl;
+       return;
+   }
 
-    // Allocate and validate device results array
-    bool* device_results;
-    error = cudaMalloc(&device_results, total_runs * sizeof(bool));
-    if(error != cudaSuccess) {
-        cout << "CUDA malloc error: " << cudaGetErrorString(error) << endl;
-        return;
-    }
+   cout << "Shared memory details:" << endl
+        << "  Required: " << sizeof(SharedBlockMemory) << " bytes" << endl
+        << "  Aligned: " << shared_mem_per_block << " bytes" << endl;
 
-    cout << "Launch configuration validated:" << endl;
-    cout << "  Blocks: " << num_blocks << endl;
-    cout << "  Threads per block: " << threads_per_block << endl;
-    cout << "  Shared memory per block: " << shared_mem_per_block << endl;
-    cout << "  Time bound: " << TIME_BOUND << endl;
+   // Allocate and validate device results array
+   bool* device_results;
+   error = cudaMalloc(&device_results, total_runs * sizeof(bool));
+   if(error != cudaSuccess) {
+       cout << "CUDA malloc error: " << cudaGetErrorString(error) << endl;
+       return;
+   }
 
-    // Verify model is accessible
-    SharedModelState host_model;
-    error = cudaMemcpy(&host_model, model, sizeof(SharedModelState), cudaMemcpyDeviceToHost);
-    if(error != cudaSuccess) {
-        cout << "Error copying model: " << cudaGetErrorString(error) << endl;
-        cudaFree(device_results);
-        return;
-    }
+   cout << "Launch configuration validated:" << endl;
+   cout << "  Blocks: " << num_blocks << endl;
+   cout << "  Threads per block: " << threads_per_block << endl;
+   cout << "  Shared memory per block: " << shared_mem_per_block << endl;
+   cout << "  Time bound: " << TIME_BOUND << endl;
 
-    cout << "Model verified accessible with " << host_model.num_components << " components" << endl;
+   // Verify model is accessible
+   SharedModelState host_model;
+   error = cudaMemcpy(&host_model, model, sizeof(SharedModelState), cudaMemcpyDeviceToHost);
+   if(error != cudaSuccess) {
+       cout << "Error copying model: " << cudaGetErrorString(error) << endl;
+       cudaFree(device_results);
+       return;
+   }
 
-    // Launch kernel with error checking
-    simulation_kernel<<<num_blocks, threads_per_block>>>(
-        model, device_results, runs_per_block, TIME_BOUND);
+   cout << "Model verified accessible with " << host_model.num_components << " components" << endl;
 
-    error = cudaGetLastError();
-    if(error != cudaSuccess) {
-        cout << "Kernel launch error: " << cudaGetErrorString(error) << "\n"
-             << "Error code: " << error << endl
-             << "Launch parameters:" << endl
-             << "  Blocks: " << num_blocks << endl
-             << "  Threads per block: " << threads_per_block << endl
-             << "  Shared memory per block: " << shared_mem_per_block << endl;
-        cudaFree(device_results);
-        return;
-    }
+   // Check each kernel parameter
+   cout << "Kernel parameter validation:" << endl;
+   cout << "  model pointer: " << model << endl;
+   cout << "  device_results pointer: " << device_results << endl;
+   cout << "  runs_per_block: " << runs_per_block << endl;
+   cout << "  TIME_BOUND: " << TIME_BOUND << endl;
 
-    cout << "Kernel launched successfully, waiting for completion..." << endl;
+   // Verify model pointer is a valid device pointer
+   cudaPointerAttributes modelAttrs;
+   error = cudaPointerGetAttributes(&modelAttrs, model);
+   if(error != cudaSuccess) {
+       cout << "Error checking model pointer: " << cudaGetErrorString(error) << endl;
+       cudaFree(device_results);
+       return;
+   }
 
-    error = cudaDeviceSynchronize();
-    if(error != cudaSuccess) {
-        cout << "Kernel execution error: " << cudaGetErrorString(error) << endl;
-        cudaFree(device_results);
-        return;
-    }
+   cout << "Model pointer properties:" << endl;
+   cout << "  type: " << (modelAttrs.type == cudaMemoryTypeDevice ? "device" : "other") << endl;
+   cout << "  device: " << modelAttrs.device << endl;
 
-    // Cleanup
-    cudaFree(device_results);
+   // Similarly check device_results pointer
+   cudaPointerAttributes resultsAttrs;
+   error = cudaPointerGetAttributes(&resultsAttrs, device_results);
+   if(error != cudaSuccess) {
+       cout << "Error checking results pointer: " << cudaGetErrorString(error) << endl;
+       cudaFree(device_results);
+       return;
+   }
+
+   cout << "Results pointer properties:" << endl;
+   cout << "  type: " << (resultsAttrs.type == cudaMemoryTypeDevice ? "device" : "other") << endl;
+   cout << "  device: " << resultsAttrs.device << endl;
+
+   // Clear any previous error
+   error = cudaGetLastError();
+   if(error != cudaSuccess) {
+       cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
+   }
+
+   cout << "Launching kernel..." << endl;
+   // Launch kernel
+   simulation_kernel<<<num_blocks, threads_per_block>>>(
+       model, device_results, runs_per_block, TIME_BOUND);
+
+   // Check for launch error
+   error = cudaGetLastError();
+   if(error != cudaSuccess) {
+       cout << "Launch error: " << cudaGetErrorString(error) << endl;
+       cudaFree(device_results);
+       return;
+   }
+
+   // Check for execution error
+   error = cudaDeviceSynchronize();
+   if(error != cudaSuccess) {
+       cout << "Execution error: " << cudaGetErrorString(error) << endl;
+       cudaFree(device_results);
+       return;
+   }
+
+   cout << "Kernel completed successfully" << endl;
+
+   // Cleanup
+   cudaFree(device_results);
 }
+
 
 
 

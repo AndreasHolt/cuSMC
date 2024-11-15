@@ -15,7 +15,7 @@
 #include "simulation/simulation.cuh"
 #include "simulation/simulation_config.h"
 #include "simulation/state/SharedModelState.cuh"
-#define VERBOSE 1
+#define VERBOSE 0
 #include "automata_parser/VariableUsageVisitor.h"
 
 #include "simulation/simulation.cuh"
