@@ -125,6 +125,21 @@ SharedModelState* init_shared_model_state(
         components_nodes[component_id].push_back({node_id, &edges});
     }
 
+    // Sort nodes in each component by ID for consistent ordering
+    for(auto& component : components_nodes) {
+        std::sort(component.begin(), component.end(),
+                  [](const auto& a, const auto& b) { return a.first < b.first; });
+    }
+
+    cout << "\nSorted nodes by component:" << endl;
+    for(int i = 0; i < components_nodes.size(); i++) {
+        cout << "Component " << i << " nodes: ";
+        for(const auto& node_pair : components_nodes[i]) {
+            cout << node_pair.first << " ";
+        }
+        cout << endl;
+    }
+
     // After grouping nodes by component:
     cout << "\nNodes by component:" << endl;
     for(int i = 0; i < components_nodes.size(); i++) {
@@ -286,16 +301,19 @@ SharedModelState* init_shared_model_state(
 
                 // Store invariants
                 int invariants_start = current_invariant_index;
+                cout << "Processing invariants for node " << node_id
+                     << " starting at index " << invariants_start << endl;
+
                 for(int i = 0; i < current_node->invariants.size; i++) {
                     const constraint& inv = current_node->invariants.store[i];
-                    printf("Processing invariant %d for node %d\n", i, node_id);
+                    cout << "  Adding invariant " << i << " at index "
+                         << current_invariant_index << endl;
 
                     if(inv.uses_variable) {
-                        printf("Creating guard for node %d with variable ID %d\n",
-       node_id, inv.variable_id);
+                        cout << "    Variable-based guard for var_id " << inv.variable_id << endl;
                         host_invariants.push_back(create_variable_guard(inv));
-
                     } else {
+                        cout << "    Value-based guard" << endl;
                         expr* device_value = copy_expression_to_device(inv.value);
                         expr* device_expression = copy_expression_to_device(inv.expression);
                         host_invariants.push_back(GuardInfo(
