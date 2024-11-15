@@ -23,7 +23,7 @@
 int main()
 {
     // Hardcoded path to the XML file
-    std::string filename = "../automata_parser/XmlFiles/UppaalBehaviorTest2.xml";
+    std::string filename = "../automata_parser/XmlFiles/fischermulti.xml";
     string query1 = "c2.g3";
     string query2 = "c2.g4";
     std::unordered_set<std::string>* query_set = new std::unordered_set<std::string>();
@@ -31,6 +31,8 @@ int main()
     query_set->insert(query2);
 
     abstract_parser* parser = instantiate_parser(filename);
+
+    std::cout << "Test after instantiate_parser" << std::endl;
 
     network model = parser->parse(filename);
     std::cout << "Parsing successful. Network details:" << std::endl;

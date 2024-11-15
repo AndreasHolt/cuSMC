@@ -445,6 +445,7 @@ SharedModelState* init_shared_model_state(
     // Create and copy SharedModelState
     SharedModelState host_model{
         static_cast<int>(components_nodes.size()),
+        max_nodes_per_component,
         device_component_sizes,
         device_nodes,
         device_edges,

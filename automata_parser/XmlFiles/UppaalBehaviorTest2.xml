@@ -21,6 +21,7 @@ int l = 1;</declaration>
 		</location>
 		<location id="id1" x="17" y="-110">
 			<name x="7" y="-144">g2</name>
+			<label kind="invariant" x="7" y="-93">x &lt;=11</label>
 		</location>
 		<location id="id2" x="17" y="-17">
 			<name x="7" y="-51">g3</name>

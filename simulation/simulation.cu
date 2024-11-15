@@ -7,7 +7,7 @@
 #include "state/SharedRunState.cuh"
 
 #define NUM_RUNS 6
-#define TIME_BOUND 100.0
+#define TIME_BOUND 20.0
 
 #define MAX_VARIABLES 8
 
@@ -40,6 +40,90 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
     printf("Warning: Non-literal expression (op=%d), using value directly\n",
            e->operand);
     return e->value;
+}
+
+
+__device__ void take_transition(ComponentState* my_state,
+                              SharedBlockMemory* shared,
+                              SharedModelState* model,
+                              BlockSimulationState* block_state) {
+    if(my_state->num_enabled_edges == 0) {
+        printf("Thread %d: No enabled edges to take\n", threadIdx.x);
+        return;
+    }
+
+    // Select random edge from enabled ones
+    int selected_idx;
+    if(my_state->num_enabled_edges == 1) {
+        selected_idx = my_state->enabled_edges[0];
+        printf("Thread %d: Only one enabled edge (%d), selecting it\n",
+               threadIdx.x, selected_idx);
+    } else {
+        // Random selection between enabled edges
+        float rand = curand_uniform(block_state->random);
+        selected_idx = my_state->enabled_edges[(int)(rand * my_state->num_enabled_edges)];
+        printf("Thread %d: Randomly selected edge %d from %d enabled edges (rand=%f)\n",
+               threadIdx.x, selected_idx, my_state->num_enabled_edges, rand);
+    }
+
+    // Get the selected edge
+    const EdgeInfo& edge = model->edges[my_state->current_node->first_edge_index + selected_idx];
+    printf("Thread %d: Taking transition from node %d to node %d\n",
+           threadIdx.x, my_state->current_node->id, edge.dest_node_id);
+
+    // Apply updates if any
+    for(int i = 0; i < edge.num_updates; i++) {
+        const UpdateInfo& update = model->updates[edge.updates_start_index + i];
+        int var_id = update.variable_id;
+
+        // Evaluate update expression
+        double new_value = evaluate_expression(update.expression, block_state);
+
+        printf("Thread %d: Update %d - Setting var_%d (%s) from %f to %f\n",
+               threadIdx.x, i, var_id,
+               update.kind == VariableKind::CLOCK ? "clock" : "int",
+               shared->variables[var_id].value,
+               new_value);
+
+        shared->variables[var_id].value = new_value;
+        shared->variables[var_id].last_writer = my_state->component_id;
+    }
+
+    // Find destination node info
+    // First find node in the same level that matches destination ID
+    printf("Thread %d: Searching for destination node %d (current level=%d)\n",
+           threadIdx.x, edge.dest_node_id, my_state->current_node->level);
+
+    const NodeInfo* dest_node = nullptr;
+    // Search through all level slots
+    for(int level = 0; level < model->max_nodes_per_component; level++) { // TODO: Optimize this later (no pre-mature optimization for now)
+        int level_start = level * model->num_components;
+        printf("Thread %d: Checking level %d starting at index %d\n",
+               threadIdx.x, level, level_start);
+
+        for(int i = 0; i < model->num_components; i++) {
+            const NodeInfo& node = model->nodes[level_start + i];
+            printf("Thread %d:   Checking node id=%d\n", threadIdx.x, node.id);
+            if(node.id == edge.dest_node_id) {
+                dest_node = &node;
+                printf("Thread %d: Found destination node at level %d, index %d\n",
+                       threadIdx.x, level, i);
+                break;
+            }
+        }
+        if(dest_node != nullptr) break;
+    }
+
+
+    if(dest_node == nullptr) {
+        printf("Thread %d: ERROR - Could not find destination node %d!\n",
+               threadIdx.x, edge.dest_node_id);
+        return;
+    }
+
+    // Update current node
+    my_state->current_node = dest_node;
+    printf("Thread %d: Moved to new node %d\n", threadIdx.x, dest_node->id);
 }
 
 __device__ bool check_edge_enabled(const EdgeInfo& edge,
@@ -315,18 +399,26 @@ __device__ double find_minimum_delay(
     // Remember who won and check edges only for winner
     bool is_race_winner = false;
     if(threadIdx.x < num_components) {  // Only check for actual components
-        is_race_winner = (min_delay < DBL_MAX &&
-                         component_indices[0] == my_state->component_id);
+        // is_race_winner = (min_delay < DBL_MAX &&
+        //                  component_indices[0] == my_state->component_id);
+        // if(is_race_winner) {
+        //     printf("\nThread %d (component %d) won race with delay %f\n",
+        //            threadIdx.x, my_state->component_id, min_delay);
+        // }
+
+        bool is_race_winner = (min_delay < DBL_MAX &&
+                      component_indices[0] == my_state->component_id);
+
         if(is_race_winner) {
-            printf("\nThread %d (component %d) won race with delay %f\n",
-                   threadIdx.x, my_state->component_id, min_delay);
+            check_enabled_edges(my_state, shared, model, block_state, is_race_winner);
+            take_transition(my_state, shared, model, block_state);  // Add this line
         }
     }
 
     // Check enabled edges for winning component
-    if(threadIdx.x < num_components) {  // Only process for actual components
-        check_enabled_edges(my_state, shared, model, block_state, is_race_winner);
-    }
+    // if(threadIdx.x < num_components) {  // Only process for actual components
+    //     check_enabled_edges(my_state, shared, model, block_state, is_race_winner);
+    // }
     __syncthreads();
 
     return min_delay;

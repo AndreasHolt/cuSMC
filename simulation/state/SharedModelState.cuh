@@ -159,6 +159,7 @@ struct NodeInfo {
 
 struct SharedModelState {
     const int num_components;
+    const int max_nodes_per_component;
     const int* component_sizes;
     const NodeInfo* nodes;
     const EdgeInfo* edges;
@@ -169,6 +170,7 @@ struct SharedModelState {
     // Default constructor
     CPU GPU SharedModelState() :
         num_components(0),
+        max_nodes_per_component(0),
         component_sizes(nullptr),
         nodes(nullptr),
         edges(nullptr),
@@ -177,10 +179,11 @@ struct SharedModelState {
         invariants(nullptr) {}
 
     CPU GPU SharedModelState(
-        int nc, const int* cs,
+        const int nc, const int mnpc, const int* cs,
         const NodeInfo* n, const EdgeInfo* e,
         const GuardInfo* g, const UpdateInfo* u, const GuardInfo* i) :
             num_components(nc),
+            max_nodes_per_component(mnpc),
             component_sizes(cs),
             nodes(n),
             edges(e),
