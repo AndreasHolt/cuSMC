@@ -44,8 +44,6 @@ add_executable(CudaIntro main.cu
         simulation/state/SharedModelState.cuh
         main.cu
         main.cuh
-        simulation/state/aos.cu
-        simulation/state/aos.cuh
         simulation/state/SharedRunState.cu
         simulation/state/SharedRunState.cuh
         automata_parser/VariableUsageVisitor.cpp

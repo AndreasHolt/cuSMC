@@ -421,6 +421,7 @@ SharedModelState* init_shared_model_state(
         cout << "  Uses variable: " << inv.uses_variable;
         if(inv.uses_variable) {
             cout << ", var_id: " << inv.var_info.variable_id;
+            cout << ", initial_value: " << inv.var_info.initial_value;
         }
         cout << endl;
     }

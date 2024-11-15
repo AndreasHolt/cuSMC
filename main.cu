@@ -20,10 +20,18 @@
 
 #include "simulation/simulation.cuh"
 
+VariableKind* createKindArray(const std::unordered_map<int, VariableTrackingVisitor::VariableUsage>& registry) {
+    VariableKind* kinds = new VariableKind[registry.size()];
+    for(int i = 0; i < registry.size(); i++) {
+        kinds[i] = registry.at(i).kind;
+    }
+    return kinds;
+}
+
 int main()
 {
     // Hardcoded path to the XML file
-    std::string filename = "../automata_parser/XmlFiles/fischermulti.xml";
+    std::string filename = "../automata_parser/XmlFiles/UppaalBehaviorTest3.xml";
     string query1 = "c2.g3";
     string query2 = "c2.g4";
     std::unordered_set<std::string>* query_set = new std::unordered_set<std::string>();
@@ -76,6 +84,19 @@ int main()
     VariableTrackingVisitor var_tracker;
     var_tracker.visit(&model);
     var_tracker.print_variable_usage();
+    auto registry = var_tracker.get_variable_registry();
+
+    VariableKind* kinds = createKindArray(registry);
+    int num_vars = registry.size();
+    // Print kind 0
+    for(int i = 0; i < registry.size(); i++) {
+        printf("Kind %d: %d\n", i, kinds[i]);
+    }
+
+
+
+
+
 
     cout << "test" << endl;
 
@@ -99,7 +120,7 @@ int main()
     // SharedModelState* state = init_shared_model_state(&model, *optimizer.get_node_subsystems_map(), *properties.node_edge_map, optimizer.get_node_map(), properties.variable_names, static_cast<const uppaal_xml_parser*>(parser));
     cout << "test" << endl;
 
-    sim.run_statistical_model_checking(state, 0.05, 0.01);
+    sim.run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars);
 
 
     if (VERBOSE) {

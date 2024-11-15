@@ -247,11 +247,13 @@ __device__ void compute_possible_delay(
     __syncthreads();
 
     // Debug current variable values
-    printf("Thread %d: Current variable values:\n", threadIdx.x);
-    for(int i = 0; i < MAX_VARIABLES; i++) {
-        printf("  var[%d] = %f (rate=%d)\n", i,
-               shared->variables[i].value,
-               shared->variables[i].rate);
+    if(threadIdx.x == 0) {
+        printf("Thread %d: Current variable values:\n", threadIdx.x);
+        for(int i = 0; i < MAX_VARIABLES; i++) {
+            printf("  var[%d] = %f (rate=%d)\n", i,
+                   shared->variables[i].value,
+                   shared->variables[i].rate);
+        }
     }
 
 
@@ -449,10 +451,15 @@ int get_total_runs(float confidence, float precision) {
 
 
 __global__ void simulation_kernel(SharedModelState* model, bool* results,
-                                int runs_per_block, float time_bound) {
-    printf("Starting kernel: block=%d, thread=%d\n",
-           blockIdx.x, threadIdx.x);
+                                int runs_per_block, float time_bound, VariableKind* kinds, int num_vars) {
+    if(threadIdx.x == 0) {
+        printf("Starting kernel: block=%d, thread=%d\n",
+               blockIdx.x, threadIdx.x);
+    }
     CHECK_ERROR("kernel start");
+    if(threadIdx.x == 0) {
+        printf("Number of variables: %d\n", num_vars);
+    }
 
     // Verify model pointer
     if(model == nullptr) {
@@ -485,7 +492,7 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
             shared_mem.variables[i].last_writer = -1;
         }
 
-        // Initialize variables from all invariants in model
+        // For debug: print all variables and their initial values. TODO: remove later
         if(threadIdx.x == 0) {
             printf("\nInitializing variables from model invariants:\n");
             for(int comp = 0; comp < model->num_components; comp++) {
@@ -514,8 +521,10 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
     CHECK_ERROR("after shared memory declaration");
 
     // Debug model access
-    printf("Thread %d: Attempting to access model, num_components=%d\n",
-           threadIdx.x, model->num_components);
+    if(threadIdx.x == 0) {
+        printf("Thread %d: Attempting to access model, num_components=%d\n",
+               threadIdx.x, model->num_components);
+    }
     CHECK_ERROR("after model access");
 
     // Setup block state
@@ -524,7 +533,9 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
     block_state.shared = &shared_mem;
     block_state.my_component = &components[threadIdx.x];
 
-    printf("Thread %d: Block state setup complete\n", threadIdx.x);
+    if(threadIdx.x == 0) {
+        printf("Thread %d: Block state setup complete\n", threadIdx.x);
+    }
     CHECK_ERROR("after block state setup");
 
     // Initialize RNG
@@ -541,6 +552,14 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
     if (threadIdx.x == 0) {
         printf("Block %d: Initializing shared memory\n", blockIdx.x);
         SharedBlockMemory::init(&shared_mem, sim_id);
+
+        for (int i = 0; i < num_vars; i++) {
+            printf("Setting variable %d to kind %d\n", i, kinds[i]);
+            if(kinds[i] == VariableKind::CLOCK) {
+                shared_mem.variables[i].kind = VariableKind::CLOCK;
+
+            }
+        }
     }
     __syncthreads();
     CHECK_ERROR("after shared memory init");
@@ -596,7 +615,8 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
 
 
 
-void simulation::run_statistical_model_checking(SharedModelState* model, float confidence, float precision) {
+void simulation::run_statistical_model_checking(SharedModelState* model, float confidence, float precision, VariableKind* kinds, int num_vars) {
+
 
    int total_runs = 1;
    cout << "total_runs = " << total_runs << endl;
@@ -779,10 +799,24 @@ if(host_model.invariants != nullptr) {
        cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
    }
 
+    VariableKind* d_kinds;
+    error = cudaMalloc(&d_kinds, num_vars * sizeof(VariableKind));  // Assuming MAX_VARIABLES is defined
+    if(error != cudaSuccess) {
+        cout << "CUDA malloc error for kinds array: " << cudaGetErrorString(error) << endl;
+        return;
+    }
+
+    error = cudaMemcpy(d_kinds, kinds, num_vars * sizeof(VariableKind), cudaMemcpyHostToDevice);
+    if(error != cudaSuccess) {
+        cout << "Error copying kinds array: " << cudaGetErrorString(error) << endl;
+        cudaFree(d_kinds);
+        return;
+    }
+
    cout << "Launching kernel..." << endl;
    // Launch kernel
    simulation_kernel<<<num_blocks, threads_per_block>>>(
-       model, device_results, runs_per_block, TIME_BOUND);
+       model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars);
 
    // Check for launch error
    error = cudaGetLastError();
@@ -803,6 +837,7 @@ if(host_model.invariants != nullptr) {
    cout << "Kernel completed successfully" << endl;
 
    // Cleanup
+   cudaFree(d_kinds);
    cudaFree(device_results);
 }
 
