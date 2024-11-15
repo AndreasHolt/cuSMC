@@ -101,6 +101,12 @@ SharedModelState* init_shared_model_state(
     const std::unordered_map<int, VariableTrackingVisitor::VariableUsage>& variable_registry,
     const abstract_parser* parser)
 {
+    cout << "\nInitializing SharedModelState:" << endl;
+    cout << "Component mapping:" << endl;
+    for(const auto& pair : node_subsystems_map) {
+        cout << "  Node " << pair.first << " -> Component " << pair.second << endl;
+    }
+
     // First organize nodes by component
     std::vector<std::vector<std::pair<int, const std::list<edge>*>>> components_nodes;
     int max_component_id = -1;
@@ -117,6 +123,27 @@ SharedModelState* init_shared_model_state(
         const std::list<edge>& edges = pair.second;
         int component_id = node_subsystems_map.at(node_id);
         components_nodes[component_id].push_back({node_id, &edges});
+    }
+
+    // After grouping nodes by component:
+    cout << "\nNodes by component:" << endl;
+    for(int i = 0; i < components_nodes.size(); i++) {
+        cout << "Component " << i << " has " << components_nodes[i].size() << " nodes:" << endl;
+        for(const auto& node_pair : components_nodes[i]) {
+            node* current_node = node_map.at(node_pair.first);
+            cout << "  Node " << node_pair.first
+                 << " with " << current_node->invariants.size << " invariants" << endl;
+
+            // Print invariant details
+            for(int j = 0; j < current_node->invariants.size; j++) {
+                const constraint& inv = current_node->invariants.store[j];
+                cout << "    Invariant " << j << ": uses_variable=" << inv.uses_variable;
+                if(inv.uses_variable) {
+                    cout << ", var_id=" << inv.variable_id;
+                }
+                cout << endl;
+            }
+        }
     }
 
     // Find max nodes per component for array sizing
@@ -362,6 +389,24 @@ SharedModelState* init_shared_model_state(
     printf("DEBUG: About to copy guards to device, first guard expr=%p\n",
        static_cast<const void*>(host_guards[0].expression));
 
+    // Before copying to device
+    cout << "\nFinal arrays before device copy:" << endl;
+    cout << "Nodes:" << endl;
+    for(const auto& node : host_nodes) {
+        cout << "  ID: " << node.id
+             << ", invariants: " << node.num_invariants
+             << " starting at " << node.first_invariant_index << endl;
+    }
+
+    cout << "Invariants:" << endl;
+    for(const auto& inv : host_invariants) {
+        cout << "  Uses variable: " << inv.uses_variable;
+        if(inv.uses_variable) {
+            cout << ", var_id: " << inv.var_info.variable_id;
+        }
+        cout << endl;
+    }
+
     // Copy everything to device
     cudaMemcpy(device_nodes, host_nodes.data(),
                total_node_slots * sizeof(NodeInfo),
@@ -394,6 +439,8 @@ SharedModelState* init_shared_model_state(
     cudaMalloc(&device_model, sizeof(SharedModelState));
     cudaMemcpy(device_model, &host_model, sizeof(SharedModelState),
                cudaMemcpyHostToDevice);
+
+
 
     return device_model;
 }

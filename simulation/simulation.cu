@@ -505,6 +505,7 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
 
 
 void simulation::run_statistical_model_checking(SharedModelState* model, float confidence, float precision) {
+
    int total_runs = 1;
    cout << "total_runs = " << total_runs << endl;
 
@@ -521,6 +522,8 @@ void simulation::run_statistical_model_checking(SharedModelState* model, float c
        cout << "Error getting device properties: " << cudaGetErrorString(error) << endl;
        return;
    }
+
+
 
    // Adjust threads to be multiple of warp size
    int warp_size = deviceProp.warpSize;
@@ -585,7 +588,65 @@ void simulation::run_statistical_model_checking(SharedModelState* model, float c
        return;
    }
 
-   cout << "Model verified accessible with " << host_model.num_components << " components" << endl;
+    cout << "Model verified accessible with " << host_model.num_components << " components" << endl;
+
+// Add verification here with more safety checks
+cout << "\nVerifying model transfer:" << endl;
+cout << "Model contents:" << endl;
+cout << "  nodes pointer: " << host_model.nodes << endl;
+cout << "  invariants pointer: " << host_model.invariants << endl;
+cout << "  num_components: " << host_model.num_components << endl;
+
+if (host_model.nodes == nullptr) {
+    cout << "Error: Nodes array is null" << endl;
+    cudaFree(device_results);
+    return;
+}
+
+// Try to read just the pointer first
+void* nodes_ptr;
+error = cudaMemcpy(&nodes_ptr, &(model->nodes), sizeof(void*), cudaMemcpyDeviceToHost);
+if(error != cudaSuccess) {
+    cout << "Error reading nodes pointer: " << cudaGetErrorString(error) << endl;
+    cudaFree(device_results);
+    return;
+}
+cout << "Nodes pointer verification: " << nodes_ptr << endl;
+
+// Now try to read one node
+NodeInfo test_node;
+error = cudaMemcpy(&test_node, host_model.nodes, sizeof(NodeInfo), cudaMemcpyDeviceToHost);
+if(error != cudaSuccess) {
+    cout << "Error reading node: " << cudaGetErrorString(error) << endl;
+    cudaFree(device_results);
+    return;
+}
+cout << "First node verification:" << endl
+     << "  ID: " << test_node.id << endl
+     << "  First invariant index: " << test_node.first_invariant_index << endl
+     << "  Num invariants: " << test_node.num_invariants << endl;
+
+// Only check invariants if we have a valid pointer
+if(host_model.invariants != nullptr) {
+    cout << "Attempting to read invariant..." << endl;
+    GuardInfo test_guard;
+    error = cudaMemcpy(&test_guard, host_model.invariants, sizeof(GuardInfo),
+                       cudaMemcpyDeviceToHost);
+    if(error != cudaSuccess) {
+        cout << "Error reading invariant: " << cudaGetErrorString(error) << endl;
+        cudaFree(device_results);
+        return;
+    }
+    cout << "First invariant verification:" << endl
+         << "  Uses variable: " << test_guard.uses_variable << endl
+         << "  Variable ID: " << (test_guard.uses_variable ?
+                                 test_guard.var_info.variable_id : -1) << endl;
+} else {
+    cout << "No invariants pointer available" << endl;
+}
+
+
+
 
    // Check each kernel parameter
    cout << "Kernel parameter validation:" << endl;
