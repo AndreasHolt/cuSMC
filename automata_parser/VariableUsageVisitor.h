@@ -322,6 +322,7 @@ public:
             if(var.template_name.empty()) {
                 print_variable(pair.first, var);
             }
+
         }
 
         // Print locals grouped by template

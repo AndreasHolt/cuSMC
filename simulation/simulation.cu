@@ -8,12 +8,7 @@
 
 #define NUM_RUNS 6
 #define TIME_BOUND 20.0
-
 #define MAX_VARIABLES 8
-
-
-// Et array af locations for et specifikt component
-// En funktion der mapper en værdi i det array til den relevante node
 
 __device__ double evaluate_expression(const expr* e, BlockSimulationState* block_state) {
     if(e == nullptr) {
@@ -227,7 +222,7 @@ __device__ void compute_possible_delay(
     ComponentState* my_state,
     SharedBlockMemory* shared,
     SharedModelState* model,
-    BlockSimulationState* block_state)
+    BlockSimulationState* block_state, int num_vars)
 {
     const NodeInfo& node = *my_state->current_node;
     printf("Thread %d: Processing node %d with %d invariants\n",
@@ -237,7 +232,7 @@ __device__ void compute_possible_delay(
     double max_delay = DBL_MAX;
     bool is_bounded = false;
     if(threadIdx.x == 0) {  // TODO: REMOVE
-        for(int i = 0; i < MAX_VARIABLES; i++) {
+        for(int i = 0; i < num_vars; i++) {
             if(shared->variables[i].kind == VariableKind::CLOCK) {
                 shared->variables[i].rate = 1;
             }
@@ -249,7 +244,7 @@ __device__ void compute_possible_delay(
     // Debug current variable values
     if(threadIdx.x == 0) {
         printf("Thread %d: Current variable values:\n", threadIdx.x);
-        for(int i = 0; i < MAX_VARIABLES; i++) {
+        for(int i = 0; i < num_vars; i++) {
             printf("  var[%d] = %f (rate=%d)\n", i,
                    shared->variables[i].value,
                    shared->variables[i].rate);
@@ -262,7 +257,7 @@ __device__ void compute_possible_delay(
 
         if(inv.uses_variable) {
             int var_id = inv.var_info.variable_id;
-            if(var_id >= MAX_VARIABLES) {
+            if(var_id >= num_vars) {
                 printf("Thread %d: Invalid variable ID %d\n", threadIdx.x, var_id);
                 continue;
             }
@@ -278,7 +273,7 @@ __device__ void compute_possible_delay(
             // Evaluate bound expression
             double bound = evaluate_expression(inv.expression, block_state);
             printf("Thread %d: Clock %d invariant: current=%f, bound=%f, rate=%d\n",
-                   threadIdx.x, var_id, current_val, bound, var.rate);
+                   threadIdx.x, var_id, current_val, bound, var.rate); // TODO: remove rate from var. Rates are dependent on the location
 
             // Only handle upper bounds
             if(inv.operand == constraint::less_c ||
@@ -491,7 +486,7 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
     }
 
 
-    if (threadIdx.x == 0) {
+    if (threadIdx.x == 0) { // TODO: remove. Double with the init function.
         // Initialize variables with default values
         for(int i = 0; i < MAX_VARIABLES; i++) {
             shared_mem.variables[i].value = 0.0;
@@ -516,7 +511,7 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
                            "    Initial value: %f\n",
                            i, inv.uses_variable,
                            inv.uses_variable ? inv.var_info.variable_id : -1,
-                           inv.uses_variable ? inv.var_info.initial_value : 0.0);
+                           inv.var_info.initial_value != 0.0 ? inv.var_info.initial_value : 0.0);
                 }
             }
         }
@@ -563,9 +558,12 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
 
         for (int i = 0; i < num_vars; i++) {
             printf("Setting variable %d to kind %d\n", i, kinds[i]);
+            shared_mem.variables[i].value = model->initial_var_values[i];
             if(kinds[i] == VariableKind::CLOCK) {
                 shared_mem.variables[i].kind = VariableKind::CLOCK;
-
+            }
+            else if(kinds[i] == VariableKind::INT) {
+                // Not sure whether we need this case yet
             }
         }
     }
@@ -595,7 +593,7 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
     while(shared_mem.global_time < time_bound) {
         printf("Thread %d: Time=%f\n", threadIdx.x, shared_mem.global_time);
 
-        compute_possible_delay(my_state, &shared_mem, model, &block_state);
+        compute_possible_delay(my_state, &shared_mem, model, &block_state, num_vars);
         CHECK_ERROR("after compute delay");
         __syncthreads();
 

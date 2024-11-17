@@ -28,6 +28,7 @@ VariableKind* createKindArray(const std::unordered_map<int, VariableTrackingVisi
     return kinds;
 }
 
+
 int main()
 {
     // Hardcoded path to the XML file
@@ -115,7 +116,7 @@ int main()
     *properties.node_edge_map,
     optimizer.get_node_map(),
     var_tracker.get_variable_registry(),
-    parser
+    parser, num_vars
     );
     // SharedModelState* state = init_shared_model_state(&model, *optimizer.get_node_subsystems_map(), *properties.node_edge_map, optimizer.get_node_map(), properties.variable_names, static_cast<const uppaal_xml_parser*>(parser));
     cout << "test" << endl;

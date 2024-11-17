@@ -166,6 +166,7 @@ struct SharedModelState {
     const GuardInfo* guards;
     const UpdateInfo* updates;
     const GuardInfo* invariants;
+    const int* initial_var_values;
 
     // Default constructor
     CPU GPU SharedModelState() :
@@ -176,12 +177,13 @@ struct SharedModelState {
         edges(nullptr),
         guards(nullptr),
         updates(nullptr),
-        invariants(nullptr) {}
+        invariants(nullptr),
+        initial_var_values(nullptr) {}
 
     CPU GPU SharedModelState(
         const int nc, const int mnpc, const int* cs,
         const NodeInfo* n, const EdgeInfo* e,
-        const GuardInfo* g, const UpdateInfo* u, const GuardInfo* i) :
+        const GuardInfo* g, const UpdateInfo* u, const GuardInfo* i, const int* iv) :
             num_components(nc),
             max_nodes_per_component(mnpc),
             component_sizes(cs),
@@ -189,7 +191,8 @@ struct SharedModelState {
             edges(e),
             guards(g),
             updates(u),
-            invariants(i) {}
+            invariants(i),
+            initial_var_values(iv) {}
 };
 
 
@@ -205,7 +208,7 @@ SharedModelState* init_shared_model_state(
     const std::unordered_map<int, std::list<edge>>& node_edge_map,
     const std::unordered_map<int, node*>& node_map,
     const std::unordered_map<int, VariableTrackingVisitor::VariableUsage>& variable_registry,
-    const abstract_parser* parser);
+    const abstract_parser* parser, const int num_vars);
 
 
 

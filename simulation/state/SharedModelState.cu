@@ -99,7 +99,7 @@ SharedModelState* init_shared_model_state(
     const std::unordered_map<int, std::list<edge>>& node_edge_map,
     const std::unordered_map<int, node*>& node_map,
     const std::unordered_map<int, VariableTrackingVisitor::VariableUsage>& variable_registry,
-    const abstract_parser* parser)
+    const abstract_parser* parser, const int num_vars)
 {
     cout << "\nInitializing SharedModelState:" << endl;
     cout << "Component mapping:" << endl;
@@ -178,6 +178,9 @@ SharedModelState* init_shared_model_state(
                components_nodes.size() * sizeof(int),
                cudaMemcpyHostToDevice);
 
+    std::vector<int> initial_values(num_vars);
+
+
     // Count total edges, guards, updates and invariants
     int total_edges = 0;
     int total_guards = 0;
@@ -228,43 +231,87 @@ SharedModelState* init_shared_model_state(
 
     // Helper function for creating variable-based guards
     auto create_variable_guard = [&](const constraint& guard) -> GuardInfo {
-        auto var_it = variable_registry.find(guard.variable_id);
-        if(var_it != variable_registry.end()) {
-            const auto& var_usage = var_it->second;
+   if(guard.uses_variable) {
+       // Handle direct variable reference (clocks)
+       auto var_it = variable_registry.find(guard.variable_id);
+       if(var_it != variable_registry.end()) {
+           const auto& var_usage = var_it->second;
 
-            // Get initial value from network/parser
-            double initial_value = 0.0;
-            for(int i = 0; i < cpu_network->variables.size; i++) {
-                if(cpu_network->variables.store[i].id == guard.variable_id) {
-                    initial_value = cpu_network->variables.store[i].value;
-                    break;
-                }
-            }
+           // Get initial value from network/parser
+           double initial_value = 0.0;
+           for(int i = 0; i < cpu_network->variables.size; i++) {
+               if(cpu_network->variables.store[i].id == guard.variable_id) {
+                   initial_value = cpu_network->variables.store[i].value;
 
-            VariableInfo var_info{
-                guard.variable_id,
-                var_usage.kind,
-                var_usage.name.c_str(),
-                initial_value // Initial value of variable
-            };
+                   initial_values[guard.variable_id] = initial_value; // Add to initial values array
+                   printf("Appending initial value %f for int variable %d\n", initial_value, guard.variable_id);
+                   printf("DEBUG: Initial value of clock variable %d is %f\n",
+                          guard.variable_id, initial_value);
+                   break;
+               }
+           }
 
-            expr* device_expression = copy_expression_to_device(guard.expression);
-            return GuardInfo(guard.operand, var_info, device_expression);
-        } else {
-            printf("Warning: Variable ID %d not found in registry\n", guard.variable_id);
-            char default_name[MAX_VAR_NAME_LENGTH];
-            snprintf(default_name, MAX_VAR_NAME_LENGTH, "var_%d", guard.variable_id);
+           VariableInfo var_info{
+               guard.variable_id,
+               var_usage.kind,
+               var_usage.name.c_str(),
+               initial_value
+           };
 
-            VariableInfo var_info{
-                guard.variable_id,
-                VariableKind::INT,  // Default to INT
-                default_name
-            };
+           expr* device_expression = copy_expression_to_device(guard.expression);
+           return GuardInfo(guard.operand, var_info, device_expression);
+       }
+   } else if(guard.value != nullptr &&
+             guard.value->operand == expr::clock_variable_ee) {
+       // Handle variable reference in expression (integers)
+       int var_id = guard.value->variable_id;
+       auto var_it = variable_registry.find(var_id);
+       if(var_it != variable_registry.end()) {
+           const auto& var_usage = var_it->second;
 
-            expr* device_expression = copy_expression_to_device(guard.expression);
-            return GuardInfo(guard.operand, var_info, device_expression);
-        }
-    };
+           // Get initial value from network
+           double initial_value = 0.0;
+           for(int i = 0; i < cpu_network->variables.size; i++) {
+               if(cpu_network->variables.store[i].id == var_id) {
+                   initial_value = cpu_network->variables.store[i].value;
+                   printf("Appending initial value %f for int variable %d\n", initial_value, var_id);
+                   initial_values[var_id] = initial_value; // Add to initial values array
+                   printf("DEBUG: Initial value of integer variable %d is %f\n",
+                          var_id, initial_value);
+                   break;
+               }
+           }
+
+
+           VariableInfo var_info{
+               var_id,
+               var_usage.kind,
+               var_usage.name.c_str(),
+               initial_value
+           };
+
+           expr* device_expression = copy_expression_to_device(guard.expression);
+           return GuardInfo(guard.operand, var_info, device_expression);
+       }
+   }
+
+   // Default case if no variable found
+   printf("Warning: Variable not found in registry\n");
+   char default_name[MAX_VAR_NAME_LENGTH];
+   snprintf(default_name, MAX_VAR_NAME_LENGTH, "var_unknown");
+
+   VariableInfo var_info{
+       -1,  // Invalid ID
+       VariableKind::INT,
+       default_name,
+       0.0  // Default value
+   };
+
+   expr* device_expression = copy_expression_to_device(guard.expression);
+   return GuardInfo(guard.operand, var_info, device_expression);
+};
+
+
 
     // Helper function for creating updates
     auto create_update = [&](const update& upd) -> UpdateInfo {
@@ -309,11 +356,15 @@ SharedModelState* init_shared_model_state(
                     cout << "  Adding invariant " << i << " at index "
                          << current_invariant_index << endl;
 
+                    // For invariants:
                     if(inv.uses_variable) {
                         cout << "    Variable-based guard for var_id " << inv.variable_id << endl;
                         host_invariants.push_back(create_variable_guard(inv));
+                    } else if(inv.value != nullptr && inv.value->operand == expr::clock_variable_ee) {
+                        cout << "    Value-based guard with integer variable " << inv.value->variable_id << endl;
+                        host_invariants.push_back(create_variable_guard(inv));  // Modified create_variable_guard will handle this
                     } else {
-                        cout << "    Value-based guard" << endl;
+                        cout << "    Non-variable value-based guard" << endl;
                         expr* device_value = copy_expression_to_device(inv.value);
                         expr* device_expression = copy_expression_to_device(inv.expression);
                         host_invariants.push_back(GuardInfo(
@@ -324,6 +375,7 @@ SharedModelState* init_shared_model_state(
                         ));
                     }
                     current_invariant_index++;
+
                 }
 
                 // Create node info
@@ -347,13 +399,17 @@ SharedModelState* init_shared_model_state(
                         const constraint& guard = e.guards.store[g];
 
                         if(guard.uses_variable) {
-
+                            cout << "    Direct variable guard" << endl;
                             host_guards.push_back(create_variable_guard(guard));
+                        } else if(guard.value != nullptr && guard.value->operand == expr::clock_variable_ee) {
+                            cout << "    Integer variable in expression" << endl;
+                            host_guards.push_back(create_variable_guard(guard));  // Modified create_variable_guard will handle this
                         } else {
+                            cout << "    Non-variable guard" << endl;
                             expr* device_value = copy_expression_to_device(guard.value);
                             expr* device_expression = copy_expression_to_device(guard.expression);
                             printf("DEBUG: Creating guard with expression ptr=%p\n",
-       static_cast<const void*>(device_expression));
+                                   static_cast<const void*>(device_expression));
                             host_guards.push_back(GuardInfo(
                                 guard.operand,
                                 false,
@@ -361,9 +417,10 @@ SharedModelState* init_shared_model_state(
                                 device_expression
                             ));
                             printf("DEBUG: Added guard, expression ptr=%p\n",
-       static_cast<const void*>(host_guards.back().expression));
+                                   static_cast<const void*>(host_guards.back().expression));
                         }
                         current_guard_index++;
+
                     }
 
                     // Store updates
@@ -443,6 +500,15 @@ SharedModelState* init_shared_model_state(
                total_invariants * sizeof(GuardInfo),
                cudaMemcpyHostToDevice);
 
+    // Copy initial values to device
+    int* device_initial_values;
+    cudaMalloc(&device_initial_values, num_vars * sizeof(int));
+    cudaMemcpy(device_initial_values, initial_values.data(),
+               num_vars * sizeof(int),
+               cudaMemcpyHostToDevice);
+
+
+
     // Create and copy SharedModelState
     SharedModelState host_model{
         static_cast<int>(components_nodes.size()),
@@ -452,7 +518,8 @@ SharedModelState* init_shared_model_state(
         device_edges,
         device_guards,
         device_updates,
-        device_invariants
+        device_invariants,
+        device_initial_values
     };
 
     SharedModelState* device_model;
