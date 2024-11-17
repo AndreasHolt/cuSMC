@@ -256,8 +256,6 @@ __device__ void compute_possible_delay(
         }
     }
 
-
-
     // Process invariants
     for(int i = 0; i < node.num_invariants; i++) {
         const GuardInfo& inv = model->invariants[node.first_invariant_index + i];
@@ -273,7 +271,7 @@ __device__ void compute_possible_delay(
             double current_val = var.value;
 
             // Set rate to 1 for clocks
-            if(inv.var_info.type == VariableKind::CLOCK) {
+            if(inv.var_info.type == VariableKind::CLOCK) { // TODO: fetch the rate from the model. Used for exponential distribution etc.
                 var.rate = 1;
             }
 
@@ -298,7 +296,7 @@ __device__ void compute_possible_delay(
                            threadIdx.x, time_to_bound);
 
                     if(time_to_bound >= 0) {
-                        max_delay = min(max_delay, time_to_bound);
+                        max_delay = min(max_delay, time_to_bound); // TODO: remove time_to_bound, as it is not part of the semantics
                         is_bounded = true;
                         printf("Thread %d: Updated max_delay to %f\n",
                                threadIdx.x, max_delay);
@@ -316,8 +314,18 @@ __device__ void compute_possible_delay(
         printf("Thread %d: Sampled delay %f in [%f, %f] (rand=%f)\n",
                threadIdx.x, my_state->next_delay, min_delay, max_delay, rand);
     } else {
-        printf("Thread %d: No delay bounds, using 1.0\n", threadIdx.x);
-        my_state->next_delay = 1.0;  // Default step if no bounds
+
+        double rate = 1.0; // Default rate if no rate is specified on the node
+        if(node.lambda != nullptr) {
+            rate = evaluate_expression(node.lambda, block_state);
+        }
+
+        // Sample from the exponential distribution
+        double rand = curand_uniform_double(block_state->random);
+        my_state->next_delay = -__log2f(rand) / rate; // Fastest log, but not as accurate. We consider it fine because we are doing statistical sampling
+        my_state->has_delay = true;
+        printf("Thread %d: No delay bounds, sampled %f using exponential distribution with rate %f\n", threadIdx.x, my_state->next_delay, rate);
+
         my_state->has_delay = true;
     }
 }
