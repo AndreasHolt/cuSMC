@@ -77,7 +77,7 @@ struct SharedBlockMemory {
         // Initialize variables explicitly
         for(int i = 0; i < Constants::MAX_VARIABLES; i++) {
             shared->variables[i].value = 0.0;
-            shared->variables[i].rate = 0;
+            shared->variables[i].rate = 1;
             shared->variables[i].kind = VariableKind::INT;
             shared->variables[i].last_writer = -1;
         }
