@@ -52,7 +52,7 @@ add_executable(CudaIntro main.cu
 
 
 # Enable separable compilation (optional, depends on your needs)
-set_target_properties(CudaIntro PROPERTIES CUDA_SEPARABLE_COMPILATION ON COMPILE_OPTIONS -G)
+set_target_properties(CudaIntro PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 # Add include directories if needed
 # target_include_directories(CudaIntro PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

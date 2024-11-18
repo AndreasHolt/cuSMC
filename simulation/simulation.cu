@@ -7,7 +7,7 @@
 #include "state/SharedRunState.cuh"
 
 #define NUM_RUNS 6
-#define TIME_BOUND 20.0
+#define TIME_BOUND 10.0
 #define MAX_VARIABLES 8
 
 __device__ double evaluate_expression(const expr* e, BlockSimulationState* block_state) {

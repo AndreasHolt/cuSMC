@@ -442,6 +442,7 @@ SharedModelState* init_shared_model_state(
                         e.updates.size,
                         updates_start
                     };
+                    printf("Creating edge on channel %d\n", e.channel);
                     host_edges.push_back(edge_info);
                     current_edge_index++;
                 }

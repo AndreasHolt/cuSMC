@@ -10,6 +10,7 @@
 #include "../../include/VariableTypes.h"
 #include "../../engine/Domain.h"
 #include "../../automata_parser/VariableUsageVisitor.h"
+#include <list>
 
 
 // struct SharedModelState {
