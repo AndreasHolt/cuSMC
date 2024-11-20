@@ -19,9 +19,7 @@ namespace Constants {
 
 }
 
-//class SharedRunState {
-//
-//};
+
 
 struct ComponentState {
     int component_id;
@@ -32,8 +30,6 @@ struct ComponentState {
     int num_enabled_edges;                  // Number of currently enabled edges
 };
 
-// This replaces both SharedSimState and SharedBlockMemory
-// Contains actual arrays instead of pointers since it will be in shared memory
 struct SharedBlockMemory {
     // Global simulation state
     double global_time;
@@ -91,42 +87,12 @@ struct SharedBlockMemory {
 
 };
 
-// This becomes simpler as it just points to everything needed
 struct BlockSimulationState {
     SharedModelState* model;          // Global memory
     SharedBlockMemory* shared;        // Shared memory
     ComponentState* my_component;      // Points to thread's component in shared memory
     curandState* random;              // Thread's RNG state
 };
-
-
-
-// ----------------------------------------------------------
-
-// struct ComponentStateOld {
-//     int current_node_id;     // Current node the component is in
-//     float* clock_values;     // Array of clock values for this component
-//     float next_delay;        // Pre-computed next delay
-//     int next_edge_index;     // Pre-computed next edge to take (-1 if none)
-//     bool committed;          // If in committed location
-//     bool urgent;             // If in urgent location
-// };
-//
-// struct SharedRunState {
-//     // These are in shared memory, one instance per block
-//     ComponentStateOld components[MAX_COMPONENTS];
-//     float global_time;       // Current simulation time
-//     float* shared_clocks;    // Shared clock values
-//
-//     // Methods for state management
-//     __device__ void init(const SharedModelState* model);
-//     __device__ void compute_delays(const SharedModelState* model);
-//     __device__ void advance_time(float time_delta);
-//     __device__ void take_transition(const SharedModelState* model, int component_id, int edge_index);
-// };
-//
-
-
 
 
 

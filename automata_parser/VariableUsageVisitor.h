@@ -24,11 +24,10 @@ public:
         VariableKind kind;
         std::string template_name;  // Which template this variable belongs to ("" for global)
         bool is_const;
-        std::unordered_set<int> used_in_nodes;  // Changed from vector to set
-        std::unordered_set<int> used_in_edges;  // Changed from vector to set
+        std::unordered_set<int> used_in_nodes;
+        std::unordered_set<int> used_in_edges;
         int rate;
 
-        // Add default constructor
         VariableUsage() :
             name(""),
             kind(VariableKind::INT),
@@ -36,7 +35,6 @@ public:
             is_const(false),
             rate(0) {}
 
-        // Keep existing constructor
         VariableUsage(const std::string& n, VariableKind k,
                      const std::string& t = "", bool c = false, int r = 0) :
             name(n),
@@ -63,10 +61,10 @@ private:
             auto it = variable_registry_.find(e->variable_id);
             if(it != variable_registry_.end()) {
                 if(current_node_id_ >= 0) {
-                    it->second.used_in_nodes.insert(current_node_id_);  // Changed from push_back to insert
+                    it->second.used_in_nodes.insert(current_node_id_);
                 }
                 if(current_edge_id_ >= 0) {
-                    it->second.used_in_edges.insert(current_edge_id_);  // Changed from push_back to insert
+                    it->second.used_in_edges.insert(current_edge_id_);
                 }
             }
         }
@@ -131,7 +129,7 @@ public:
 
         for(const auto& var : vars) {
             // std::string var_name = get_var_name_from_parser(var.id);
-            std::string var_name = "test";
+            std::string var_name = "test"; // Not really needed. Variable names are irrelevant, we just need the IDs
 
             register_variable(
                 var_name,
@@ -159,7 +157,7 @@ public:
             printf("Processing variable %d: id=%d, rate=%d\n",
                    i, var.id, var.rate);
 
-            // Temporary name until we implement proper name lookup
+            // Temporary name until we implement proper name lookup (if we want it for print/debugging purposes)
             std::string var_name = "var_" + std::to_string(var.id);
 
             int var_id = register_variable(
@@ -193,7 +191,7 @@ public:
             if(inv.uses_variable) {
                 auto it = variable_registry_.find(inv.variable_id);
                 if(it != variable_registry_.end()) {
-                    it->second.used_in_nodes.insert(n->id);  // Changed from push_back
+                    it->second.used_in_nodes.insert(n->id);
                 }
             }
 
@@ -221,7 +219,7 @@ public:
             if(guard.uses_variable) {
                 auto it = variable_registry_.find(guard.variable_id);
                 if(it != variable_registry_.end()) {
-                    it->second.used_in_edges.insert(current_edge_id_);  // Changed from push_back
+                    it->second.used_in_edges.insert(current_edge_id_);
                 }
             }
 
@@ -237,7 +235,7 @@ public:
 
             auto it = variable_registry_.find(upd.variable_id);
             if(it != variable_registry_.end()) {
-                it->second.used_in_edges.insert(current_edge_id_);  // Changed from push_back
+                it->second.used_in_edges.insert(current_edge_id_);
             }
 
             track_expr_variables(upd.expression);
@@ -254,10 +252,10 @@ public:
             auto it = variable_registry_.find(c->variable_id);
             if(it != variable_registry_.end()) {
                 if(current_node_id_ >= 0) {
-                    it->second.used_in_nodes.insert(current_node_id_);  // Changed from push_back
+                    it->second.used_in_nodes.insert(current_node_id_);
                 }
                 if(current_edge_id_ >= 0) {
-                    it->second.used_in_edges.insert(current_edge_id_);  // Changed from push_back
+                    it->second.used_in_edges.insert(current_edge_id_);
                 }
             }
         }
@@ -277,7 +275,7 @@ public:
         auto it = variable_registry_.find(u->variable_id);
         if(it != variable_registry_.end()) {
             if(current_edge_id_ >= 0) {
-                it->second.used_in_edges.insert(current_edge_id_);  // Changed from push_back
+                it->second.used_in_edges.insert(current_edge_id_);
             }
         }
         track_expr_variables(u->expression);
