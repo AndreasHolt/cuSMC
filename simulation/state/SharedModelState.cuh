@@ -107,7 +107,7 @@ struct UpdateInfo {
         expression(exp),
         kind(k) {}
 
-    // Keep old constructor for backward compatibility if needed
+    // Old constructor for backward compatibility (in case it breaks something)
     CPU GPU UpdateInfo(int vid, expr* exp) :
         variable_id(vid),
         expression(exp),

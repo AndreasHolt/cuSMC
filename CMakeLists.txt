@@ -34,8 +34,6 @@ add_executable(CudaIntro main.cu
         simulation/simulation.cu
         simulation/simulation.cuh
         main.cpp
-        simulation/data_structures.cu
-        simulation/data_structures.cuh
         network_optimization/domain_optimization_visitor.h
         network_optimization/domain_optimization_visitor.cpp
         network_optimization/visitor.cpp
