@@ -11,8 +11,10 @@
 #include <unordered_map>
 #include <string>
 #include "engine/Domain.h"
+#include <list>
 
-struct network_props {
+struct network_props
+{
     std::chrono::steady_clock::time_point pre_optimisation_start;
     std::chrono::steady_clock::time_point post_optimisation_start;
     std::unordered_map<int, std::string> *variable_names;
@@ -22,7 +24,7 @@ struct network_props {
     std::unordered_map<int, node *> node_map;
 
     // Our version
-    std::unordered_map<int, list<edge> > *node_edge_map;
+    std::unordered_map<int, std::list<edge>> *node_edge_map;
     std::list<int> *start_nodes;
     std::unordered_map<int, std::string> *template_names;
 };

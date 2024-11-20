@@ -4,7 +4,7 @@
 
 #include "SharedModelState.cuh"
 
-#include <iostream>
+
 
 #include "../../automata_parser/abstract_parser.h"
 

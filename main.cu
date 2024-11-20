@@ -39,7 +39,7 @@ int main()
     query_set->insert(query1);
     query_set->insert(query2);
 
-    abstract_parser* parser = instantiate_parser(filename);
+    abstract_parser* parser = new uppaal_xml_parser();
 
     std::cout << "Test after instantiate_parser" << std::endl;
 

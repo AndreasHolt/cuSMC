@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.18)  # Minimum version for CUDA support
 project(CudaIntro LANGUAGES CUDA CXX)   # Specify CUDA and C++ as the primary languages
 
-set(CMAKE_CUDA_STANDARD 17)              # Set the CUDA standard to C++17
-set(CMAKE_CXX_STANDARD 17)               # Set the C++ standard to C++17
+set(CMAKE_CUDA_STANDARD 20)              # Set the CUDA standard to C++17
+set(CMAKE_CXX_STANDARD 20)               # Set the C++ standard to C++17
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)     # Ensure that the specified standard is required
 set(CMAKE_CXX_STANDARD_REQUIRED ON)      # Ensure that the specified standard is required
 
@@ -13,21 +13,18 @@ add_executable(CudaIntro main.cu
         automata_parser/uppaal_xml_parser.cpp automata_parser/uppaal_xml_parser.h
         automata_parser/declaration_parser.h automata_parser/declaration_parser.cpp
         automata_parser/string_extractor.h automata_parser/string_extractor.cpp
-        automata_parser/pugixml.cpp automata_parser automata_parser/smacc_parser.cpp
+        automata_parser/pugixml.cpp automata_parser
         automata_parser/variable_expression_evaluator.cpp automata_parser/variable_expression_evaluator.h
 
-        # Engine
+        # engine
         engine/Domain.cu engine/Domain.h
         engine/model_oracle.cu engine/model_oracle.h
         engine/automata_engine.cu
-
 
         # Includes
         include/common_macros.h
         include/common_macros.h
         engine/interpreter.h
-        automata_parser/instantiate_parser.cpp
-        automata_parser/instantiate_parser.h
         simulation/simulation_config.h
         output.h
         simulation/simulation_file_paths.h
