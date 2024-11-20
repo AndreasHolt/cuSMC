@@ -604,12 +604,6 @@ __host__ network uppaal_xml_parser::parse_xml(const char* file_path)
     xml_document doc;
     declaration_parser dp;
 
-    //Check that it is a xml file
-    if (auto file = std::string(file_path); !file.ends_with(".xml"))
-    {
-        THROW_LINE("WRONG FILE EXTENSION")
-    }
-
     // load the XML file
     if (!doc.load_file(file_path))
     {

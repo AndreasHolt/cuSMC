@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.18)  # Minimum version for CUDA support
 project(CudaIntro LANGUAGES CUDA CXX)   # Specify CUDA and C++ as the primary languages
 
-set(CMAKE_CUDA_STANDARD 20)              # Set the CUDA standard to C++17
-set(CMAKE_CXX_STANDARD 20)               # Set the C++ standard to C++17
+set(CMAKE_CUDA_STANDARD 17)              # Set the CUDA standard to C++17
+set(CMAKE_CXX_STANDARD 17)               # Set the C++ standard to C++17
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)     # Ensure that the specified standard is required
 set(CMAKE_CXX_STANDARD_REQUIRED ON)      # Ensure that the specified standard is required
 
@@ -41,7 +41,6 @@ add_executable(CudaIntro main.cu
         main.cuh
         simulation/state/SharedRunState.cu
         simulation/state/SharedRunState.cuh
-        automata_parser/VariableUsageVisitor.cpp
         automata_parser/VariableUsageVisitor.h
         include/VariableTypes.h)
 

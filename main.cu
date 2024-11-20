@@ -8,7 +8,6 @@
 #include "engine/Domain.h"
 #include "automata_parser/uppaal_xml_parser.h"
 #include <iostream>
-#include "automata_parser/instantiate_parser.h"
 #include "output.h"
 #include "network_optimization/domain_optimization_visitor.h"
 #include "network_optimization/pn_compile_visitor.h"
@@ -85,7 +84,6 @@ int main()
     for(int i = 0; i < registry.size(); i++) {
         printf("Kind %d: %d\n", i, kinds[i]);
     }
-
 
     SharedModelState* state = init_shared_model_state(
     &model,  // cpu_network

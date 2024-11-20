@@ -21,7 +21,7 @@ class VariableTrackingVisitor : public visitor {
 public:
     struct VariableUsage {
         std::string name;
-        VariableKind kind;
+        VariableKind kind; // INT | CLOCK
         std::string template_name;  // Which template this variable belongs to ("" for global)
         bool is_const;
         std::unordered_set<int> used_in_nodes;

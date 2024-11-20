@@ -231,13 +231,7 @@ __device__ void compute_possible_delay(
     double min_delay = 0.0;
     double max_delay = DBL_MAX;
     bool is_bounded = false;
-    if(threadIdx.x == 0) {  // TODO: REMOVE
-        for(int i = 0; i < num_vars; i++) {
-            if(shared->variables[i].kind == VariableKind::CLOCK) {
-                shared->variables[i].rate = 1;
-            }
-        }
-    }
+
 
     __syncthreads();
 
