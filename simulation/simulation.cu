@@ -16,26 +16,136 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
         return 0.0;
     }
 
-    // Handle literals directly
-    if(e->operand == expr::literal_ee) {
-        return e->value;
-    }
+    // For pn_compiled_ee, we should evaluate the left branch
+    if(e->operand == expr::pn_compiled_ee) {
+        printf("DEBUG: Evaluating Polish notation expression of length %d\n",
+               e->length);
 
-    // Handle variable references
-    if(e->operand == expr::clock_variable_ee) {
-        if(e->variable_id < MAX_VARIABLES) {
-            return block_state->shared->variables[e->variable_id].value;
+        // Create a stack for evaluation
+        __shared__ double value_stack[64];  // TODO: We can probably get the exact number from the optimizer, and pass it in as a parameter
+        int stack_top = 0;
+
+        // Evaluate the Polish notation expression
+        for(int i = 1; i < e->length; i++) {  // Start from 1 to skip the header
+            const expr& current = e[i];
+
+            switch(current.operand) {
+                case expr::literal_ee:
+                    value_stack[stack_top++] = current.value; // stack_top++ increments the stack_top after adding the value
+                break;
+
+                case expr::clock_variable_ee:
+                    value_stack[stack_top++] =
+                        block_state->shared->variables[current.variable_id].value;
+                break;
+
+                case expr::plus_ee: {
+                    double b = value_stack[--stack_top]; // --stack_top first decrements then accesses
+                    double a = value_stack[--stack_top];
+                    value_stack[stack_top++] = a + b;
+                    break;
+                }
+
+                case expr::minus_ee: {
+                    double b = value_stack[--stack_top];
+                    double a = value_stack[--stack_top];
+                    value_stack[stack_top++] = a - b;
+                    break;
+                }
+
+                case expr::multiply_ee: {
+                    double b = value_stack[--stack_top];
+                    double a = value_stack[--stack_top];
+                    value_stack[stack_top++] = a * b;
+                    break;
+                }
+
+                // TODO: Add more operators as needed
+
+                default:
+                    printf("Warning: Unknown operator %d in PN expression\n",
+                           current.operand);
+                break;
+            }
         }
-        printf("Warning: Invalid variable ID %d in expression\n", e->variable_id);
-        return 0.0;
+
+        // Result should be on top of stack
+        return value_stack[stack_top - 1];
     }
 
-    // Just return the raw value for now
-    // TODO: implement full expression evaluation later when basic timing works. We need to support variables i.e. x <= l, where l is not const
-    printf("Warning: Non-literal expression (op=%d), using value directly\n",
-           e->operand);
-    return e->value;
+
+    printf("DEBUG: Evaluating non-pn expression with operator %d\n", e->operand);
+
+    // Handling of expressions that are not PN
+    switch(e->operand) {
+        case expr::literal_ee:
+            return e->value;
+
+        case expr::clock_variable_ee: // Also used for variables that are INT, not just CLOCK
+            if(e->variable_id < MAX_VARIABLES) {
+                return block_state->shared->variables[e->variable_id].value;
+            }
+            printf("Warning: Invalid variable ID %d in expression\n", e->variable_id);
+            return 0.0;
+
+        case expr::plus_ee:
+            // For Polish notation: evaluate children then add
+            if(e->left && e->right) {
+                double left_val = evaluate_expression(e->left, block_state);
+                double right_val = evaluate_expression(e->right, block_state);
+                printf("DEBUG: Plus operation: %f + %f = %f\n",
+                       left_val, right_val, left_val + right_val);
+                return left_val + right_val;
+            }
+            break;
+
+        case expr::minus_ee:
+            if(e->left && e->right) {
+                double left_val = evaluate_expression(e->left, block_state);
+                double right_val = evaluate_expression(e->right, block_state);
+                return left_val - right_val;
+            }
+            break;
+
+        case expr::multiply_ee:
+            if(e->left && e->right) {
+                double left_val = evaluate_expression(e->left, block_state);
+                double right_val = evaluate_expression(e->right, block_state);
+                return left_val * right_val;
+            }
+            break;
+
+        case expr::division_ee:
+            if(e->left && e->right) {
+                double left_val = evaluate_expression(e->left, block_state);
+                double right_val = evaluate_expression(e->right, block_state);
+                if(right_val == 0.0) {
+                    printf("Warning: Division by zero\n");
+                    return 0.0;
+                }
+                return left_val / right_val;
+            }
+            break;
+
+        case expr::pn_compiled_ee:
+        case expr::pn_skips_ee:
+            // Acts as a goto or jump. Used for implementing conditional expressions (ternary)
+            // TODO: Implement this fully
+            if(e->left) {
+                return evaluate_expression(e->left, block_state);
+            }
+            break;
+
+        default:
+            printf("Warning: Unhandled operator %d in expression\n", e->operand);
+            break;
+    }
+
+    return 0.0;
 }
+
+
+
 
 
 __device__ void take_transition(ComponentState* my_state,
@@ -120,6 +230,7 @@ __device__ void take_transition(ComponentState* my_state,
     my_state->current_node = dest_node;
     printf("Thread %d: Moved to new node %d\n", threadIdx.x, dest_node->id);
 }
+
 
 __device__ bool check_edge_enabled(const EdgeInfo& edge,
                                  const SharedBlockMemory* shared,
@@ -410,7 +521,7 @@ __device__ double find_minimum_delay(
 
         if(is_race_winner) {
             check_enabled_edges(my_state, shared, model, block_state, is_race_winner);
-            take_transition(my_state, shared, model, block_state);  // Add this line
+            take_transition(my_state, shared, model, block_state);
         }
     }
 
@@ -422,30 +533,6 @@ __device__ double find_minimum_delay(
 
     return min_delay;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-int get_total_runs(float confidence, float precision) {
-    // confidence level = alpha, i.e. 0.05 for 95% confidence
-    // precision = epsilon, i.e. 0.01 for +-1% error
-
-    // int total_runs = (int)ceil(log(2.0/confidence)/log(2.0*precision*precision));
-    // int total_runs = static_cast<int>(ceil(log(2.0 / confidence) / log(2.0 * precision * precision)));
-    int total_runs = static_cast<size_t>(ceil((log(2.0) - log(confidence)) / (2*pow(precision, 2))));
-    return total_runs;
-}
-
-// TODO: what if we want to spawn 50 trains? How do we do that?
-
 
 __global__ void simulation_kernel(SharedModelState* model, bool* results,
                                 int runs_per_block, float time_bound, VariableKind* kinds, int num_vars) {
@@ -611,9 +698,6 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
 
     printf("Thread %d: Simulation complete\n", threadIdx.x);
 }
-
-
-
 
 void simulation::run_statistical_model_checking(SharedModelState* model, float confidence, float precision, VariableKind* kinds, int num_vars) {
 
@@ -839,74 +923,4 @@ if(host_model.invariants != nullptr) {
    // Cleanup
    cudaFree(d_kinds);
    cudaFree(device_results);
-}
-
-
-
-
-
-
-
-
-
-__global__ void findSmallestElementInArray(float *input, int input_length, float *result, int nblocks) {
-    int threadid = blockIdx.x * blockDim.x + threadIdx.x;
-    int nThreads = blockDim.x * nblocks;
-    for (int i = 0; i < ceil(log2f(nThreads)); i++) { //1
-        if (threadid % static_cast<int>(pow(2, i+1)==0)) {
-            int correspondant = min(static_cast<int>(threadid + pow(2, i)), input_length-1);
-            input[threadid] = min(input[threadid], input[correspondant]);
-        }
-    }
-    if (threadid == 0) {
-        *result = input[0];
-    }
-}
-
-// void testFunction () {
-//     float* h_a = new float[NUM_RUNS];
-//     srand( static_cast<unsigned>(time(NULL)));
-//     int upper = 3500;
-//     int lower = 1230;
-//     for (int i = 0; i < NUM_RUNS; i++) {
-//
-//         h_a[i] = rand() % (upper - lower) + lower;
-//         cout << h_a[i] << ", ";
-//     }
-//     cout << endl;
-//
-//     float* d_a;
-//     float d_result;
-//     cudaMalloc(&d_a, NUM_RUNS * sizeof(float));
-//
-//     cudaMemcpy(d_a, h_a, NUM_RUNS * sizeof(float), cudaMemcpyHostToDevice);
-//
-//     findSmallestElementInArray<<<1, 128>>>(d_a, NUM_RUNS, &d_result, 1); // 2 blocks (component size), 100 simulations but round up to 128
-//
-//     cudaMemcpy(h_a, d_a, NUM_RUNS * sizeof(float), cudaMemcpyDeviceToHost);
-//
-//     for (int i = 0; i < NUM_RUNS; i++) {
-//         cout << h_a[i] << ", ";
-//     }
-//     cout <<endl << "Result = " << d_result << endl;
-// }
-
-void simulation::runSimulation() {
-    // Problem with models, spawning new components Trains in train gate for example?
-    // componentSimulation<<<NUM_COMPONENTS, 128>>>(); // 2 blocks (component size), 100 simulations but round up to 128
-
-    // testFunction();
-
-    // Pick delays: implement delay function
-    // Find the smallest delay, and which index it has (to find component it belongs to)
-    // Apply the delay
-    // Pick a transition from the component that won: Pick according to the weights
-    // Check whether we need to synchronize with anything when taking this transition
-    // Take the transition
-
-    // We need the state such that we can describe the run afterwards. We add our delays to it.
-
-
-
-    cout << "test from run sim" << endl;
 }

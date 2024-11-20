@@ -84,6 +84,7 @@ int l = 8;
 			<target ref="id1"/>
 			<label kind="guard" x="-127" y="-85">x&lt;=10</label>
 			<label kind="synchronisation" x="-160" y="-72">lol!</label>
+			<label kind="assignment" x="-160" y="-55">x = 0, y = 0, l = (l + 10) * 2</label>
 		</transition>
 	</template>
 	<template>

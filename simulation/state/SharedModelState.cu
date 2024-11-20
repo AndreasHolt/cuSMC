@@ -26,7 +26,6 @@ void print_node_info(const node* n, const std::string& prefix = "") {
 // Add this before init_shared_model_state
 std::vector<expr*> allocated_expressions;  // Global to track allocations
 
-
 expr* copy_expression_to_device(const expr* host_expr) {
     printf("Copying expression with operand %d\n",
            host_expr ? host_expr->operand : -1);
@@ -42,6 +41,35 @@ expr* copy_expression_to_device(const expr* host_expr) {
         return nullptr;
     }
 
+    // Check if this is a Polish notation expression
+    if(host_expr->operand == expr::pn_compiled_ee) {
+        int array_size = host_expr->length;
+        printf("Copying Polish notation expression array of size %d\n", array_size);
+
+        // Allocate device memory for the entire array at once
+        expr* device_expr_array;
+        cudaMalloc(&device_expr_array, array_size * sizeof(expr));
+        allocated_expressions.push_back(device_expr_array);
+
+        // Copy the entire array
+        cudaMemcpy(device_expr_array, host_expr, array_size * sizeof(expr),
+                   cudaMemcpyHostToDevice);
+
+        printf("Copied Polish notation array to device at %p\n",
+               static_cast<void*>(device_expr_array));
+
+        // Verify first element
+        expr verify_expr;
+        cudaMemcpy(&verify_expr, device_expr_array, sizeof(expr),
+                   cudaMemcpyDeviceToHost);
+        printf("Verified first element - operand=%d, length=%d\n",
+               verify_expr.operand, verify_expr.length);
+
+        return device_expr_array;
+    }
+
+
+    // If it's not a PN expression, we need to handle it differently
     // Allocate device memory for this node
     expr* device_expr;
     cudaMalloc(&device_expr, sizeof(expr));

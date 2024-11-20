@@ -52,7 +52,6 @@ int main()
     simulation_config config = {};
 
     auto sim = simulation(parser);
-    sim.runSimulation();
 
     properties.node_edge_map = new std::unordered_map<int, std::list<edge>>(parser->get_node_edge_map());
     properties.start_nodes = new std::list<int>(parser->get_start_nodes());
