@@ -11,6 +11,9 @@
 #include "../simulation/simulation_file_paths.h"
 #define SHARED_MEMORY_PR_THREAD 32
 
+//////////////////////////
+// NOT USED YET
+//////////////////////////
 
 struct simulation_config
 {

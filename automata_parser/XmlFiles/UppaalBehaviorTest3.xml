@@ -4,8 +4,10 @@
 	<declaration>// Place global declarations here.
 
 clock y;
+broadcast chan lol;
+broadcast chan troll;
 const int S = 5;
-int crit = 5;
+
 clock x;
 
 //const int N = 1;         // # 
@@ -13,15 +15,15 @@ clock x;
 	<template>
 		<name>c2</name>
 		<declaration>clock x;
-
-int l = 1;</declaration>
+int l = 8;
+</declaration>
 		<location id="id0" x="-178" y="0">
 			<name x="-188" y="-34">g1</name>
-			<label kind="invariant" x="-187" y="34">x &lt;= 5</label>
+			<label kind="invariant" x="-229" y="17">x &lt;= 10</label>
 		</location>
 		<location id="id1" x="17" y="-110">
 			<name x="7" y="-144">g2</name>
-			<label kind="invariant" x="7" y="-93">x &lt;=11</label>
+			<label kind="invariant" x="7" y="-93">x &lt;=10</label>
 		</location>
 		<location id="id2" x="17" y="-17">
 			<name x="7" y="-51">g3</name>
@@ -38,70 +40,80 @@ int l = 1;</declaration>
 		</location>
 		<init ref="id0"/>
 		<transition id="id7">
+			<source ref="id1"/>
+			<target ref="id0"/>
+			<nail x="-136" y="-136"/>
+		</transition>
+		<transition id="id8">
 			<source ref="id2"/>
 			<target ref="id6"/>
 			<label kind="guard" x="76" y="-34">y &lt; 5</label>
 		</transition>
-		<transition id="id8">
+		<transition id="id9">
 			<source ref="id5"/>
 			<target ref="id6"/>
 		</transition>
-		<transition id="id9">
+		<transition id="id10">
 			<source ref="id4"/>
 			<target ref="id5"/>
-			<label kind="guard" x="281" y="76">l &lt; 5</label>
 		</transition>
-		<transition id="id10">
+		<transition id="id11">
 			<source ref="id4"/>
 			<target ref="id3"/>
 			<label kind="guard" x="120" y="38">x &lt; 3</label>
 			<nail x="102" y="34"/>
 		</transition>
-		<transition id="id11">
+		<transition id="id12">
 			<source ref="id3"/>
 			<target ref="id4"/>
-			<label kind="assignment" x="35" y="97">l=l+1</label>
-		</transition>
-		<transition id="id12">
-			<source ref="id0"/>
-			<target ref="id3"/>
-			<label kind="guard" x="-160" y="8">x&gt;20</label>
+			<label kind="guard" x="35" y="63">l &lt;= 2</label>
 		</transition>
 		<transition id="id13">
 			<source ref="id0"/>
-			<target ref="id2"/>
-			<label kind="guard" x="-127" y="-34">x&gt;10</label>
+			<target ref="id3"/>
+			<label kind="guard" x="-136" y="34">x&gt;20 &amp;&amp; l &gt;= 10</label>
 		</transition>
 		<transition id="id14">
 			<source ref="id0"/>
+			<target ref="id2"/>
+			<label kind="guard" x="-127" y="-34">x&gt;10</label>
+			<label kind="synchronisation" x="-160" y="-25">troll!</label>
+		</transition>
+		<transition id="id15">
+			<source ref="id0"/>
 			<target ref="id1"/>
-			<label kind="guard" x="-153" y="-85">x&lt;=10</label>
+			<label kind="guard" x="-127" y="-85">x&lt;=10</label>
+			<label kind="synchronisation" x="-160" y="-72">lol!</label>
 		</transition>
 	</template>
 	<template>
 		<name x="5" y="5">c1</name>
 		<declaration>// Place local declarations here.
-clock x = 10;
-</declaration>
-		<location id="id15" x="51" y="-8">
+clock x = 0;
+int g = 1;</declaration>
+		<location id="id16" x="51" y="-8">
 			<name x="41" y="-42">f1</name>
 			<label kind="invariant" x="42" y="8">x&lt;=15</label>
 		</location>
-		<location id="id16" x="212" y="-8">
+		<location id="id17" x="212" y="-8">
 			<name x="202" y="-42">f2</name>
+			<label kind="invariant" x="202" y="9">g &lt;= 1000</label>
+			<label kind="exponentialrate" x="202" y="26">1 + S</label>
 		</location>
-		<location id="id17" x="348" y="-8">
+		<location id="id18" x="348" y="-8">
 			<name x="338" y="-42">f3</name>
 		</location>
-		<init ref="id15"/>
-		<transition id="id18">
+		<init ref="id16"/>
+		<transition id="id19">
+			<source ref="id17"/>
+			<target ref="id18"/>
+			<label kind="synchronisation" x="230" y="-25">troll?</label>
+		</transition>
+		<transition id="id20">
 			<source ref="id16"/>
 			<target ref="id17"/>
-		</transition>
-		<transition id="id19">
-			<source ref="id15"/>
-			<target ref="id16"/>
-			<label kind="guard" x="69" y="-42">x &lt; 1</label>
+			<label kind="guard" x="69" y="-42">x &lt; 20</label>
+			<label kind="synchronisation" x="69" y="-25">lol?</label>
 		</transition>
 	</template>
 	<system>// Place template instantiations here.

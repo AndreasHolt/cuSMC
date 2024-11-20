@@ -7,6 +7,7 @@
 
 #include "helper_methods.h"
 #include "../engine/Domain.h"
+#include "../simulation/state/SharedModelState.cuh"
 
 class abstract_parser
 {

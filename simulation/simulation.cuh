@@ -17,7 +17,7 @@ public:
 
     simulation(abstract_parser* uppaal_xml_parser_instance) { parser = uppaal_xml_parser_instance; }
 
-    void run_statistical_model_checking(SharedModelState* model, float confidence, float precision);
+    void run_statistical_model_checking(SharedModelState* model, float confidence, float precision, VariableKind* kinds, int num_vars);
 
     static void runSimulation();
 

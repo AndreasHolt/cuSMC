@@ -3,30 +3,38 @@
 //
 
 
+
 #ifndef SHAREDMODELSTATE_CUH
 #define SHAREDMODELSTATE_CUH
 
-
-
+#include "../../include/VariableTypes.h"
 #include "../../engine/Domain.h"
+#include "../../automata_parser/VariableUsageVisitor.h"
 #include <list>
-#include <iostream>
 
-// struct SharedModelState {
-//     const node** nodes;           // Array of automata nodes
-//     const int num_automata;       // Number of automata components
-//     const clock_var* variables;   // Array of clock/data variables
-//     const int num_variables;       // Number of variables
-//     const expr** expressions;     // Array of expressions used in model
-//     const int num_expressions;     // Number of expressions
-//     const edge** edges;           // Array of transitions
-//     const int num_edges;          // Number of edges
-//     const bool* initial_urgent;   // Initial urgent states
-//     const bool* initial_committed; // Initial committed states
-//     const unsigned max_expr_depth; // For expression evaluation
-//     const unsigned max_backtrace_depth;
-//     const unsigned max_edge_fanout; // Maximum outgoing edges
-// };
+class abstract_parser;
+class uppaal_xml_parser;
+
+#define MAX_VAR_NAME_LENGTH 128
+
+struct VariableInfo {
+    int variable_id;
+    VariableKind type;
+    char name[MAX_VAR_NAME_LENGTH];
+    double initial_value;
+
+    CPU GPU VariableInfo(int id, VariableKind t, const char* n, double val = 0.0)
+        : variable_id(id), type(t), initial_value(val) {
+        strncpy(name, n, MAX_VAR_NAME_LENGTH - 1);
+        name[MAX_VAR_NAME_LENGTH - 1] = '\0';
+    }
+
+    CPU GPU VariableInfo()
+        : variable_id(0), type(VariableKind::INT), initial_value(0.0) {
+        name[0] = '\0';
+    }
+};
+
 
 struct EdgeInfo {
     int source_node_id;       // ID of source node
@@ -52,43 +60,60 @@ struct EdgeInfo {
         num_updates(nu), updates_start_index(us) {}
 };
 
+
 struct GuardInfo {
     constraint::operators operand;
     bool uses_variable;
     union {
-        expr* value;
-        int variable_id;
-        int compile_id;
+        VariableInfo var_info;
+        struct {
+            expr* value;
+            expr* expression;
+        };
     };
-    expr* expression;
 
-    // Default constructor
-    CPU GPU GuardInfo() : operand(constraint::less_equal_c),
-                         uses_variable(false), value(nullptr),
-                         expression(nullptr) {}
-
-    // Constructor for initialization with all fields
-    CPU GPU GuardInfo(constraint::operators op, bool uv, expr* v, expr* exp) :
-        operand(op),
-        uses_variable(uv),
-        expression(exp)
-    {
-        value = v;  // Sets the union's value field
+    // Constructor for variable-based guard
+    CPU GPU GuardInfo(constraint::operators op, const VariableInfo& var, expr* expr)
+    : operand(op), uses_variable(true) {
+        var_info = var;
+        expression = expr;  // Need to set this after var_info since they share a union
     }
+
+
+
+    // Constructor for value-based guard
+    CPU GPU GuardInfo(constraint::operators op, bool uses_var, expr* val, expr* expr)
+        : operand(op), uses_variable(uses_var), value(val), expression(expr) {}
+
+
+    // Default constructor needed for vector
+    CPU GPU GuardInfo() : operand(constraint::less_equal_c), uses_variable(false), value(nullptr), expression(nullptr) {}
 };
 
 struct UpdateInfo {
     int variable_id;
     expr* expression;
+    VariableKind kind;
 
     // Default constructor
-    CPU GPU UpdateInfo() : variable_id(0), expression(nullptr) {}
+    CPU GPU UpdateInfo() :
+        variable_id(0),
+        expression(nullptr),
+        kind(VariableKind::INT) {}  // Default to INT_LOCAL
 
     // Constructor for initialization with all fields
+    CPU GPU UpdateInfo(int vid, expr* exp, VariableKind k) :
+        variable_id(vid),
+        expression(exp),
+        kind(k) {}
+
+    // Old constructor for backward compatibility (in case it breaks something)
     CPU GPU UpdateInfo(int vid, expr* exp) :
         variable_id(vid),
-        expression(exp) {}
+        expression(exp),
+        kind(VariableKind::INT) {}  // Default to INT_LOCAL
 };
+
 
 
 struct NodeInfo {
@@ -114,42 +139,56 @@ struct NodeInfo {
 
 struct SharedModelState {
     const int num_components;
+    const int max_nodes_per_component;
     const int* component_sizes;
     const NodeInfo* nodes;
     const EdgeInfo* edges;
     const GuardInfo* guards;
     const UpdateInfo* updates;
     const GuardInfo* invariants;
+    const int* initial_var_values;
+
+    // Default constructor
+    CPU GPU SharedModelState() :
+        num_components(0),
+        max_nodes_per_component(0),
+        component_sizes(nullptr),
+        nodes(nullptr),
+        edges(nullptr),
+        guards(nullptr),
+        updates(nullptr),
+        invariants(nullptr),
+        initial_var_values(nullptr) {}
 
     CPU GPU SharedModelState(
-        int nc, const int* cs,
+        const int nc, const int mnpc, const int* cs,
         const NodeInfo* n, const EdgeInfo* e,
-        const GuardInfo* g, const UpdateInfo* u, const GuardInfo* i) :
+        const GuardInfo* g, const UpdateInfo* u, const GuardInfo* i, const int* iv) :
             num_components(nc),
+            max_nodes_per_component(mnpc),
             component_sizes(cs),
             nodes(n),
             edges(e),
             guards(g),
             updates(u),
-            invariants(i) {}
+            invariants(i),
+            initial_var_values(iv) {}
 };
-
-
-//
-// SharedModelState* init_shared_model_state(
-//     const network* cpu_network,
-//     const std::unordered_map<int, int>& node_subsystems_map,
-//     const std::unordered_map<int, node*>& node_map);
 
 SharedModelState* init_shared_model_state(
     const network* cpu_network,
     const std::unordered_map<int, int>& node_subsystems_map,
-    const std::unordered_map<int, std::list<edge>>& node_edge_map, const std::unordered_map<int, node*>& node_map);
+    const std::unordered_map<int, std::list<edge>>& node_edge_map,
+    const std::unordered_map<int, node*>& node_map,
+    const std::unordered_map<int, VariableTrackingVisitor::VariableUsage>& variable_registry,
+    const abstract_parser* parser, const int num_vars);
 
 
 __global__ void test_kernel(SharedModelState* model);
 __global__ void validate_edge_indices(SharedModelState* model);
 // __global__ void verify_invariants_kernel(SharedModelState* model);
 __global__ void verify_expressions_kernel(SharedModelState* model);
+
+
 
 #endif //SHAREDMODELSTATE_CUH

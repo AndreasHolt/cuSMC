@@ -31,8 +31,6 @@ add_executable(CudaIntro main.cu
         simulation/simulation.cu
         simulation/simulation.cuh
         main.cpp
-        simulation/data_structures.cu
-        simulation/data_structures.cuh
         network_optimization/domain_optimization_visitor.h
         network_optimization/domain_optimization_visitor.cpp
         network_optimization/visitor.cpp
@@ -42,7 +40,10 @@ add_executable(CudaIntro main.cu
         main.cu
         main.cuh
         simulation/state/SharedRunState.cu
-        simulation/state/SharedRunState.cuh)
+        simulation/state/SharedRunState.cuh
+        automata_parser/VariableUsageVisitor.cpp
+        automata_parser/VariableUsageVisitor.h
+        include/VariableTypes.h)
 
 
 # Enable separable compilation (optional, depends on your needs)
