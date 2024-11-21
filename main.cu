@@ -14,7 +14,6 @@
 #include "simulation/simulation.cuh"
 #include "simulation/simulation_config.h"
 #include "simulation/state/SharedModelState.cuh"
-#define VERBOSE 0
 #include "automata_parser/VariableUsageVisitor.h"
 
 #include "simulation/simulation.cuh"
@@ -40,13 +39,13 @@ int main()
 
     abstract_parser* parser = new uppaal_xml_parser();
 
-    std::cout << "Test after instantiate_parser" << std::endl;
+    if constexpr (VERBOSE) {std::cout << "Test after instantiate_parser" << std::endl;}
 
     network model = parser->parse(filename);
 
-    std::cout << "Parsing successful. Network details:" << std::endl;
+    if constexpr (VERBOSE) {std::cout << "Parsing successful. Network details:" << std::endl;}
 
-    cout << "Performing optimizations..." << endl;
+    if constexpr (VERBOSE) {cout << "Performing optimizations..." << endl;}
 
     network_props properties = {};
     simulation_config config = {};
@@ -74,14 +73,18 @@ int main()
 
     VariableTrackingVisitor var_tracker;
     var_tracker.visit(&model);
-    var_tracker.print_variable_usage();
+    if constexpr (VERBOSE) {
+        var_tracker.print_variable_usage();
+    }
     auto registry = var_tracker.get_variable_registry();
 
     VariableKind* kinds = createKindArray(registry);
     int num_vars = registry.size();
 
-    for(int i = 0; i < registry.size(); i++) {
-        printf("Kind %d: %d\n", i, kinds[i]);
+    if constexpr (VERBOSE) {
+        for(int i = 0; i < registry.size(); i++) {
+            printf("Kind %d: %d\n", i, kinds[i]);
+        }
     }
 
     SharedModelState* state = init_shared_model_state(
@@ -97,7 +100,7 @@ int main()
 
 
     // Kernels for debugging purposes
-    if (VERBOSE) {
+    if constexpr (VERBOSE) {
         verify_expressions_kernel<<<1,1>>>(state);
         // cudaDeviceSynchronize();
         // verify_invariants_kernel<<<1, 1>>>(state);

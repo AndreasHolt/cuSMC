@@ -331,9 +331,11 @@ unordered_map<int, string>* uppaal_xml_parser::get_clock_names()
     for (const auto& pair : this->timers_map_) add_timer(pair.second, pair.first, map);
     for (const auto& pair : this->vars_map_) add_timer(pair.second, pair.first, map);
 
-    printf("Variable mapping:\n");
-    for(const auto& pair : *map) {
-        printf("  ID %d -> %s\n", pair.first, pair.second.c_str());
+    if constexpr (VERBOSE) {
+        printf("Variable mapping:\n");
+        for(const auto& pair : *map) {
+            printf("  ID %d -> %s\n", pair.first, pair.second.c_str());
+        }
     }
         
     return map;

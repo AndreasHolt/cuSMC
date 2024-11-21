@@ -5,7 +5,7 @@
 #include "SharedModelState.cuh"
 
 #include <iostream>
-
+#include "../../main.cuh"
 
 #include "../../automata_parser/abstract_parser.h"
 
@@ -27,9 +27,10 @@ void print_node_info(const node* n, const std::string& prefix = "") {
 std::vector<expr*> allocated_expressions;  // Global to track allocations
 
 expr* copy_expression_to_device(const expr* host_expr) {
-    printf("Copying expression with operand %d\n",
-           host_expr ? host_expr->operand : -1);
-
+    if constexpr (VERBOSE) {
+        printf("Copying expression with operand %d\n",
+               host_expr ? host_expr->operand : -1);
+    }
     if(host_expr == nullptr) {
         printf("Null expression, returning nullptr\n");
         return nullptr;
@@ -44,8 +45,9 @@ expr* copy_expression_to_device(const expr* host_expr) {
     // Check if this is a Polish notation expression
     if(host_expr->operand == expr::pn_compiled_ee) {
         int array_size = host_expr->length;
-        printf("Copying Polish notation expression array of size %d\n", array_size);
-
+        if constexpr (VERBOSE) {
+            printf("Copying Polish notation expression array of size %d\n", array_size);
+        }
         // Allocate device memory for the entire array at once
         expr* device_expr_array;
         cudaMalloc(&device_expr_array, array_size * sizeof(expr));
@@ -54,16 +56,19 @@ expr* copy_expression_to_device(const expr* host_expr) {
         // Copy the entire array
         cudaMemcpy(device_expr_array, host_expr, array_size * sizeof(expr),
                    cudaMemcpyHostToDevice);
-
-        printf("Copied Polish notation array to device at %p\n",
-               static_cast<void*>(device_expr_array));
+        if constexpr (VERBOSE) {
+            printf("Copied Polish notation array to device at %p\n",
+                   static_cast<void*>(device_expr_array));
+        }
 
         // Verify first element
         expr verify_expr;
         cudaMemcpy(&verify_expr, device_expr_array, sizeof(expr),
                    cudaMemcpyDeviceToHost);
-        printf("Verified first element - operand=%d, length=%d\n",
-               verify_expr.operand, verify_expr.length);
+        if constexpr (VERBOSE) {
+            printf("Verified first element - operand=%d, length=%d\n",
+                   verify_expr.operand, verify_expr.length);
+        }
 
         return device_expr_array;
     }
@@ -73,30 +78,35 @@ expr* copy_expression_to_device(const expr* host_expr) {
     // Allocate device memory for this node
     expr* device_expr;
     cudaMalloc(&device_expr, sizeof(expr));
-    printf("Allocated device memory at %p for operand %d\n",
-           static_cast<void*>(device_expr), host_expr->operand);
+    if constexpr (VERBOSE) {
+        printf("Allocated device memory at %p for operand %d\n",
+               static_cast<void*>(device_expr), host_expr->operand);
+    }
     allocated_expressions.push_back(device_expr);
 
     // Create temporary host copy
     expr temp_expr;
-
-    printf("DEBUG: Original expression details: operand=%d, value=%f, variable_id=%d\n",
-       host_expr->operand, host_expr->value, host_expr->variable_id);
+    if constexpr (VERBOSE) {
+        printf("DEBUG: Original expression details: operand=%d, value=%f, variable_id=%d\n",
+           host_expr->operand, host_expr->value, host_expr->variable_id);
+    }
 
     try {
         temp_expr.operand = host_expr->operand;
         temp_expr.value = host_expr->value;
-
-        printf("Copying children for operand %d - Left: %p, Right: %p\n",
-               host_expr->operand,
-               static_cast<const void*>(host_expr->left),
-               static_cast<const void*>(host_expr->right));
+        if constexpr (VERBOSE) {
+            printf("Copying children for operand %d - Left: %p, Right: %p\n",
+                   host_expr->operand,
+                   static_cast<const void*>(host_expr->left),
+                   static_cast<const void*>(host_expr->right));
+        }
 
         // Recursively copy left and right subtrees
         temp_expr.left = copy_expression_to_device(host_expr->left);
         temp_expr.right = copy_expression_to_device(host_expr->right);
-
-        printf("Finished copying children for operand %d\n", host_expr->operand);
+        if constexpr (VERBOSE) {
+            printf("Finished copying children for operand %d\n", host_expr->operand);
+        }
     }
     catch(...) {
         printf("Exception while accessing host expression with operand %d\n",
@@ -108,13 +118,15 @@ expr* copy_expression_to_device(const expr* host_expr) {
 
     // Copy the node to device
     cudaMemcpy(device_expr, &temp_expr, sizeof(expr), cudaMemcpyHostToDevice);
-    printf("DEBUG: Copy complete - device_expr=%p\n", static_cast<void*>(device_expr));
-
+    if constexpr (VERBOSE) {
+        printf("DEBUG: Copy complete - device_expr=%p\n", static_cast<void*>(device_expr));
+    }
     // Verify it's readable
     expr verify_expr;
     cudaMemcpy(&verify_expr, device_expr, sizeof(expr), cudaMemcpyHostToDevice);
-    printf("DEBUG: Verification read - operand=%d\n", verify_expr.operand);
-
+    if constexpr (VERBOSE) {
+        printf("DEBUG: Verification read - operand=%d\n", verify_expr.operand);
+    }
     return device_expr;
 
 }
@@ -130,10 +142,12 @@ SharedModelState* init_shared_model_state(
     const std::unordered_map<int, VariableTrackingVisitor::VariableUsage>& variable_registry,
     const abstract_parser* parser, const int num_vars)
 {
-    cout << "\nInitializing SharedModelState:" << endl;
-    cout << "Component mapping:" << endl;
-    for(const auto& pair : node_subsystems_map) {
-        cout << "  Node " << pair.first << " -> Component " << pair.second << endl;
+    if constexpr (VERBOSE) {
+        cout << "\nInitializing SharedModelState:" << endl;
+        cout << "Component mapping:" << endl;
+        for(const auto& pair : node_subsystems_map) {
+            cout << "  Node " << pair.first << " -> Component " << pair.second << endl;
+        }
     }
 
     // First organize nodes by component
@@ -159,33 +173,43 @@ SharedModelState* init_shared_model_state(
         std::sort(component.begin(), component.end(),
                   [](const auto& a, const auto& b) { return a.first < b.first; });
     }
-
-    cout << "\nSorted nodes by component:" << endl;
-    for(int i = 0; i < components_nodes.size(); i++) {
-        cout << "Component " << i << " nodes: ";
-        for(const auto& node_pair : components_nodes[i]) {
-            cout << node_pair.first << " ";
+    if constexpr (VERBOSE) {
+        cout << "\nSorted nodes by component:" << endl;
+        for(int i = 0; i < components_nodes.size(); i++) {
+            cout << "Component " << i << " nodes: ";
+            for(const auto& node_pair : components_nodes[i]) {
+                cout << node_pair.first << " ";
+            }
+            cout << endl;
         }
-        cout << endl;
     }
 
     // After grouping nodes by component:
-    cout << "\nNodes by component:" << endl;
+    if constexpr (VERBOSE) {
+        cout << "\nNodes by component:" << endl;
+    }
     for(int i = 0; i < components_nodes.size(); i++) {
-        cout << "Component " << i << " has " << components_nodes[i].size() << " nodes:" << endl;
+        if constexpr (VERBOSE) {
+            cout << "Component " << i << " has " << components_nodes[i].size() << " nodes:" << endl;
+        }
         for(const auto& node_pair : components_nodes[i]) {
             node* current_node = node_map.at(node_pair.first);
-            cout << "  Node " << node_pair.first
-                 << " with " << current_node->invariants.size << " invariants" << endl;
+            if constexpr (VERBOSE) {
+                cout << "  Node " << node_pair.first
+                     << " with " << current_node->invariants.size << " invariants" << endl;
+            }
 
             // Print invariant details
             for(int j = 0; j < current_node->invariants.size; j++) {
                 const constraint& inv = current_node->invariants.store[j];
-                cout << "    Invariant " << j << ": uses_variable=" << inv.uses_variable;
-                if(inv.uses_variable) {
-                    cout << ", var_id=" << inv.variable_id;
+                if constexpr (VERBOSE) {
+                    cout << "    Invariant " << j << ": uses_variable=" << inv.uses_variable;
+                    if(inv.uses_variable) {
+                        cout << ", var_id=" << inv.variable_id;
+                    }
+
+                    cout << endl;
                 }
-                cout << endl;
             }
         }
     }
@@ -273,9 +297,11 @@ SharedModelState* init_shared_model_state(
                    initial_value = cpu_network->variables.store[i].value;
 
                    initial_values[guard.variable_id] = initial_value; // Add to initial values array
-                   printf("Appending initial value %f for int variable %d\n", initial_value, guard.variable_id);
-                   printf("DEBUG: Initial value of clock variable %d is %f\n",
-                          guard.variable_id, initial_value);
+                   if constexpr (VERBOSE) {
+                       printf("Appending initial value %f for int variable %d\n", initial_value, guard.variable_id);
+                       printf("DEBUG: Initial value of clock variable %d is %f\n",
+                              guard.variable_id, initial_value);
+                   }
                    break;
                }
            }
@@ -303,10 +329,14 @@ SharedModelState* init_shared_model_state(
            for(int i = 0; i < cpu_network->variables.size; i++) {
                if(cpu_network->variables.store[i].id == var_id) {
                    initial_value = cpu_network->variables.store[i].value;
-                   printf("Appending initial value %f for int variable %d\n", initial_value, var_id);
+                   if constexpr (VERBOSE) {
+                       printf("Appending initial value %f for int variable %d\n", initial_value, var_id);
+                   }
                    initial_values[var_id] = initial_value; // Add to initial values array
-                   printf("DEBUG: Initial value of integer variable %d is %f\n",
-                          var_id, initial_value);
+                   if constexpr (VERBOSE) {
+                       printf("DEBUG: Initial value of integer variable %d is %f\n",
+                              var_id, initial_value);
+                   }
                    break;
                }
            }
@@ -377,23 +407,33 @@ SharedModelState* init_shared_model_state(
 
                 // Store invariants
                 int invariants_start = current_invariant_index;
-                cout << "Processing invariants for node " << node_id
-                     << " starting at index " << invariants_start << endl;
+                if constexpr (VERBOSE) {
+                    cout << "Processing invariants for node " << node_id
+                         << " starting at index " << invariants_start << endl;
+                }
 
                 for(int i = 0; i < current_node->invariants.size; i++) {
                     const constraint& inv = current_node->invariants.store[i];
-                    cout << "  Adding invariant " << i << " at index "
-                         << current_invariant_index << endl;
+                    if constexpr (VERBOSE) {
+                        cout << "  Adding invariant " << i << " at index "
+                             << current_invariant_index << endl;
+                    }
 
                     // For invariants:
                     if(inv.uses_variable) {
-                        cout << "    Variable-based guard for var_id " << inv.variable_id << endl;
+                        if constexpr (VERBOSE) {
+                            cout << "    Variable-based guard for var_id " << inv.variable_id << endl;
+                        }
                         host_invariants.push_back(create_variable_guard(inv));
                     } else if(inv.value != nullptr && inv.value->operand == expr::clock_variable_ee) {
-                        cout << "    Value-based guard with integer variable " << inv.value->variable_id << endl;
+                        if constexpr (VERBOSE) {
+                            cout << "    Value-based guard with integer variable " << inv.value->variable_id << endl;
+                        }
                         host_invariants.push_back(create_variable_guard(inv));  // Modified create_variable_guard will handle this
                     } else {
-                        cout << "    Non-variable value-based guard" << endl;
+                        if constexpr (VERBOSE) {
+                            cout << "    Non-variable value-based guard" << endl;
+                        }
                         expr* device_value = copy_expression_to_device(inv.value);
                         expr* device_expression = copy_expression_to_device(inv.expression);
                         host_invariants.push_back(GuardInfo(
@@ -428,25 +468,35 @@ SharedModelState* init_shared_model_state(
                         const constraint& guard = e.guards.store[g];
 
                         if(guard.uses_variable) {
-                            cout << "    Direct variable guard" << endl;
+                            if constexpr (VERBOSE) {
+                                cout << "    Direct variable guard" << endl;
+                            }
                             host_guards.push_back(create_variable_guard(guard));
                         } else if(guard.value != nullptr && guard.value->operand == expr::clock_variable_ee) {
-                            cout << "    Integer variable in expression" << endl;
+                            if constexpr (VERBOSE) {
+                                cout << "    Integer variable in expression" << endl;
+                            }
                             host_guards.push_back(create_variable_guard(guard));  // Modified create_variable_guard will handle this
                         } else {
-                            cout << "    Non-variable guard" << endl;
+                            if constexpr (VERBOSE) {
+                                cout << "    Non-variable guard" << endl;
+                            }
                             expr* device_value = copy_expression_to_device(guard.value);
                             expr* device_expression = copy_expression_to_device(guard.expression);
-                            printf("DEBUG: Creating guard with expression ptr=%p\n",
-                                   static_cast<const void*>(device_expression));
+                            if constexpr (VERBOSE) {
+                                printf("DEBUG: Creating guard with expression ptr=%p\n",
+                                       static_cast<const void*>(device_expression));
+                            }
                             host_guards.push_back(GuardInfo(
                                 guard.operand,
                                 false,
                                 device_value,
                                 device_expression
                             ));
-                            printf("DEBUG: Added guard, expression ptr=%p\n",
-                                   static_cast<const void*>(host_guards.back().expression));
+                            if constexpr (VERBOSE) {
+                                printf("DEBUG: Added guard, expression ptr=%p\n",
+                                       static_cast<const void*>(host_guards.back().expression));
+                            }
                         }
                         current_guard_index++;
 
@@ -471,7 +521,9 @@ SharedModelState* init_shared_model_state(
                         e.updates.size,
                         updates_start
                     };
-                    printf("Creating edge on channel %d\n", e.channel);
+                    if constexpr (VERBOSE) {
+                        printf("Creating edge on channel %d\n", e.channel);
+                    }
                     host_edges.push_back(edge_info);
                     current_edge_index++;
                 }
@@ -490,27 +542,28 @@ SharedModelState* init_shared_model_state(
             }
         }
     }
+    if constexpr (VERBOSE) {
+        printf("DEBUG: About to copy guards to device, first guard expr=%p\n",
+           static_cast<const void*>(host_guards[0].expression));
 
-    printf("DEBUG: About to copy guards to device, first guard expr=%p\n",
-       static_cast<const void*>(host_guards[0].expression));
-
-    // Before copying to device
-    cout << "\nFinal arrays before device copy:" << endl;
-    cout << "Nodes:" << endl;
-    for(const auto& node : host_nodes) {
-        cout << "  ID: " << node.id
-             << ", invariants: " << node.num_invariants
-             << " starting at " << node.first_invariant_index << endl;
-    }
-
-    cout << "Invariants:" << endl;
-    for(const auto& inv : host_invariants) {
-        cout << "  Uses variable: " << inv.uses_variable;
-        if(inv.uses_variable) {
-            cout << ", var_id: " << inv.var_info.variable_id;
-            cout << ", initial_value: " << inv.var_info.initial_value;
+        // Before copying to device
+        cout << "\nFinal arrays before device copy:" << endl;
+        cout << "Nodes:" << endl;
+        for(const auto& node : host_nodes) {
+            cout << "  ID: " << node.id
+                 << ", invariants: " << node.num_invariants
+                 << " starting at " << node.first_invariant_index << endl;
         }
-        cout << endl;
+
+        cout << "Invariants:" << endl;
+        for(const auto& inv : host_invariants) {
+            cout << "  Uses variable: " << inv.uses_variable;
+            if(inv.uses_variable) {
+                cout << ", var_id: " << inv.var_info.variable_id;
+                cout << ", initial_value: " << inv.var_info.initial_value;
+            }
+            cout << endl;
+        }
     }
 
     // Copy everything to device

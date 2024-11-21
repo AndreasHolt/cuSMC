@@ -5,6 +5,7 @@
 
 #include "state/SharedModelState.cuh"
 #include "state/SharedRunState.cuh"
+#include "../main.cuh"
 
 #define NUM_RUNS 6
 #define TIME_BOUND 10.0
@@ -18,8 +19,10 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
 
     // For pn_compiled_ee, we should evaluate the left branch
     if(e->operand == expr::pn_compiled_ee) {
-        printf("DEBUG: Evaluating Polish notation expression of length %d\n",
-               e->length);
+        if constexpr (VERBOSE) {
+            printf("DEBUG: Evaluating Polish notation expression of length %d\n",
+                   e->length);
+        }
 
         // Create a stack for evaluation
         __shared__ double value_stack[64];  // TODO: We can probably get the exact number from the optimizer, and pass it in as a parameter
@@ -73,9 +76,9 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
         return value_stack[stack_top - 1];
     }
 
-
-    printf("DEBUG: Evaluating non-pn expression with operator %d\n", e->operand);
-
+    if constexpr (VERBOSE) {
+        printf("DEBUG: Evaluating non-pn expression with operator %d\n", e->operand);
+    }
     // Handling of expressions that are not PN
     switch(e->operand) {
         case expr::literal_ee:
@@ -93,8 +96,10 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
             if(e->left && e->right) {
                 double left_val = evaluate_expression(e->left, block_state);
                 double right_val = evaluate_expression(e->right, block_state);
-                printf("DEBUG: Plus operation: %f + %f = %f\n",
-                       left_val, right_val, left_val + right_val);
+                if constexpr (VERBOSE) {
+                    printf("DEBUG: Plus operation: %f + %f = %f\n",
+                           left_val, right_val, left_val + right_val);
+                }
                 return left_val + right_val;
             }
             break;
@@ -161,20 +166,26 @@ __device__ void take_transition(ComponentState* my_state,
     int selected_idx;
     if(my_state->num_enabled_edges == 1) {
         selected_idx = my_state->enabled_edges[0];
-        printf("Thread %d: Only one enabled edge (%d), selecting it\n",
-               threadIdx.x, selected_idx);
+        if constexpr (VERBOSE) {
+            printf("Thread %d: Only one enabled edge (%d), selecting it\n",
+                   threadIdx.x, selected_idx);
+        }
     } else {
         // Random selection between enabled edges
         float rand = curand_uniform(block_state->random);
         selected_idx = my_state->enabled_edges[(int)(rand * my_state->num_enabled_edges)];
-        printf("Thread %d: Randomly selected edge %d from %d enabled edges (rand=%f)\n",
-               threadIdx.x, selected_idx, my_state->num_enabled_edges, rand);
+        if constexpr (VERBOSE) {
+            printf("Thread %d: Randomly selected edge %d from %d enabled edges (rand=%f)\n",
+                   threadIdx.x, selected_idx, my_state->num_enabled_edges, rand);
+        }
     }
 
     // Get the selected edge
     const EdgeInfo& edge = model->edges[my_state->current_node->first_edge_index + selected_idx];
-    printf("Thread %d: Taking transition from node %d to node %d\n",
-           threadIdx.x, my_state->current_node->id, edge.dest_node_id);
+    if constexpr (VERBOSE) {
+        printf("Thread %d: Taking transition from node %d to node %d\n",
+               threadIdx.x, my_state->current_node->id, edge.dest_node_id);
+    }
 
     // Apply updates if any
     for(int i = 0; i < edge.num_updates; i++) {
@@ -183,12 +194,13 @@ __device__ void take_transition(ComponentState* my_state,
 
         // Evaluate update expression
         double new_value = evaluate_expression(update.expression, block_state);
-
-        printf("Thread %d: Update %d - Setting var_%d (%s) from %f to %f\n",
-               threadIdx.x, i, var_id,
-               update.kind == VariableKind::CLOCK ? "clock" : "int",
-               shared->variables[var_id].value,
-               new_value);
+        if constexpr (VERBOSE) {
+            printf("Thread %d: Update %d - Setting var_%d (%s) from %f to %f\n",
+                   threadIdx.x, i, var_id,
+                   update.kind == VariableKind::CLOCK ? "clock" : "int",
+                   shared->variables[var_id].value,
+                   new_value);
+        }
 
         shared->variables[var_id].value = new_value;
         shared->variables[var_id].last_writer = my_state->component_id;
@@ -196,23 +208,31 @@ __device__ void take_transition(ComponentState* my_state,
 
     // Find destination node info
     // First find node in the same level that matches destination ID
-    printf("Thread %d: Searching for destination node %d (current level=%d)\n",
-           threadIdx.x, edge.dest_node_id, my_state->current_node->level);
+    if constexpr (VERBOSE) {
+        printf("Thread %d: Searching for destination node %d (current level=%d)\n",
+               threadIdx.x, edge.dest_node_id, my_state->current_node->level);
+    }
 
     const NodeInfo* dest_node = nullptr;
     // Search through all level slots
     for(int level = 0; level < model->max_nodes_per_component; level++) { // TODO: Optimize this later (no pre-mature optimization for now)
         int level_start = level * model->num_components;
-        printf("Thread %d: Checking level %d starting at index %d\n",
-               threadIdx.x, level, level_start);
+        if constexpr (VERBOSE) {
+            printf("Thread %d: Checking level %d starting at index %d\n",
+                   threadIdx.x, level, level_start);
+        }
 
         for(int i = 0; i < model->num_components; i++) {
             const NodeInfo& node = model->nodes[level_start + i];
-            printf("Thread %d:   Checking node id=%d\n", threadIdx.x, node.id);
+            if constexpr (VERBOSE) {
+                printf("Thread %d:   Checking node id=%d\n", threadIdx.x, node.id);
+            }
             if(node.id == edge.dest_node_id) {
                 dest_node = &node;
-                printf("Thread %d: Found destination node at level %d, index %d\n",
-                       threadIdx.x, level, i);
+                if constexpr (VERBOSE) {
+                    printf("Thread %d: Found destination node at level %d, index %d\n",
+                           threadIdx.x, level, i);
+                }
                 break;
             }
         }
@@ -228,7 +248,9 @@ __device__ void take_transition(ComponentState* my_state,
 
     // Update current node
     my_state->current_node = dest_node;
-    printf("Thread %d: Moved to new node %d\n", threadIdx.x, dest_node->id);
+    if constexpr (VERBOSE) {
+        printf("Thread %d: Moved to new node %d\n", threadIdx.x, dest_node->id);
+    }
 }
 
 
@@ -236,8 +258,10 @@ __device__ bool check_edge_enabled(const EdgeInfo& edge,
                                  const SharedBlockMemory* shared,
                                  SharedModelState* model,
                                  BlockSimulationState* block_state) {
-    printf("\nThread %d: Checking edge %d->%d with %d guards\n",
-           threadIdx.x, edge.source_node_id, edge.dest_node_id, edge.num_guards);
+    if constexpr (VERBOSE) {
+        printf("\nThread %d: Checking edge %d->%d with %d guards\n",
+               threadIdx.x, edge.source_node_id, edge.dest_node_id, edge.num_guards);
+    }
 
     // Check all guards on the edge
     for(int i = 0; i < edge.num_guards; i++) {
@@ -247,16 +271,17 @@ __device__ bool check_edge_enabled(const EdgeInfo& edge,
             int var_id = guard.var_info.variable_id;
             double var_value = shared->variables[var_id].value;
             double bound = evaluate_expression(guard.expression, block_state);
-
-            printf("  Guard %d: var_%d (%s) = %f %s %f\n",
-                   i, var_id,
-                   guard.var_info.type == VariableKind::CLOCK ? "clock" : "int",
-                   var_value,
-                   guard.operand == constraint::less_equal_c ? "<=" :
-                   guard.operand == constraint::less_c ? "<" :
-                   guard.operand == constraint::greater_equal_c ? ">=" :
-                   guard.operand == constraint::greater_c ? ">" : "?",
-                   bound);
+            if constexpr (VERBOSE) {
+                printf("  Guard %d: var_%d (%s) = %f %s %f\n",
+                       i, var_id,
+                       guard.var_info.type == VariableKind::CLOCK ? "clock" : "int",
+                       var_value,
+                       guard.operand == constraint::less_equal_c ? "<=" :
+                       guard.operand == constraint::less_c ? "<" :
+                       guard.operand == constraint::greater_equal_c ? ">=" :
+                       guard.operand == constraint::greater_c ? ">" : "?",
+                       bound);
+            }
 
             bool satisfied = false;
             switch(guard.operand) {
@@ -274,13 +299,16 @@ __device__ bool check_edge_enabled(const EdgeInfo& edge,
             }
 
             if(!satisfied) {
-                printf("  Guard not satisfied - edge disabled\n");
+                if constexpr (VERBOSE) {
+                    printf("  Guard not satisfied - edge disabled\n");
+                }
                 return false;
             }
         }
     }
-
-    printf("  All guards satisfied - edge enabled!\n");
+    if constexpr (VERBOSE) {
+        printf("  All guards satisfied - edge enabled!\n");
+    }
     return true;
 }
 
@@ -290,12 +318,15 @@ __device__ void check_enabled_edges(ComponentState* my_state,
                                   BlockSimulationState* block_state,
                                   bool is_race_winner) {
     if (!is_race_winner) {
-        printf("Thread %d: Skipping edge check (didn't win race)\n", threadIdx.x);
+        if constexpr (VERBOSE) {
+            printf("Thread %d: Skipping edge check (didn't win race)\n", threadIdx.x);
+        }
         return;
     }
-
-    printf("\nThread %d: Checking enabled edges for node %d\n",
-           threadIdx.x, my_state->current_node->id);
+    if constexpr (VERBOSE) {
+        printf("\nThread %d: Checking enabled edges for node %d\n",
+               threadIdx.x, my_state->current_node->id);
+    }
 
     const NodeInfo& node = *my_state->current_node;
     my_state->num_enabled_edges = 0;  // Reset counter
@@ -306,13 +337,16 @@ __device__ void check_enabled_edges(ComponentState* my_state,
         if(check_edge_enabled(edge, shared, model, block_state)) {
             // Store enabled edge for later selection
             my_state->enabled_edges[my_state->num_enabled_edges++] = i;
-            printf("Thread %d: Edge %d is enabled (total enabled: %d)\n",
-                   threadIdx.x, i, my_state->num_enabled_edges);
+            if constexpr (VERBOSE) {
+                printf("Thread %d: Edge %d is enabled (total enabled: %d)\n",
+                       threadIdx.x, i, my_state->num_enabled_edges);
+            }
         }
     }
-
-    printf("Thread %d: Found %d enabled edges\n",
-           threadIdx.x, my_state->num_enabled_edges);
+    if constexpr (VERBOSE) {
+        printf("Thread %d: Found %d enabled edges\n",
+               threadIdx.x, my_state->num_enabled_edges);
+    }
 }
 
 
@@ -336,8 +370,10 @@ __device__ void compute_possible_delay(
     BlockSimulationState* block_state, int num_vars)
 {
     const NodeInfo& node = *my_state->current_node;
-    printf("Thread %d: Processing node %d with %d invariants\n",
-           threadIdx.x, node.id, node.num_invariants);
+    if constexpr (VERBOSE) {
+        printf("Thread %d: Processing node %d with %d invariants\n",
+               threadIdx.x, node.id, node.num_invariants);
+    }
 
     double min_delay = 0.0;
     double max_delay = DBL_MAX;
@@ -347,12 +383,14 @@ __device__ void compute_possible_delay(
     __syncthreads();
 
     // Debug current variable values
-    if(threadIdx.x == 0) {
-        printf("Thread %d: Current variable values:\n", threadIdx.x);
-        for(int i = 0; i < num_vars; i++) {
-            printf("  var[%d] = %f (rate=%d)\n", i,
-                   shared->variables[i].value,
-                   shared->variables[i].rate);
+    if constexpr (VERBOSE) {
+        if(threadIdx.x == 0) {
+            printf("Thread %d: Current variable values:\n", threadIdx.x);
+            for(int i = 0; i < num_vars; i++) {
+                printf("  var[%d] = %f (rate=%d)\n", i,
+                       shared->variables[i].value,
+                       shared->variables[i].rate);
+            }
         }
     }
 
@@ -377,9 +415,10 @@ __device__ void compute_possible_delay(
 
             // Evaluate bound expression
             double bound = evaluate_expression(inv.expression, block_state);
-            printf("Thread %d: Clock %d invariant: current=%f, bound=%f, rate=%d\n",
-                   threadIdx.x, var_id, current_val, bound, var.rate); // TODO: remove rate from var. Rates are dependent on the location
-
+            if constexpr (VERBOSE) {
+                printf("Thread %d: Clock %d invariant: current=%f, bound=%f, rate=%d\n",
+                       threadIdx.x, var_id, current_val, bound, var.rate); // TODO: remove rate from var. Rates are dependent on the location
+            }
             // Only handle upper bounds
             if(inv.operand == constraint::less_c ||
                inv.operand == constraint::less_equal_c) {
@@ -391,15 +430,18 @@ __device__ void compute_possible_delay(
                     if(inv.operand == constraint::less_c) {
                         time_to_bound -= 1e-6;
                     }
-
-                    printf("Thread %d: Computed time_to_bound=%f\n",
-                           threadIdx.x, time_to_bound);
+                    if constexpr (VERBOSE) {
+                        printf("Thread %d: Computed time_to_bound=%f\n",
+                               threadIdx.x, time_to_bound);
+                    }
 
                     if(time_to_bound >= 0) {
                         max_delay = min(max_delay, time_to_bound); // TODO: remove time_to_bound, as it is not part of the semantics
                         is_bounded = true;
-                        printf("Thread %d: Updated max_delay to %f\n",
-                               threadIdx.x, max_delay);
+                        if constexpr (VERBOSE) {
+                            printf("Thread %d: Updated max_delay to %f\n",
+                                   threadIdx.x, max_delay);
+                        }
                     }
                 }
             }
@@ -411,8 +453,10 @@ __device__ void compute_possible_delay(
         double rand = curand_uniform(block_state->random);
         my_state->next_delay = min_delay + (max_delay - min_delay) * rand;
         my_state->has_delay = true;
-        printf("Thread %d: Sampled delay %f in [%f, %f] (rand=%f)\n",
-               threadIdx.x, my_state->next_delay, min_delay, max_delay, rand);
+        if constexpr (VERBOSE) {
+            printf("Thread %d: Sampled delay %f in [%f, %f] (rand=%f)\n",
+                   threadIdx.x, my_state->next_delay, min_delay, max_delay, rand);
+        }
     } else {
 
         double rate = 1.0; // Default rate if no rate is specified on the node
@@ -424,8 +468,9 @@ __device__ void compute_possible_delay(
         double rand = curand_uniform_double(block_state->random);
         my_state->next_delay = -__log2f(rand) / rate; // Fastest log, but not as accurate. We consider it fine because we are doing statistical sampling
         my_state->has_delay = true;
-        printf("Thread %d: No delay bounds, sampled %f using exponential distribution with rate %f\n", threadIdx.x, my_state->next_delay, rate);
-
+        if constexpr (VERBOSE) {
+            printf("Thread %d: No delay bounds, sampled %f using exponential distribution with rate %f\n", threadIdx.x, my_state->next_delay, rate);
+        }
         my_state->has_delay = true;
     }
 }
@@ -448,36 +493,43 @@ __device__ double find_minimum_delay(
     if(threadIdx.x < num_components) {
         delays[threadIdx.x] = my_state->has_delay ? my_state->next_delay : DBL_MAX;
         component_indices[threadIdx.x] = my_state->component_id;
-        printf("Thread %d (component %d): Initial delay %f\n",
-               threadIdx.x, my_state->component_id, delays[threadIdx.x]);
+        if constexpr (VERBOSE) {
+            printf("Thread %d (component %d): Initial delay %f\n",
+                   threadIdx.x, my_state->component_id, delays[threadIdx.x]);
+        }
     }
     __syncthreads();
 
     // Debug print initial state
-    if(threadIdx.x == 0) {
-        printf("Initial delays: ");
-        for(int i = 0; i < num_components; i++) {  // Only print actual components
-            printf("[%d]=%f ", i, delays[i]);
+    if constexpr (VERBOSE) {
+        if(threadIdx.x == 0) {
+            printf("Initial delays: ");
+            for(int i = 0; i < num_components; i++) {  // Only print actual components
+                printf("[%d]=%f ", i, delays[i]);
+            }
+            printf("\n");
         }
-        printf("\n");
+        __syncthreads();
     }
-    __syncthreads();
-
     // Find minimum - only compare actual components
     for(int stride = (num_components + 1)/2; stride > 0; stride >>= 1) {
         if(threadIdx.x < stride && threadIdx.x < num_components) {
             int compare_idx = threadIdx.x + stride;
             if(compare_idx < num_components) {  // Only compare if within valid components
-                printf("Thread %d comparing with position %d: %f vs %f\n",
-                       threadIdx.x, compare_idx, delays[threadIdx.x],
-                       delays[compare_idx]);
+                if constexpr (VERBOSE) {
+                    printf("Thread %d comparing with position %d: %f vs %f\n",
+                           threadIdx.x, compare_idx, delays[threadIdx.x],
+                           delays[compare_idx]);
+                }
 
                 if(delays[compare_idx] < delays[threadIdx.x]) {
                     delays[threadIdx.x] = delays[compare_idx];
                     component_indices[threadIdx.x] = component_indices[compare_idx];
-                    printf("Thread %d: Updated minimum to %f from component %d\n",
-                           threadIdx.x, delays[threadIdx.x],
-                           component_indices[threadIdx.x]);
+                    if constexpr (VERBOSE) {
+                        printf("Thread %d: Updated minimum to %f from component %d\n",
+                               threadIdx.x, delays[threadIdx.x],
+                               component_indices[threadIdx.x]);
+                    }
                 }
             }
         }
@@ -488,18 +540,22 @@ __device__ double find_minimum_delay(
     double min_delay = delays[0];
     if(threadIdx.x == 0) {
         if(min_delay < DBL_MAX) {
-            printf("\nFinal result:\n");
-            printf("  Minimum delay: %f\n", min_delay);
-            printf("  Winning component: %d\n", component_indices[0]);
-            printf("\nUpdating clocks:\n");
+            if constexpr (VERBOSE) {
+                printf("\nFinal result:\n");
+                printf("  Minimum delay: %f\n", min_delay);
+                printf("  Winning component: %d\n", component_indices[0]);
+                printf("\nUpdating clocks:\n");
+            }
 
             for(int i = 0; i < MAX_VARIABLES; i++) {
                 if(shared->variables[i].kind == VariableKind::CLOCK) {
                     double old_value = shared->variables[i].value;
                     shared->variables[i].rate = 1;
                     shared->variables[i].value += min_delay;
-                    printf("  Clock %d: %f -> %f (advanced by %f)\n",
-                           i, old_value, shared->variables[i].value, min_delay);
+                    if constexpr (VERBOSE) {
+                        printf("  Clock %d: %f -> %f (advanced by %f)\n",
+                               i, old_value, shared->variables[i].value, min_delay);
+                    }
                 }
             }
         }
@@ -536,34 +592,39 @@ __device__ double find_minimum_delay(
 
 __global__ void simulation_kernel(SharedModelState* model, bool* results,
                                 int runs_per_block, float time_bound, VariableKind* kinds, int num_vars) {
-    if(threadIdx.x == 0) {
-        printf("Starting kernel: block=%d, thread=%d\n",
-               blockIdx.x, threadIdx.x);
+    if constexpr (VERBOSE) {
+        if(threadIdx.x == 0) {
+            printf("Starting kernel: block=%d, thread=%d\n",
+                   blockIdx.x, threadIdx.x);
+        }
     }
-    CHECK_ERROR("kernel start");
-    if(threadIdx.x == 0) {
-        printf("Number of variables: %d\n", num_vars);
-    }
+        CHECK_ERROR("kernel start");
+    if constexpr (VERBOSE) {
+        if(threadIdx.x == 0) {
+            printf("Number of variables: %d\n", num_vars);
+        }
 
-    // Verify model pointer
-    if(model == nullptr) {
-        printf("Thread %d: NULL model pointer!\n", threadIdx.x);
-        return;
+        // Verify model pointer
+        if(model == nullptr) {
+            printf("Thread %d: NULL model pointer!\n", threadIdx.x);
+            return;
+        }
     }
 
     __shared__ SharedBlockMemory shared_mem;
     __shared__ ComponentState components[MAX_COMPONENTS];
     __shared__ curandState rng_states[MAX_COMPONENTS];
-
-    if(threadIdx.x < model->num_components) {  // Only debug print for actual components
-        printf("Thread %d: Model details:\n"
-               "  Num components: %d\n"
-               "  First node invariant index: %d\n"
-               "  Num invariants in first node: %d\n",
-               threadIdx.x,
-               model->num_components,
-               model->nodes[threadIdx.x].first_invariant_index,
-               model->nodes[threadIdx.x].num_invariants);
+    if constexpr (VERBOSE) {
+        if(threadIdx.x < model->num_components) {  // Only debug print for actual components
+            printf("Thread %d: Model details:\n"
+                   "  Num components: %d\n"
+                   "  First node invariant index: %d\n"
+                   "  Num invariants in first node: %d\n",
+                   threadIdx.x,
+                   model->num_components,
+                   model->nodes[threadIdx.x].first_invariant_index,
+                   model->nodes[threadIdx.x].num_invariants);
+        }
     }
 
 
@@ -577,22 +638,24 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
         }
 
         // For debug: print all variables and their initial values. TODO: remove later
-        if(threadIdx.x == 0) {
-            printf("\nInitializing variables from model invariants:\n");
-            for(int comp = 0; comp < model->num_components; comp++) {
-                const NodeInfo& node = model->nodes[comp];
-                printf("Component %d has %d invariants starting at index %d\n",
-                       comp, node.num_invariants, node.first_invariant_index);
+        if constexpr (VERBOSE) {
+            if(threadIdx.x == 0) {
+                printf("\nInitializing variables from model invariants:\n");
+                for(int comp = 0; comp < model->num_components; comp++) {
+                    const NodeInfo& node = model->nodes[comp];
+                    printf("Component %d has %d invariants starting at index %d\n",
+                           comp, node.num_invariants, node.first_invariant_index);
 
-                for(int i = 0; i < node.num_invariants; i++) {
-                    const GuardInfo& inv = model->invariants[node.first_invariant_index + i];
-                    printf("  Invariant %d:\n"
-                           "    Uses variable: %d\n"
-                           "    Variable ID: %d\n"
-                           "    Initial value: %f\n",
-                           i, inv.uses_variable,
-                           inv.uses_variable ? inv.var_info.variable_id : -1,
-                           inv.var_info.initial_value != 0.0 ? inv.var_info.initial_value : 0.0);
+                    for(int i = 0; i < node.num_invariants; i++) {
+                        const GuardInfo& inv = model->invariants[node.first_invariant_index + i];
+                        printf("  Invariant %d:\n"
+                               "    Uses variable: %d\n"
+                               "    Variable ID: %d\n"
+                               "    Initial value: %f\n",
+                               i, inv.uses_variable,
+                               inv.uses_variable ? inv.var_info.variable_id : -1,
+                               inv.var_info.initial_value != 0.0 ? inv.var_info.initial_value : 0.0);
+                    }
                 }
             }
         }
@@ -605,20 +668,25 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
     CHECK_ERROR("after shared memory declaration");
 
     // Debug model access
-    if(threadIdx.x == 0) {
-        printf("Thread %d: Attempting to access model, num_components=%d\n",
-               threadIdx.x, model->num_components);
+    if constexpr (VERBOSE) {
+        if(threadIdx.x == 0) {
+            printf("Thread %d: Attempting to access model, num_components=%d\n",
+                   threadIdx.x, model->num_components);
+        }
     }
+
     CHECK_ERROR("after model access");
+
 
     // Setup block state
     BlockSimulationState block_state;
     block_state.model = model;
     block_state.shared = &shared_mem;
     block_state.my_component = &components[threadIdx.x];
-
-    if(threadIdx.x == 0) {
-        printf("Thread %d: Block state setup complete\n", threadIdx.x);
+    if constexpr (VERBOSE) {
+        if(threadIdx.x == 0) {
+            printf("Thread %d: Block state setup complete\n", threadIdx.x);
+        }
     }
     CHECK_ERROR("after block state setup");
 
@@ -634,11 +702,15 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
 
     // Initialize shared state
     if (threadIdx.x == 0) {
-        printf("Block %d: Initializing shared memory\n", blockIdx.x);
+        if constexpr (VERBOSE) {
+            printf("Block %d: Initializing shared memory\n", blockIdx.x);
+        }
         SharedBlockMemory::init(&shared_mem, sim_id);
 
         for (int i = 0; i < num_vars; i++) {
-            printf("Setting variable %d to kind %d\n", i, kinds[i]);
+            if constexpr (VERBOSE) {
+                printf("Setting variable %d to kind %d\n", i, kinds[i]);
+            }
             shared_mem.variables[i].value = model->initial_var_values[i];
             if(kinds[i] == VariableKind::CLOCK) {
                 shared_mem.variables[i].kind = VariableKind::CLOCK;
@@ -665,15 +737,17 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
     my_state->component_id = comp_id;
     my_state->current_node = &model->nodes[comp_id];
     my_state->has_delay = false;
-
-    printf("Thread %d: Component initialized, node_id=%d\n",
-           threadIdx.x, my_state->current_node->id);
+    if constexpr (VERBOSE) {
+        printf("Thread %d: Component initialized, node_id=%d\n",
+               threadIdx.x, my_state->current_node->id);
+    }
     CHECK_ERROR("after component init");
 
     // Main simulation loop
     while(shared_mem.global_time < time_bound) {
-        printf("Thread %d: Time=%f\n", threadIdx.x, shared_mem.global_time);
-
+        if constexpr (VERBOSE) {
+            printf("Thread %d: Time=%f\n", threadIdx.x, shared_mem.global_time);
+        }
         compute_possible_delay(my_state, &shared_mem, model, &block_state, num_vars);
         CHECK_ERROR("after compute delay");
         __syncthreads();
@@ -686,12 +760,15 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
     model->num_components    // int num_components
 );
         CHECK_ERROR("after find minimum");
-        printf("Thread %d: Minimum delay = %f\n", threadIdx.x, min_delay);
-
+        if constexpr (VERBOSE) {
+            printf("Thread %d: Minimum delay = %f\n", threadIdx.x, min_delay);
+        }
         if(threadIdx.x == 0) {
             shared_mem.global_time += min_delay;
-            printf("Block %d: Advanced time to %f\n",
-                   blockIdx.x, shared_mem.global_time);
+            if constexpr (VERBOSE) {
+                printf("Block %d: Advanced time to %f\n",
+                       blockIdx.x, shared_mem.global_time);
+            }
         }
         __syncthreads();
     }
@@ -703,8 +780,9 @@ void simulation::run_statistical_model_checking(SharedModelState* model, float c
 
 
    int total_runs = 1;
-   cout << "total_runs = " << total_runs << endl;
-
+    if constexpr (VERBOSE) {
+        cout << "total_runs = " << total_runs << endl;
+    }
    // Validate parameters
    if(model == nullptr) {
        cout << "Error: NULL model pointer" << endl;
@@ -728,13 +806,15 @@ void simulation::run_statistical_model_checking(SharedModelState* model, float c
    int num_blocks = 1;
 
    // Print detailed device information
-   cout << "Device details:" << endl
-        << "  Name: " << deviceProp.name << endl
-        << "  Warp size: " << warp_size << endl
-        << "  Max threads per block: " << deviceProp.maxThreadsPerBlock << endl
-        << "  Max block dimensions: " << deviceProp.maxThreadsDim[0] << " x "
-        << deviceProp.maxThreadsDim[1] << " x " << deviceProp.maxThreadsDim[2] << endl
-        << "  Adjusted threads per block: " << threads_per_block << endl;
+    if constexpr (VERBOSE) {
+        cout << "Device details:" << endl
+             << "  Name: " << deviceProp.name << endl
+             << "  Warp size: " << warp_size << endl
+             << "  Max threads per block: " << deviceProp.maxThreadsPerBlock << endl
+             << "  Max block dimensions: " << deviceProp.maxThreadsDim[0] << " x "
+             << deviceProp.maxThreadsDim[1] << " x " << deviceProp.maxThreadsDim[2] << endl
+             << "  Adjusted threads per block: " << threads_per_block << endl;
+    }
 
    // Validate configuration
    if (threads_per_block > deviceProp.maxThreadsPerBlock) {
@@ -756,10 +836,11 @@ void simulation::run_statistical_model_checking(SharedModelState* model, float c
             << ") exceeds device capability (" << deviceProp.sharedMemPerBlock << ")" << endl;
        return;
    }
-
-   cout << "Shared memory details:" << endl
-        << "  Required: " << sizeof(SharedBlockMemory) << " bytes" << endl
-        << "  Aligned: " << shared_mem_per_block << " bytes" << endl;
+    if constexpr (VERBOSE) {
+    cout << "Shared memory details:" << endl
+             << "  Required: " << sizeof(SharedBlockMemory) << " bytes" << endl
+             << "  Aligned: " << shared_mem_per_block << " bytes" << endl;
+    }
 
    // Allocate and validate device results array
    bool* device_results;
@@ -768,12 +849,13 @@ void simulation::run_statistical_model_checking(SharedModelState* model, float c
        cout << "CUDA malloc error: " << cudaGetErrorString(error) << endl;
        return;
    }
-
-   cout << "Launch configuration validated:" << endl;
-   cout << "  Blocks: " << num_blocks << endl;
-   cout << "  Threads per block: " << threads_per_block << endl;
-   cout << "  Shared memory per block: " << shared_mem_per_block << endl;
-   cout << "  Time bound: " << TIME_BOUND << endl;
+    if constexpr (VERBOSE) {
+        cout << "Launch configuration validated:" << endl;
+        cout << "  Blocks: " << num_blocks << endl;
+        cout << "  Threads per block: " << threads_per_block << endl;
+        cout << "  Shared memory per block: " << shared_mem_per_block << endl;
+        cout << "  Time bound: " << TIME_BOUND << endl;
+    }
 
    // Verify model is accessible
    SharedModelState host_model;
@@ -783,16 +865,17 @@ void simulation::run_statistical_model_checking(SharedModelState* model, float c
        cudaFree(device_results);
        return;
    }
-
-    cout << "Model verified accessible with " << host_model.num_components << " components" << endl;
-
+    if constexpr (VERBOSE) {
+        cout << "Model verified accessible with " << host_model.num_components << " components" << endl;
+    }
 // Add verification here with more safety checks
-cout << "\nVerifying model transfer:" << endl;
-cout << "Model contents:" << endl;
-cout << "  nodes pointer: " << host_model.nodes << endl;
-cout << "  invariants pointer: " << host_model.invariants << endl;
-cout << "  num_components: " << host_model.num_components << endl;
-
+    if constexpr (VERBOSE) {
+        cout << "\nVerifying model transfer:" << endl;
+        cout << "Model contents:" << endl;
+        cout << "  nodes pointer: " << host_model.nodes << endl;
+        cout << "  invariants pointer: " << host_model.invariants << endl;
+        cout << "  num_components: " << host_model.num_components << endl;
+    }
 if (host_model.nodes == nullptr) {
     cout << "Error: Nodes array is null" << endl;
     cudaFree(device_results);
@@ -807,8 +890,9 @@ if(error != cudaSuccess) {
     cudaFree(device_results);
     return;
 }
-cout << "Nodes pointer verification: " << nodes_ptr << endl;
-
+if constexpr (VERBOSE) {
+    cout << "Nodes pointer verification: " << nodes_ptr << endl;
+}
 // Now try to read one node
 NodeInfo test_node;
 error = cudaMemcpy(&test_node, host_model.nodes, sizeof(NodeInfo), cudaMemcpyDeviceToHost);
@@ -817,14 +901,17 @@ if(error != cudaSuccess) {
     cudaFree(device_results);
     return;
 }
-cout << "First node verification:" << endl
-     << "  ID: " << test_node.id << endl
-     << "  First invariant index: " << test_node.first_invariant_index << endl
-     << "  Num invariants: " << test_node.num_invariants << endl;
-
+if constexpr (VERBOSE) {
+    cout << "First node verification:" << endl
+         << "  ID: " << test_node.id << endl
+         << "  First invariant index: " << test_node.first_invariant_index << endl
+         << "  Num invariants: " << test_node.num_invariants << endl;
+}
 // Only check invariants if we have a valid pointer
 if(host_model.invariants != nullptr) {
-    cout << "Attempting to read invariant..." << endl;
+    if constexpr (VERBOSE) {
+        cout << "Attempting to read invariant..." << endl;
+    }
     GuardInfo test_guard;
     error = cudaMemcpy(&test_guard, host_model.invariants, sizeof(GuardInfo),
                        cudaMemcpyDeviceToHost);
@@ -833,10 +920,12 @@ if(host_model.invariants != nullptr) {
         cudaFree(device_results);
         return;
     }
-    cout << "First invariant verification:" << endl
-         << "  Uses variable: " << test_guard.uses_variable << endl
-         << "  Variable ID: " << (test_guard.uses_variable ?
-                                 test_guard.var_info.variable_id : -1) << endl;
+    if constexpr (VERBOSE) {
+        cout << "First invariant verification:" << endl
+             << "  Uses variable: " << test_guard.uses_variable << endl
+             << "  Variable ID: " << (test_guard.uses_variable ?
+                                     test_guard.var_info.variable_id : -1) << endl;
+    }
 } else {
     cout << "No invariants pointer available" << endl;
 }
@@ -845,11 +934,13 @@ if(host_model.invariants != nullptr) {
 
 
    // Check each kernel parameter
-   cout << "Kernel parameter validation:" << endl;
-   cout << "  model pointer: " << model << endl;
-   cout << "  device_results pointer: " << device_results << endl;
-   cout << "  runs_per_block: " << runs_per_block << endl;
-   cout << "  TIME_BOUND: " << TIME_BOUND << endl;
+    if constexpr (VERBOSE) {
+        cout << "Kernel parameter validation:" << endl;
+        cout << "  model pointer: " << model << endl;
+        cout << "  device_results pointer: " << device_results << endl;
+        cout << "  runs_per_block: " << runs_per_block << endl;
+        cout << "  TIME_BOUND: " << TIME_BOUND << endl;
+    }
 
    // Verify model pointer is a valid device pointer
    cudaPointerAttributes modelAttrs;
@@ -859,10 +950,11 @@ if(host_model.invariants != nullptr) {
        cudaFree(device_results);
        return;
    }
-
-   cout << "Model pointer properties:" << endl;
-   cout << "  type: " << (modelAttrs.type == cudaMemoryTypeDevice ? "device" : "other") << endl;
-   cout << "  device: " << modelAttrs.device << endl;
+    if constexpr (VERBOSE) {
+        cout << "Model pointer properties:" << endl;
+        cout << "  type: " << (modelAttrs.type == cudaMemoryTypeDevice ? "device" : "other") << endl;
+        cout << "  device: " << modelAttrs.device << endl;
+    }
 
    // Similarly check device_results pointer
    cudaPointerAttributes resultsAttrs;
@@ -872,11 +964,11 @@ if(host_model.invariants != nullptr) {
        cudaFree(device_results);
        return;
    }
-
-   cout << "Results pointer properties:" << endl;
-   cout << "  type: " << (resultsAttrs.type == cudaMemoryTypeDevice ? "device" : "other") << endl;
-   cout << "  device: " << resultsAttrs.device << endl;
-
+    if constexpr (VERBOSE) {
+        cout << "Results pointer properties:" << endl;
+        cout << "  type: " << (resultsAttrs.type == cudaMemoryTypeDevice ? "device" : "other") << endl;
+        cout << "  device: " << resultsAttrs.device << endl;
+    }
    // Clear any previous error
    error = cudaGetLastError();
    if(error != cudaSuccess) {
@@ -896,8 +988,9 @@ if(host_model.invariants != nullptr) {
         cudaFree(d_kinds);
         return;
     }
-
-   cout << "Launching kernel..." << endl;
+    if constexpr (VERBOSE) {
+        cout << "Launching kernel..." << endl;
+    }
    // Launch kernel
    simulation_kernel<<<num_blocks, threads_per_block>>>(
        model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars);
@@ -917,8 +1010,9 @@ if(host_model.invariants != nullptr) {
        cudaFree(device_results);
        return;
    }
-
-   cout << "Kernel completed successfully" << endl;
+    if constexpr (VERBOSE) {
+        cout << "Kernel completed successfully" << endl;
+    }
 
    // Cleanup
    cudaFree(d_kinds);

@@ -13,6 +13,7 @@
 #include "../engine/Domain.h"
 #include "../network_optimization/visitor.h"
 #include <unordered_set>
+#include "../main.cuh"
 
 
 
@@ -87,8 +88,10 @@ private:
                      const std::string& template_name, bool is_const, int rate) {
         std::string scope_key = make_scope_key(var_name, template_name);
 
-        printf("Attempting to register variable '%s' in scope '%s'\n",
-               var_name.c_str(), scope_key.c_str());
+        if constexpr (VERBOSE) {
+            printf("Attempting to register variable '%s' in scope '%s'\n",
+                   var_name.c_str(), scope_key.c_str());
+        }
 
         // Check if variable already exists in this scope
         auto it = scope_to_id_map_.find(scope_key);
@@ -107,14 +110,15 @@ private:
             is_const,
             rate
         );
-
-        printf("Registered %s variable '%s' (id=%d) in %s with rate=%d\n",
-               kind == VariableKind::CLOCK ? " clock" :
-               kind == VariableKind::INT ? "local int" : "global int",
-               var_name.c_str(),
-               var_id,
-               template_name.empty() ? "global scope" : template_name.c_str(),
-               rate);
+        if constexpr (VERBOSE) {
+            printf("Registered %s variable '%s' (id=%d) in %s with rate=%d\n",
+                   kind == VariableKind::CLOCK ? " clock" :
+                   kind == VariableKind::INT ? "local int" : "global int",
+                   var_name.c_str(),
+                   var_id,
+                   template_name.empty() ? "global scope" : template_name.c_str(),
+                   rate);
+        }
 
         return var_id;
     }
@@ -148,14 +152,16 @@ public:
         current_template_ = "";  // Ensure we're in global scope
 
         // Debug print network info
-        printf("\nProcessing network with %d variables\n", net->variables.size);
-
+        if constexpr (VERBOSE) {
+            printf("\nProcessing network with %d variables\n", net->variables.size);
+        }
         // Process global variables
         for(int i = 0; i < net->variables.size; i++) {
             const clock_var& var = net->variables.store[i];
-
-            printf("Processing variable %d: id=%d, rate=%d\n",
-                   i, var.id, var.rate);
+            if constexpr (VERBOSE) {
+                printf("Processing variable %d: id=%d, rate=%d\n",
+                       i, var.id, var.rate);
+            }
 
             // Temporary name until we implement proper name lookup (if we want it for print/debugging purposes)
             std::string var_name = "var_" + std::to_string(var.id);
@@ -169,11 +175,13 @@ public:
             );
 
             // Debug print registration result
-            printf("Registered as variable ID %d\n", var_id);
+            if constexpr (VERBOSE) {
+                printf("Registered as variable ID %d\n", var_id);
+            }
         }
-
-        printf("\nFinished processing network variables\n");
-
+        if constexpr (VERBOSE) {
+            printf("\nFinished processing network variables\n");
+        }
         accept(net, this);
     }
 
@@ -182,7 +190,9 @@ public:
         if(has_visited(n)) return;
 
         current_node_id_ = n->id;
-        printf("Visiting node %d\n", n->id);
+        if constexpr (VERBOSE) {
+            printf("Visiting node %d\n", n->id);
+        }
 
         // Process invariants
         for(int i = 0; i < n->invariants.size; i++) {
@@ -210,7 +220,9 @@ public:
         if(has_visited(e)) return;
 
         current_edge_id_++;
-        printf("Visiting edge %d\n", current_edge_id_);
+        if constexpr (VERBOSE) {
+            printf("Visiting edge %d\n", current_edge_id_);
+        }
 
         // Process guards
         for(int i = 0; i < e->guards.size; i++) {

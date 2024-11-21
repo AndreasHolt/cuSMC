@@ -5,7 +5,7 @@
 #ifndef MAIN_CUH
 #define MAIN_CUH
 
-
+#define VERBOSE 1
 
 class main {
 
