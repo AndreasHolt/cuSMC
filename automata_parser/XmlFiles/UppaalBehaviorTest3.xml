@@ -38,53 +38,61 @@ int l = 8;
 		</location>
 		<location id="id6" x="510" y="119">
 		</location>
+		<location id="id7" x="-187" y="102">
+		</location>
 		<init ref="id0"/>
-		<transition id="id7">
+		<transition id="id8">
+			<source ref="id0"/>
+			<target ref="id7"/>
+			<label kind="guard" x="-182" y="17">x &gt;= 56</label>
+			<label kind="synchronisation" x="-182" y="34">troll?</label>
+		</transition>
+		<transition id="id9">
 			<source ref="id1"/>
 			<target ref="id0"/>
 			<nail x="-136" y="-136"/>
 		</transition>
-		<transition id="id8">
+		<transition id="id10">
 			<source ref="id2"/>
 			<target ref="id6"/>
 			<label kind="guard" x="76" y="-34">y &lt; 5</label>
 		</transition>
-		<transition id="id9">
+		<transition id="id11">
 			<source ref="id5"/>
 			<target ref="id6"/>
 		</transition>
-		<transition id="id10">
+		<transition id="id12">
 			<source ref="id4"/>
 			<target ref="id5"/>
 		</transition>
-		<transition id="id11">
+		<transition id="id13">
 			<source ref="id4"/>
 			<target ref="id3"/>
 			<label kind="guard" x="120" y="38">x &lt; 3</label>
 			<nail x="102" y="34"/>
 		</transition>
-		<transition id="id12">
+		<transition id="id14">
 			<source ref="id3"/>
 			<target ref="id4"/>
 			<label kind="guard" x="35" y="63">l &lt;= 2</label>
 		</transition>
-		<transition id="id13">
+		<transition id="id15">
 			<source ref="id0"/>
 			<target ref="id3"/>
 			<label kind="guard" x="-136" y="34">x&gt;20 &amp;&amp; l &gt;= 10</label>
 		</transition>
-		<transition id="id14">
+		<transition id="id16">
 			<source ref="id0"/>
 			<target ref="id2"/>
-			<label kind="guard" x="-127" y="-34">x&gt;10</label>
-			<label kind="synchronisation" x="-160" y="-25">troll!</label>
+			<label kind="guard" x="-127" y="-34">x&lt;5</label>
+			<label kind="synchronisation" x="-161" y="-25">troll?</label>
 		</transition>
-		<transition id="id15">
+		<transition id="id17">
 			<source ref="id0"/>
 			<target ref="id1"/>
 			<label kind="guard" x="-127" y="-85">x&lt;=10</label>
 			<label kind="synchronisation" x="-160" y="-72">lol!</label>
-			<label kind="assignment" x="-160" y="-55">x = 0, y = 0, l = (l + 10) * 2</label>
+			<label kind="assignment" x="-153" y="-59">y = 0, l = (l + 10) * 2</label>
 		</transition>
 	</template>
 	<template>
@@ -92,28 +100,35 @@ int l = 8;
 		<declaration>// Place local declarations here.
 clock x = 0;
 int g = 1;</declaration>
-		<location id="id16" x="51" y="-8">
+		<location id="id18" x="51" y="-8">
 			<name x="41" y="-42">f1</name>
-			<label kind="invariant" x="42" y="8">x&lt;=15</label>
+			<label kind="invariant" x="42" y="8">x&lt;=1</label>
 		</location>
-		<location id="id17" x="212" y="-8">
+		<location id="id19" x="212" y="-8">
 			<name x="202" y="-42">f2</name>
 			<label kind="invariant" x="202" y="9">g &lt;= 1000</label>
 			<label kind="exponentialrate" x="202" y="26">1 + S</label>
 		</location>
-		<location id="id18" x="348" y="-8">
+		<location id="id20" x="348" y="-8">
 			<name x="338" y="-42">f3</name>
 		</location>
-		<init ref="id16"/>
-		<transition id="id19">
-			<source ref="id17"/>
-			<target ref="id18"/>
+		<location id="id21" x="187" y="-136">
+		</location>
+		<init ref="id18"/>
+		<transition id="id22">
+			<source ref="id18"/>
+			<target ref="id21"/>
+			<label kind="synchronisation" x="69" y="-89">!troll</label>
+		</transition>
+		<transition id="id23">
+			<source ref="id19"/>
+			<target ref="id20"/>
 			<label kind="synchronisation" x="230" y="-25">troll?</label>
 		</transition>
-		<transition id="id20">
-			<source ref="id16"/>
-			<target ref="id17"/>
-			<label kind="guard" x="69" y="-42">x &lt; 20</label>
+		<transition id="id24">
+			<source ref="id18"/>
+			<target ref="id19"/>
+			<label kind="guard" x="69" y="-42">x &lt; 10</label>
 			<label kind="synchronisation" x="69" y="-25">lol?</label>
 		</transition>
 	</template>
