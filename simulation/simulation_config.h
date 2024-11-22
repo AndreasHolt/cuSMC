@@ -52,6 +52,7 @@ struct simulation_config
     unsigned variable_count = 1;
     unsigned network_size = 1;
     unsigned node_count = 0;
+    // Is this the number of urgent nodes in an automata?
     unsigned initial_urgent = 0;
     unsigned initial_committed = 0;
 
@@ -80,20 +81,22 @@ struct simulation_config
     }
 };
 
+// Since this is a function for modifying a config, why do we not make it a member function of simulation_config?
 void setup_simulation_config(simulation_config* config, const network* model, const unsigned max_expr_depth, const unsigned max_fanout, const unsigned node_count) {
-    unsigned track_count = 0;
+    unsigned tracked_var_count = 0;
     for (int i = 0; i < model->variables.size; ++i) {
         if(model->variables.store[i].should_track)
-            track_count++;
+            tracked_var_count++;
     }
 
     for (int i = 0; i < model->automatas.size; ++i)
     {
+        //Can an entire automata be urgent? If not should we not check .store[i].store[0] to get the first node?
         config->initial_urgent += IS_URGENT(model->automatas.store[i]->type);
         config->initial_committed += model->automatas.store[i]->type == node::committed;
     }
 
-    config->tracked_variable_count = track_count;
+    config->tracked_variable_count = tracked_var_count;
     config->network_size = model->automatas.size;
     config->variable_count = model->variables.size;
 

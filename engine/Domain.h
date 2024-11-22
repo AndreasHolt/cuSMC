@@ -143,7 +143,7 @@ struct node
         goal = 1,
         branch = 2,
         urgent = 3,
-        committed = 4,
+        committed = 4,  // What is the difference between branch, committed, and urgent?
     } type = location;
     expr* lamda{};
     arr<edge> edges = arr<edge>::empty();

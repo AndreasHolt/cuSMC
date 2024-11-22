@@ -66,6 +66,7 @@ int main()
         properties.template_names);
     optimizer.optimize(&model);
 
+    // Convert expressions into polish notation
     pn_compile_visitor pn_compiler;
     pn_compiler.visit(&model);
 
