@@ -215,28 +215,45 @@ __device__ void take_transition(ComponentState* my_state,
 
     const NodeInfo* dest_node = nullptr;
     // Search through all level slots
-    for(int level = 0; level < model->max_nodes_per_component; level++) { // TODO: Optimize this later (no pre-mature optimization for now)
-        int level_start = level * model->num_components;
-        if constexpr (VERBOSE) {
-            printf("Thread %d: Checking level %d starting at index %d\n",
-                   threadIdx.x, level, level_start);
+    //for(int level = 0; level < model->max_nodes_per_component; level++) {
+    //    int level_start = level * model->num_components;
+     //   if constexpr (VERBOSE) {
+    //        printf("Thread %d: Checking level %d starting at index %d\n",
+    //               threadIdx.x, level, level_start);
+    //    }
+//
+    //    for(int i = 0; i < model->num_components; i++) {
+    //        const NodeInfo& node = model->nodes[level_start + i];
+    //        if constexpr (VERBOSE) {
+    //            printf("Thread %d:   Checking node id=%d\n", threadIdx.x, node.id);
+    //        }
+    //        if(node.id == edge.dest_node_id) {
+    //            dest_node = &node;
+    //            if constexpr (VERBOSE) {
+    //                printf("Thread %d: Found destination node at level %d, index %d\n",
+    //                       threadIdx.x, level, i);
+    //            }
+    //            break;
+    //        }
+    //    }
+    //    if(dest_node != nullptr) break;
+    //}
+    // new method optimized for finding dest node
+    // If multiple runs in 1 block, then we can still find relevant index by using the modulo component
+    // Example: 4 runs, thread 1, 26, 51, 76 all access index 1. Aka modulo num_components
+    for (int level = 0; level < model->max_nodes_per_component; level++) {
+        // We know relevant nodes are stored at each level offset by the index of the component idx
+        // The component idx is equivalent to threadIdx
+        const NodeInfo& node = model->nodes[level * model->num_components + threadIdx.x];
+        if(node.id == edge.dest_node_id) {
+            dest_node = &node;
+            if constexpr (VERBOSE) {
+                printf("Thread %d: Found destination node at level %d, index %d\n",
+                       threadIdx.x, level, (threadIdx.x));
+            }
+            break;
         }
 
-        for(int i = 0; i < model->num_components; i++) {
-            const NodeInfo& node = model->nodes[level_start + i];
-            if constexpr (VERBOSE) {
-                printf("Thread %d:   Checking node id=%d\n", threadIdx.x, node.id);
-            }
-            if(node.id == edge.dest_node_id) {
-                dest_node = &node;
-                if constexpr (VERBOSE) {
-                    printf("Thread %d: Found destination node at level %d, index %d\n",
-                           threadIdx.x, level, i);
-                }
-                break;
-            }
-        }
-        if(dest_node != nullptr) break;
     }
 
 
@@ -379,8 +396,22 @@ __device__ void compute_possible_delay(
     double max_delay = DBL_MAX;
     bool is_bounded = false;
 
-
     __syncthreads();
+
+
+    if constexpr (VERBOSE || true) {
+        printf("Node idx %d has type: %d \n", node.id, node.type);
+    }
+    // Node types with 3 (Urgent) or 4 (Comitted) need to return 0 as their delay
+    if (node.type > 2) {
+        if constexpr (VERBOSE || true) {
+            printf("Node idx %d has type: %d, therefore it is urgent or comitted and selecting delay 0 \n", node.id, node.type);
+        }
+        my_state->next_delay = 0;
+        my_state->has_delay = true;
+        return;
+    }
+
 
     // Debug current variable values
     if constexpr (VERBOSE) {
