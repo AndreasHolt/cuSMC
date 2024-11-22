@@ -101,7 +101,7 @@ int main()
 
     // Kernels for debugging purposes
     if constexpr (VERBOSE) {
-        verify_expressions_kernel<<<1,1>>>(state);
+        // verify_expressions_kernel<<<1,1>>>(state);
         // cudaDeviceSynchronize();
         // verify_invariants_kernel<<<1, 1>>>(state);
         // test_kernel<<<1, 1>>>(state);
