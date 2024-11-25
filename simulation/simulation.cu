@@ -11,36 +11,44 @@
 #define TIME_BOUND 10.0
 #define MAX_VARIABLES 20
 
+
+
 __device__ double evaluate_expression(const expr* e, BlockSimulationState* block_state) {
     if(e == nullptr) {
         printf("Warning: Null expression in evaluate_expression\n");
         return 0.0;
     }
 
-    // For pn_compiled_ee, we should evaluate the left branch
-    if(e->operand == expr::pn_compiled_ee) {
+    // Get operand using our helper
+    int op = fetch_expr_operand(e);
+
+    if(op == expr::pn_compiled_ee) {
         if constexpr (VERBOSE) {
             printf("DEBUG: Evaluating Polish notation expression of length %d\n",
-                   e->length);
+                   e->length); // Direct access ok since we're just reading length once
         }
 
         // Create a stack for evaluation
-        __shared__ double value_stack[64];  // TODO: We can probably get the exact number from the optimizer, and pass it in as a parameter
+        __shared__ double value_stack[64]; // TODO: We can probably get the exact number from the optimizer, and pass it in as a parameter
         int stack_top = 0;
 
         // Evaluate the Polish notation expression
+        // Since e[i] are contiguous (we use polish notation), we can access them directly
         for(int i = 1; i < e->length; i++) {  // Start from 1 to skip the header
             const expr& current = e[i];
+            int current_op = fetch_expr_operand(&current);
 
-            switch(current.operand) {
+            switch(current_op) {
                 case expr::literal_ee:
-                    value_stack[stack_top++] = current.value; // stack_top++ increments the stack_top after adding the value
-                break;
+                    value_stack[stack_top++] = fetch_expr_value(&current); // stack_top++ increments the stack_top after adding the value
+                    break;
 
-                case expr::clock_variable_ee:
+                case expr::clock_variable_ee: {
+                    int var_id = current.variable_id;  // Union access, single read
                     value_stack[stack_top++] =
-                        block_state->shared->variables[current.variable_id].value;
-                break;
+                        block_state->shared->variables[var_id].value;
+                    break;
+                }
 
                 case expr::plus_ee: {
                     double b = value_stack[--stack_top]; // --stack_top first decrements then accesses
@@ -66,36 +74,38 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
                 // TODO: Add more operators as needed
 
                 default:
-                    printf("Warning: Unknown operator %d in PN expression\n",
-                           current.operand);
-                break;
+                    printf("Warning: Unknown operator %d in PN expression\n", current_op);
+                    break;
             }
         }
-
-        // Result should be on top of stack
         return value_stack[stack_top - 1];
     }
 
+
+    // Handle non-PN expressions
     if constexpr (VERBOSE) {
-        printf("DEBUG: Evaluating non-pn expression with operator %d\n", e->operand);
+        printf("DEBUG: Evaluating non-pn expression with operator %d\n", op);
     }
-    // Handling of expressions that are not PN
-    switch(e->operand) {
+
+    switch(op) {
         case expr::literal_ee:
-            return e->value;
+            return fetch_expr_value(e);
 
-        case expr::clock_variable_ee: // Also used for variables that are INT, not just CLOCK
-            if(e->variable_id < MAX_VARIABLES) {
-                return block_state->shared->variables[e->variable_id].value;
+        case expr::clock_variable_ee: {
+            int var_id = e->variable_id;  // Union access, single read
+            if(var_id < MAX_VARIABLES) {
+                return block_state->shared->variables[var_id].value;
             }
-            printf("Warning: Invalid variable ID %d in expression\n", e->variable_id);
+            printf("Warning: Invalid variable ID %d in expression\n", var_id);
             return 0.0;
+        }
 
-        case expr::plus_ee:
-            // For Polish notation: evaluate children then add
-            if(e->left && e->right) {
-                double left_val = evaluate_expression(e->left, block_state);
-                double right_val = evaluate_expression(e->right, block_state);
+        case expr::plus_ee: {
+            const expr* left = fetch_expr(e->left);
+            const expr* right = fetch_expr(e->right);
+            if(left && right) {
+                double left_val = evaluate_expression(left, block_state);
+                double right_val = evaluate_expression(right, block_state);
                 if constexpr (VERBOSE) {
                     printf("DEBUG: Plus operation: %f + %f = %f\n",
                            left_val, right_val, left_val + right_val);
@@ -103,27 +113,36 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
                 return left_val + right_val;
             }
             break;
+        }
 
-        case expr::minus_ee:
-            if(e->left && e->right) {
-                double left_val = evaluate_expression(e->left, block_state);
-                double right_val = evaluate_expression(e->right, block_state);
+        case expr::minus_ee: {
+            const expr* left = fetch_expr(e->left);
+            const expr* right = fetch_expr(e->right);
+            if(left && right) {
+                double left_val = evaluate_expression(left, block_state);
+                double right_val = evaluate_expression(right, block_state);
                 return left_val - right_val;
             }
             break;
+        }
 
-        case expr::multiply_ee:
-            if(e->left && e->right) {
-                double left_val = evaluate_expression(e->left, block_state);
-                double right_val = evaluate_expression(e->right, block_state);
+        case expr::multiply_ee: {
+            const expr* left = fetch_expr(e->left);
+            const expr* right = fetch_expr(e->right);
+            if(left && right) {
+                double left_val = evaluate_expression(left, block_state);
+                double right_val = evaluate_expression(right, block_state);
                 return left_val * right_val;
             }
             break;
+        }
 
-        case expr::division_ee:
-            if(e->left && e->right) {
-                double left_val = evaluate_expression(e->left, block_state);
-                double right_val = evaluate_expression(e->right, block_state);
+        case expr::division_ee: {
+            const expr* left = fetch_expr(e->left);
+            const expr* right = fetch_expr(e->right);
+            if(left && right) {
+                double left_val = evaluate_expression(left, block_state);
+                double right_val = evaluate_expression(right, block_state);
                 if(right_val == 0.0) {
                     printf("Warning: Division by zero\n");
                     return 0.0;
@@ -131,18 +150,16 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
                 return left_val / right_val;
             }
             break;
+        }
 
-        case expr::pn_compiled_ee:
         case expr::pn_skips_ee:
-            // Acts as a goto or jump. Used for implementing conditional expressions (ternary)
-            // TODO: Implement this fully
             if(e->left) {
-                return evaluate_expression(e->left, block_state);
+                return evaluate_expression(fetch_expr(e->left), block_state);
             }
             break;
 
         default:
-            printf("Warning: Unhandled operator %d in expression\n", e->operand);
+            printf("Warning: Unhandled operator %d in expression\n", op);
             break;
     }
 

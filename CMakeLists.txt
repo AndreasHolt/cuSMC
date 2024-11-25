@@ -5,6 +5,7 @@ set(CMAKE_CUDA_STANDARD 17)              # Set the CUDA standard to C++17
 set(CMAKE_CXX_STANDARD 17)               # Set the C++ standard to C++17
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)     # Ensure that the specified standard is required
 set(CMAKE_CXX_STANDARD_REQUIRED ON)      # Ensure that the specified standard is required
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -arch=sm_75")
 
 # Add your source files
 add_executable(CudaIntro main.cu

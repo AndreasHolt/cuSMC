@@ -11,6 +11,12 @@
 #include "../../engine/Domain.h"
 #include "../../automata_parser/VariableUsageVisitor.h"
 #include <list>
+#include <cuda_runtime.h>
+
+
+
+
+
 
 class abstract_parser;
 class uppaal_xml_parser;
@@ -135,6 +141,30 @@ struct NodeInfo {
         first_edge_index(fei), num_edges(ne), first_invariant_index(fii), num_invariants(ni) {}
 };
 
+
+// Helper for safely accessing expr pointer
+__device__ __forceinline__ const expr* fetch_expr(const expr* ptr) {
+    // return ptr since we can't __ldg a whole struct directly.
+    return ptr;
+}
+
+__device__ __forceinline__ double fetch_expr_value(const expr* ptr) {
+#if __CUDA_ARCH__ >= 350
+    printf("Using __ldg for fetch_expr_value, ptr->value: %f\n", ptr ? ptr->value : 0.0);
+    return ptr ? __ldg((const double*)&ptr->value) : 0.0;
+#else
+    printf("Using regular load for fetch_expr_value, ptr->value: %f\n", ptr ? ptr->value : 0.0);
+    return ptr ? ptr->value : 0.0;
+#endif
+}
+
+__device__ __forceinline__ int fetch_expr_operand(const expr* ptr) {
+#if __CUDA_ARCH__ >= 350
+    return ptr ? __ldg((const int*)&ptr->operand) : -1;
+#else
+    return ptr ? ptr->operand : -1;
+#endif
+}
 
 
 /*
