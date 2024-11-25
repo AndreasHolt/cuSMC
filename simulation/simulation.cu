@@ -30,17 +30,18 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
 
         // Evaluate the Polish notation expression
         for(int i = 1; i < e->length; i++) {  // Start from 1 to skip the header
-            const expr& current = e[i];
+            const expr& current = e[i];       // Does this work because it is in polish notation? Or is e an array of expressions?
 
             switch(current.operand) {
                 case expr::literal_ee:
                     value_stack[stack_top++] = current.value; // stack_top++ increments the stack_top after adding the value
                 break;
 
-                case expr::clock_variable_ee:
+                case expr::clock_variable_ee: {
                     value_stack[stack_top++] =
                         block_state->shared->variables[current.variable_id].value;
-                break;
+                    break;
+                }
 
                 case expr::plus_ee: {
                     double b = value_stack[--stack_top]; // --stack_top first decrements then accesses
@@ -85,7 +86,7 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
             return e->value;
 
         case expr::clock_variable_ee: // Also used for variables that are INT, not just CLOCK
-            if(e->variable_id < MAX_VARIABLES) {
+            if(e->variable_id < MAX_VARIABLES) { // Why do we need a MAX_VARIABLES?
                 return block_state->shared->variables[e->variable_id].value;
             }
             printf("Warning: Invalid variable ID %d in expression\n", e->variable_id);
@@ -189,7 +190,7 @@ __device__ void take_transition(ComponentState* my_state,
 
     // If this edge has a positive channel (broadcast sender)
     if(edge.channel > 0) {
-        int channel_abs = abs(edge.channel);
+    int channel_abs = abs(edge.channel);    // Would abs(edge.channel) not always be equal to edge.channel?
 
         // This component needs to signal the broadcast, as its channel is '!-labelled'
         shared->channel_active[channel_abs] = true;
@@ -962,7 +963,7 @@ void simulation::run_statistical_model_checking(SharedModelState* model, float c
     if constexpr (VERBOSE) {
         cout << "Model verified accessible with " << host_model.num_components << " components" << endl;
     }
-// Add verification here with more safety checks
+    // Add verification here with more safety checks
     if constexpr (VERBOSE) {
         cout << "\nVerifying model transfer:" << endl;
         cout << "Model contents:" << endl;
@@ -970,59 +971,59 @@ void simulation::run_statistical_model_checking(SharedModelState* model, float c
         cout << "  invariants pointer: " << host_model.invariants << endl;
         cout << "  num_components: " << host_model.num_components << endl;
     }
-if (host_model.nodes == nullptr) {
-    cout << "Error: Nodes array is null" << endl;
-    cudaFree(device_results);
-    return;
-}
-
-// Try to read just the pointer first
-void* nodes_ptr;
-error = cudaMemcpy(&nodes_ptr, &(model->nodes), sizeof(void*), cudaMemcpyDeviceToHost);
-if(error != cudaSuccess) {
-    cout << "Error reading nodes pointer: " << cudaGetErrorString(error) << endl;
-    cudaFree(device_results);
-    return;
-}
-if constexpr (VERBOSE) {
-    cout << "Nodes pointer verification: " << nodes_ptr << endl;
-}
-// Now try to read one node
-NodeInfo test_node;
-error = cudaMemcpy(&test_node, host_model.nodes, sizeof(NodeInfo), cudaMemcpyDeviceToHost);
-if(error != cudaSuccess) {
-    cout << "Error reading node: " << cudaGetErrorString(error) << endl;
-    cudaFree(device_results);
-    return;
-}
-if constexpr (VERBOSE) {
-    cout << "First node verification:" << endl
-         << "  ID: " << test_node.id << endl
-         << "  First invariant index: " << test_node.first_invariant_index << endl
-         << "  Num invariants: " << test_node.num_invariants << endl;
-}
-// Only check invariants if we have a valid pointer
-if(host_model.invariants != nullptr) {
-    if constexpr (VERBOSE) {
-        cout << "Attempting to read invariant..." << endl;
+    if (host_model.nodes == nullptr) {
+        cout << "Error: Nodes array is null" << endl;
+        cudaFree(device_results);
+        return;
     }
-    GuardInfo test_guard;
-    error = cudaMemcpy(&test_guard, host_model.invariants, sizeof(GuardInfo),
-                       cudaMemcpyDeviceToHost);
+
+    // Try to read just the pointer first
+    void* nodes_ptr;
+    error = cudaMemcpy(&nodes_ptr, &(model->nodes), sizeof(void*), cudaMemcpyDeviceToHost);
     if(error != cudaSuccess) {
-        cout << "Error reading invariant: " << cudaGetErrorString(error) << endl;
+        cout << "Error reading nodes pointer: " << cudaGetErrorString(error) << endl;
         cudaFree(device_results);
         return;
     }
     if constexpr (VERBOSE) {
-        cout << "First invariant verification:" << endl
-             << "  Uses variable: " << test_guard.uses_variable << endl
-             << "  Variable ID: " << (test_guard.uses_variable ?
-                                     test_guard.var_info.variable_id : -1) << endl;
+        cout << "Nodes pointer verification: " << nodes_ptr << endl;
     }
-} else {
-    cout << "No invariants pointer available" << endl;
-}
+    // Now try to read one node
+    NodeInfo test_node;
+    error = cudaMemcpy(&test_node, host_model.nodes, sizeof(NodeInfo), cudaMemcpyDeviceToHost);
+    if(error != cudaSuccess) {
+        cout << "Error reading node: " << cudaGetErrorString(error) << endl;
+        cudaFree(device_results);
+        return;
+    }
+    if constexpr (VERBOSE) {
+        cout << "First node verification:" << endl
+             << "  ID: " << test_node.id << endl
+             << "  First invariant index: " << test_node.first_invariant_index << endl
+             << "  Num invariants: " << test_node.num_invariants << endl;
+    }
+    // Only check invariants if we have a valid pointer
+    if(host_model.invariants != nullptr) {
+        if constexpr (VERBOSE) {
+            cout << "Attempting to read invariant..." << endl;
+        }
+        GuardInfo test_guard;
+        error = cudaMemcpy(&test_guard, host_model.invariants, sizeof(GuardInfo),
+                           cudaMemcpyDeviceToHost);
+        if(error != cudaSuccess) {
+            cout << "Error reading invariant: " << cudaGetErrorString(error) << endl;
+            cudaFree(device_results);
+            return;
+        }
+        if constexpr (VERBOSE) {
+            cout << "First invariant verification:" << endl
+                 << "  Uses variable: " << test_guard.uses_variable << endl
+                 << "  Variable ID: " << (test_guard.uses_variable ?
+                                         test_guard.var_info.variable_id : -1) << endl;
+        }
+    } else {
+        cout << "No invariants pointer available" << endl;
+    }
 
 
 
