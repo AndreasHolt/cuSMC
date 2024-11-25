@@ -1,4 +1,4 @@
-#!/bin/bash
+##!/bin/bash
 
 # Define the public key to access via ssh
 public_key_data="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBFZhxTgVQUFjyMMJVGUrqoDCMNsvE7tgHWUoBIY1bxm P7group"
@@ -87,9 +87,11 @@ sudo mkdir -p "/home/ucloud/repositories"
 
 # Define the URL of the Git repository
 repo_url="git@github.com:AndreasHolt/StochasticModelsCUDA.git"
+repo2_url="git@github.com:Grace-Melchiors/P7-SMAcc-Copy.git"
 
 # Define the destination directory for the cloned repository
 dest_dir="/home/ucloud/repositories"
+dest2_dir="/home/ucloud/smacc"
 
 # Add github.com to known hosts
 touch /home/ucloud/.ssh/known_hosts
@@ -126,6 +128,18 @@ else
 fi
 
 
+
+git clone "$repo2_url" "$dest2_dir"
+
+# Check if the clone was successful
+if [ $? -eq 0 ]; then
+    echo "Repository cloned successfully to '$dest2_dir'"
+else
+    echo "Error: Failed to clone repository"
+    exit 1
+fi
+
+
 # Function to create a new user
 create_user() {
     username=$1
@@ -156,6 +170,9 @@ num_users=${#usernames[@]}
 for (( i=0; i<$num_users; i++ ))
 do
     create_user ${usernames[$i]} ${passwords[$i]}
+    
+    # Add the user to the sudo group to grant sudo privileges
+    sudo usermod -aG sudo ${usernames[$i]}
 done
 
 
@@ -179,6 +196,7 @@ for username in "${usernames[@]}"; do
 
     # Set the correct permissions for the .ssh folder and the authorized_keys file
     sudo chown -R "$username:$username" "/home/$username"
+    sudo chmod 775 "/home/$username"
     sudo chmod 700 "/home/$username/.ssh"
     sudo chmod 600 "/home/$username/.ssh/authorized_keys"
 
@@ -186,6 +204,12 @@ for username in "${usernames[@]}"; do
 
     sudo cp -R "/home/ucloud/repositories" "/home/$username/repositories"
     sudo chown -R "$username:$username" "/home/$username/repositories"
+
+    sudo cp -R "/home/ucloud/smacc" "/home/$username/smacc"
+    sudo chown -R "$username:$username" "/home/$username/smacc"
+    sudo chmod -R 777 "/home/$username/smacc"
 done
+
+
 echo "All done!"
 exit 0
