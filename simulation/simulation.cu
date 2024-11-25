@@ -818,8 +818,6 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
     CHECK_ERROR("after shared memory init");
 
 
-
-
     // Initialize component state
     if(threadIdx.x >= model->num_components) {
         printf("Thread %d: Exiting - thread ID exceeds number of components\n",

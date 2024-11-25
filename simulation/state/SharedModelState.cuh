@@ -137,16 +137,21 @@ struct NodeInfo {
 
 
 
+/*
+ Caching techniques:
+ * We use __restrict__ for main data arrays, to enable L1 caching. We know that these arrays are laid out nicely and accessed predictably.
+*/
+
 struct SharedModelState {
     const int num_components;
     const int max_nodes_per_component;
-    const int* component_sizes;
-    const NodeInfo* nodes;
-    const EdgeInfo* edges;
-    const GuardInfo* guards;
-    const UpdateInfo* updates;
-    const GuardInfo* invariants;
-    const int* initial_var_values;
+    const int* const __restrict__ component_sizes;
+    const NodeInfo* const __restrict__ nodes;
+    const EdgeInfo* const __restrict__ edges;
+    const GuardInfo* const __restrict__ guards;
+    const UpdateInfo* const __restrict__ updates;
+    const GuardInfo* const __restrict__ invariants;
+    const int* const __restrict__ initial_var_values;
 
     // Default constructor
     CPU GPU SharedModelState() :
