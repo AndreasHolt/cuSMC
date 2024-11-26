@@ -993,7 +993,7 @@ if (host_model.nodes == nullptr) {
 
 // Try to read just the pointer first
 void* nodes_ptr;
-error = cudaMemcpy(&nodes_ptr, &(model->nodes), sizeof(void*), cudaMemcpyDeviceToHost);
+error = cudaMemcpy(&nodes_ptr, (void*)&(model->nodes), sizeof(void*), cudaMemcpyDeviceToHost);
 if(error != cudaSuccess) {
     cout << "Error reading nodes pointer: " << cudaGetErrorString(error) << endl;
     cudaFree(device_results);
