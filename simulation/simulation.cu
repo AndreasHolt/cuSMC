@@ -167,7 +167,21 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
 }
 
 
-
+// Calculate sum of edges from enabled set
+__device__ int get_sum_edge_weight(const ComponentState* my_state,
+                                    const SharedModelState* model,
+                                    BlockSimulationState* block_state) {
+    double sum = 0;
+    const NodeInfo* node = my_state->current_node;
+    for (int i = 0; i < node->num_edges; i++) {
+        for (int j = 0; j < my_state->num_enabled_edges; j++) {
+            if (my_state->enabled_edges[j] == node->first_edge_index+i) {
+                sum += evaluate_expression(model->edges[node->first_edge_index+i].weight,block_state);
+            }
+        }
+    }
+    return static_cast<int>(sum);
+}
 
 
 __device__ void take_transition(ComponentState* my_state,
@@ -189,8 +203,21 @@ __device__ void take_transition(ComponentState* my_state,
         }
     } else {
         // Random selection between enabled edges
-        float rand = curand_uniform(block_state->random);
-        selected_idx = my_state->enabled_edges[(int)(rand * my_state->num_enabled_edges)];
+        const int weights = get_sum_edge_weight(my_state, model, block_state);
+        const int rand = static_cast<int>(static_cast<float>(weights) * curand_uniform(block_state->random));
+        int temp = weights;
+        const NodeInfo* node = my_state->current_node;
+
+        for (int i = my_state->num_enabled_edges-1; i<=0; i--) {
+            int weight_of_edge = static_cast<int>(
+                evaluate_expression(model->edges[node->first_edge_index+i].weight, block_state));
+            if ( temp-weight_of_edge <= rand ) {
+                selected_idx = my_state->enabled_edges[i];
+                break;
+            }
+            temp -= weight_of_edge;
+        }
+        //selected_idx = my_state->enabled_edges[(int)(rand * my_state->num_enabled_edges)];
         if constexpr (VERBOSE) {
             printf("Thread %d: Randomly selected edge %d from %d enabled edges (rand=%f)\n",
                    threadIdx.x, selected_idx, my_state->num_enabled_edges, rand);
