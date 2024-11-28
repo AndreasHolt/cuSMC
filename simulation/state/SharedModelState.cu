@@ -232,6 +232,21 @@ SharedModelState* init_shared_model_state(
                cudaMemcpyHostToDevice);
 
     std::vector<int> initial_values(num_vars);
+    for(const auto& [var_id, var_usage] : variable_registry) {
+        // Get initial value from network if available
+        double initial_value = 0.0;
+        for(int i = 0; i < cpu_network->variables.size; i++) {
+            if(cpu_network->variables.store[i].id == var_id) {
+                initial_value = cpu_network->variables.store[i].value;
+                initial_values[var_id] = initial_value;
+                if constexpr (VERBOSE) {
+                    printf("Initializing variable %d with value %f (from network)\n",
+                           var_id, initial_value);
+                }
+                break;
+            }
+        }
+    }
 
 
     // Count total edges, guards, updates and invariants

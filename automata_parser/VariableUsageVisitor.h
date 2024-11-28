@@ -194,6 +194,11 @@ public:
             printf("Visiting node %d\n", n->id);
         }
 
+        // Track variables in lambda expressions
+        if(n->lamda != nullptr) {
+            track_expr_variables(n->lamda);
+        }
+
         // Process invariants
         for(int i = 0; i < n->invariants.size; i++) {
             const constraint& inv = n->invariants.store[i];
