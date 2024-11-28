@@ -5,17 +5,17 @@
 #ifndef SHAREDRUNSTATE_CUH
 #define SHAREDRUNSTATE_CUH
 #include "SharedModelState.cuh"
-#define MAX_COMPONENTS 2
+#define MAX_COMPONENTS 100
 
 //TODO: Make the below dynamic based on analysis of the model
 constexpr int MAX_VALUE_STACK_SIZE = 64;  // Can handle deeply nested expressions
 constexpr int MAX_CHANNELS = 32;          // Can handle many channels
-constexpr int MAX_VARIABLES = 32;         // Can handle many variables
+constexpr int MAX_VARIABLES = 200;         // Can handle many variables
 #define MAX_EDGES_PER_NODE 10
 
 
 namespace Constants {
-    constexpr int MAX_VARIABLES = 32;
+    constexpr int MAX_VARIABLES = 200;
 
 }
 
@@ -46,10 +46,6 @@ struct SharedBlockMemory {
     } variables[MAX_VARIABLES];
     int num_variables;
 
-    // Expression evaluation stack
-    double value_stack[MAX_VALUE_STACK_SIZE];
-    int value_stack_top;
-
     // Synchronization
     int ready_count;
     bool has_urgent;
@@ -65,7 +61,6 @@ struct SharedBlockMemory {
         shared->urgent_count = 0;
         shared->committed_count = 0;
         shared->simulation_id = sim_id;
-        shared->value_stack_top = 0;
         shared->ready_count = 0;
         shared->has_urgent = false;
         shared->has_committed = false;

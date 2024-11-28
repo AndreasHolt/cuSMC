@@ -9,7 +9,7 @@
 
 #define NUM_RUNS 6
 #define TIME_BOUND 10.0
-#define MAX_VARIABLES 20
+#define MAX_VARIABLES 200
 
 
 
@@ -71,6 +71,22 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
                     break;
                 }
 
+                case expr::division_ee: {
+                    double b = value_stack[--stack_top];
+                    double a = value_stack[--stack_top];
+
+                    if(b == 0.0) {
+                        printf("Warning: Division by zero in PN expression, rate cannot be zero\n");
+                        value_stack[stack_top++] = DBL_MIN;  // Use smallest positive double instead of 0
+                    } else {
+                        value_stack[stack_top++] = a / b;
+                        if constexpr (VERBOSE) {
+                            printf("DEBUG: Division %f / %f = %f\n", a, b, value_stack[stack_top-1]);
+                        }
+                    }
+                    break;
+                }
+
                 // TODO: Add more operators as needed
 
                 default:
@@ -80,7 +96,6 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
         }
         return value_stack[stack_top - 1];
     }
-
 
     // Handle non-PN expressions
     if constexpr (VERBOSE) {
@@ -106,6 +121,7 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
             if(left && right) {
                 double left_val = evaluate_expression(left, block_state);
                 double right_val = evaluate_expression(right, block_state);
+                printf("Left and right values: %f, %f\n", left_val, right_val);
                 if constexpr (VERBOSE) {
                     printf("DEBUG: Plus operation: %f + %f = %f\n",
                            left_val, right_val, left_val + right_val);
@@ -143,10 +159,20 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
             if(left && right) {
                 double left_val = evaluate_expression(left, block_state);
                 double right_val = evaluate_expression(right, block_state);
+
+                printf("Left and right values: %f, %f\n", left_val, right_val);
+
                 if(right_val == 0.0) {
                     printf("Warning: Division by zero\n");
                     return 0.0;
                 }
+                double result = left_val / right_val;
+
+                if(result == 0.0) { // TODO: Check that this is used for a rate
+                    printf("Warning: Expression evaluates to zero, cannot be used as exponential rate\n");
+                    return DBL_MIN;  // Minimum valid rate
+                }
+
                 return left_val / right_val;
             }
             break;
@@ -470,6 +496,7 @@ __device__ void compute_possible_delay(
     if constexpr (VERBOSE) {
         printf("Thread %d: Processing node %d with %d invariants\n",
                threadIdx.x, node.id, node.num_invariants);
+        printf("Lambda on node %d is polish notation: %s\n", node.id, node.lambda->operand == expr::pn_compiled_ee ? "true" : "false");
     }
 
     double min_delay = 0.0;
@@ -647,6 +674,7 @@ __device__ double find_minimum_delay(
         __syncthreads();
     }
 
+
     // Rest of the function same as before, but only thread 0 processes result
     double min_delay = delays[0];
     if(threadIdx.x == 0) {
@@ -661,7 +689,7 @@ __device__ double find_minimum_delay(
             for(int i = 0; i < MAX_VARIABLES; i++) {
                 if(shared->variables[i].kind == VariableKind::CLOCK) {
                     double old_value = shared->variables[i].value;
-                    shared->variables[i].rate = 1;
+                    shared->variables[i].rate = 1; // TODO: Don't do this. Also why do variables have a rate? Locations have rates.
                     shared->variables[i].value += min_delay;
                     if constexpr (VERBOSE) {
                         printf("  Clock %d: %f -> %f (advanced by %f)\n",
@@ -804,7 +832,7 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
     // Initialize RNG
     int sim_id = blockIdx.x * runs_per_block;
     int comp_id = threadIdx.x;
-    curand_init(1234 + sim_id * blockDim.x + comp_id, 0, 0,
+    curand_init(12345 + sim_id * blockDim.x + comp_id, 0, 0,
                 &rng_states[threadIdx.x]);
     block_state.random = &rng_states[threadIdx.x];
 
@@ -858,6 +886,9 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
             printf("Thread %d: Time=%f\n", threadIdx.x, shared_mem.global_time);
         }
         compute_possible_delay(my_state, &shared_mem, model, &block_state, num_vars);
+        // if constexpr (VERBOSE) {
+        //     printf("After compute delay\n");
+        // }
         CHECK_ERROR("after compute delay");
         __syncthreads();
 
@@ -910,7 +941,8 @@ void simulation::run_statistical_model_checking(SharedModelState* model, float c
 
    // Adjust threads to be multiple of warp size
    int warp_size = deviceProp.warpSize;
-   int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
+   // int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
+   int threads_per_block = 128; // 100 components
    int runs_per_block = 1;
    int num_blocks = 1;
 
