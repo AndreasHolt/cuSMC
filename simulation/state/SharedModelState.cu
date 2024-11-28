@@ -264,6 +264,13 @@ SharedModelState* init_shared_model_state(
         total_invariants += current_node->invariants.size;
     }
 
+    // Ensure that we have at least 1, so we don't end up with allocation issues
+    total_edges = std::max(1, total_edges);
+    total_guards = std::max(1, total_guards);
+    total_updates = std::max(1, total_updates);
+    total_invariants = std::max(1, total_invariants);
+
+
     // Allocate device memory
     const int total_node_slots = max_nodes_per_component * components_nodes.size();
     NodeInfo* device_nodes;
