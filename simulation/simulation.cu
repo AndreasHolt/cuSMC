@@ -214,7 +214,8 @@ __device__ int get_sum_edge_weight(const ComponentState* my_state,
 __device__ void take_transition(ComponentState* my_state,
                               SharedBlockMemory* shared,
                               SharedModelState* model,
-                              BlockSimulationState* block_state) {
+                              BlockSimulationState* block_state,
+                              int* goals) {
     if(my_state->num_enabled_edges == 0) {
         printf("Thread %d: No enabled edges to take\n", threadIdx.x);
         return;
@@ -330,6 +331,11 @@ __device__ void take_transition(ComponentState* my_state,
         const NodeInfo& node = model->nodes[level * model->num_components + threadIdx.x];
         if(node.id == edge.dest_node_id) {
             dest_node = &node;
+
+            // Insert MUTEX here for a solution to race conditions.
+            
+            goals[blockIdx.x + blockIdx.y + blockIdx.z] = 1;
+
             if constexpr (VERBOSE) {
                 printf("Thread %d: Found destination node at level %d, index %d\n",
                        threadIdx.x, level, (threadIdx.x));
@@ -473,7 +479,7 @@ __device__ void compute_possible_delay(
     ComponentState* my_state,
     SharedBlockMemory* shared,
     SharedModelState* model,
-    BlockSimulationState* block_state, int num_vars)
+    BlockSimulationState* block_state, int num_vars, int* goals)
 {
     // First check for active broadcasts
     // if(shared->channel_sender[my_state->component_id]) { We don't need this
@@ -500,7 +506,7 @@ __device__ void compute_possible_delay(
                     printf("Found %d enabled receiving edges for channel %d.\n",
                            my_state->num_enabled_edges, ch);
                 }
-                take_transition(my_state, shared, model, block_state);
+                take_transition(my_state, shared, model, block_state, goals);
             }
            }
     }
@@ -650,7 +656,8 @@ __device__ double find_minimum_delay(
     SharedBlockMemory* shared,
     SharedModelState* model,
     BlockSimulationState* block_state,
-    int num_components)
+    int num_components,
+    int* goals)
 {
     __shared__ double delays[MAX_COMPONENTS];  // Only need MAX_COMPONENTS slots, not full warp size
     __shared__ int component_indices[MAX_COMPONENTS];
@@ -744,7 +751,7 @@ __device__ double find_minimum_delay(
 
         if(is_race_winner) {
             check_enabled_edges(my_state, shared, model, block_state, is_race_winner);
-            take_transition(my_state, shared, model, block_state);
+            take_transition(my_state, shared, model, block_state, goals);
         }
     }
 
@@ -758,7 +765,7 @@ __device__ double find_minimum_delay(
 }
 
 __global__ void simulation_kernel(SharedModelState* model, bool* results,
-                                int runs_per_block, float time_bound, VariableKind* kinds, int num_vars) {
+                                int runs_per_block, float time_bound, VariableKind* kinds, int num_vars, int* goals) {
     if constexpr (VERBOSE) {
         if(threadIdx.x == 0) {
             printf("Starting kernel: block=%d, thread=%d\n",
@@ -913,10 +920,11 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
         if constexpr (VERBOSE) {
             printf("Thread %d: Time=%f\n", threadIdx.x, shared_mem.global_time);
         }
-        compute_possible_delay(my_state, &shared_mem, model, &block_state, num_vars);
+        compute_possible_delay(my_state, &shared_mem, model, &block_state, num_vars, goals);
         // if constexpr (VERBOSE) {
         //     printf("After compute delay\n");
         // }
+        
         CHECK_ERROR("after compute delay");
         __syncthreads();
 
@@ -925,7 +933,8 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
     &shared_mem,              // SharedBlockMemory*
     model,                    // SharedModelState*
     &block_state,            // BlockSimulationState*
-    model->num_components    // int num_components
+    model->num_components,    // int num_components
+    goals
 );
         CHECK_ERROR("after find minimum");
         if constexpr (VERBOSE) {
@@ -944,7 +953,7 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
     printf("Thread %d: Simulation complete\n", threadIdx.x);
 }
 
-void simulation::run_statistical_model_checking(SharedModelState* model, float confidence, float precision, VariableKind* kinds, int num_vars) {
+void simulation::run_statistical_model_checking(SharedModelState* model, float confidence, float precision, VariableKind* kinds, int num_vars, int* goals) {
 
 
    int total_runs = 1;
@@ -1162,7 +1171,7 @@ if(host_model.invariants != nullptr) {
     }
    // Launch kernel
    simulation_kernel<<<num_blocks, threads_per_block>>>(
-       model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars);
+       model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, goals);
 
    // Check for launch error
    error = cudaGetLastError();
@@ -1187,3 +1196,28 @@ if(host_model.invariants != nullptr) {
    cudaFree(d_kinds);
    cudaFree(device_results);
 }
+
+/*float compute_sample_mean(int* values){
+    // Find the size of the array
+    int n = sizeof(values) / sizeof(values[0]);
+
+    // Calculate the mean of the values stored in the array
+    return (std::reduce(values, values + n, 0)/n);
+}
+
+float compute_sample_deviation(int* values){
+
+    // Prep-steps
+    int mean = compute_sample_mean(values);
+    int acc = 0;
+    int n = sizeof(values)/sizeof(values[0]);
+
+    // Computing the sample deviation 
+    // (Note that the sample variance is biased)
+    // (We cant correct because of division by 0 threat)
+    for (int i = 0; i > n; i++){
+        acc += pow((values[i] - mean),2);
+    }
+
+    return acc;
+}*/

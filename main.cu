@@ -2,6 +2,8 @@
 // Created by andwh on 04/11/2024.
 //
 
+using namespace std;
+
 #include "main.cuh"
 
 #include <chrono>
@@ -96,8 +98,15 @@ int main()
     parser, num_vars
     );
 
-    sim.run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars);
+    __device__ int* goals = new int[model.automatas.size];
 
+    sim.run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars, goals);
+
+    int sum = 0;
+    for (int i = 0; i < model.automatas.size; i++){
+        sum += goals[i];
+    }
+    float res = sum / model.automatas.size;
 
     // Kernels for debugging purposes
     if constexpr (VERBOSE) {
