@@ -30,7 +30,7 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
         }
 
         // Create a stack for evaluation
-        __shared__ double value_stack[64]; // TODO: We can probably get the exact number from the optimizer, and pass it in as a parameter
+        __shared__ double value_stack[10]; // TODO: We can probably get the exact number from the optimizer, and pass it in as a parameter
         int stack_top = 0;
 
         // Evaluate the Polish notation expression
@@ -534,12 +534,12 @@ __device__ void compute_possible_delay(
     __syncthreads();
 
 
-    if constexpr (VERBOSE || true) {
+    if constexpr (VERBOSE) {
         printf("Node idx %d has type: %d \n", node.id, node.type);
     }
     // Node types with 3 (Urgent) or 4 (Comitted) need to return 0 as their delay
     if (node.type > 2) {
-        if constexpr (VERBOSE || true) {
+        if constexpr (VERBOSE) {
             printf("Node idx %d has type: %d, therefore it is urgent or comitted and selecting delay 0 \n", node.id, node.type);
         }
         my_state->next_delay = 0;
@@ -779,6 +779,7 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
     }
 
     __shared__ SharedBlockMemory shared_mem;
+    printf("CREATED SHARED_MEM");
     __shared__ ComponentState components[MAX_COMPONENTS];
     __shared__ curandState rng_states[MAX_COMPONENTS];
     if constexpr (VERBOSE) {
@@ -970,7 +971,7 @@ void simulation::run_statistical_model_checking(SharedModelState* model, float c
    // Adjust threads to be multiple of warp size
    int warp_size = deviceProp.warpSize;
    // int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
-   int threads_per_block = 128; // 100 components
+   int threads_per_block = 1028; // 100 components
    int runs_per_block = 1;
    int num_blocks = 1;
 

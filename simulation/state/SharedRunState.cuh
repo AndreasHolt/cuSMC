@@ -9,25 +9,39 @@
 
 //TODO: Make the below dynamic based on analysis of the model
 constexpr int MAX_VALUE_STACK_SIZE = 64;  // Can handle deeply nested expressions
-constexpr int MAX_CHANNELS = 32;          // Can handle many channels
-constexpr int MAX_VARIABLES = 200;         // Can handle many variables
-#define MAX_EDGES_PER_NODE 10
+constexpr int MAX_CHANNELS = 2;          // Can handle many channels
+constexpr int MAX_VARIABLES = 8;         // Can handle many variables
+#define MAX_EDGES_PER_NODE 8
 
 
 namespace Constants {
-    constexpr int MAX_VARIABLES = 200;
+    constexpr int MAX_VARIABLES = 8;
 
 }
 
 
 
-struct ComponentState {
-    int component_id;
-    const NodeInfo* current_node;
-    double next_delay;
+// struct ComponentState {
+//     uint16_t component_id;
+//     const NodeInfo* current_node;
+//     float next_delay;
+//     bool has_delay;
+//     uint16_t enabled_edges[MAX_EDGES_PER_NODE];  // Store indices of enabled edges TODO: replace with max fanout that we get with optimizer
+//     uint8_t num_enabled_edges;                  // Number of currently enabled edges
+// };
+
+struct alignas(4) ComponentState {  // We force 4-byte alignment instead of 8
+    // Pack these 4 bytes
+    uint16_t component_id;
+    uint8_t num_enabled_edges;
     bool has_delay;
-    int enabled_edges[MAX_EDGES_PER_NODE];  // Store indices of enabled edges TODO: replace with max fanout that we get with optimizer
-    int num_enabled_edges;                  // Number of currently enabled edges
+
+    // Pack 4 bytes, naturally aligned
+    float next_delay;
+
+    uint16_t enabled_edges[MAX_EDGES_PER_NODE];
+
+    const NodeInfo* current_node;  // 8 bytes, put pointer last
 };
 
 struct SharedBlockMemory {
