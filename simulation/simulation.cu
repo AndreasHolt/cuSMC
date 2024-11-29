@@ -9,8 +9,8 @@
 #include "../main.cuh"
 
 #define NUM_RUNS 6
-#define TIME_BOUND 10.0
-#define MAX_VARIABLES 200
+#define TIME_BOUND 100.0
+#define MAX_VARIABLES 8
 
 
 
@@ -759,6 +759,13 @@ __device__ double find_minimum_delay(
 
 __global__ void simulation_kernel(SharedModelState* model, bool* results,
                                 int runs_per_block, float time_bound, VariableKind* kinds, int num_vars) {
+
+// #if __CUDA_ARCH__ >= 860
+//     // Request maximum L1/shared memory configuration on Ampere
+//     __cuda_maxDynamicSharedMemorySize = 100 * 1024; // 100KB for A10
+// #endif
+
+
     if constexpr (VERBOSE) {
         if(threadIdx.x == 0) {
             printf("Starting kernel: block=%d, thread=%d\n",
@@ -971,7 +978,7 @@ void simulation::run_statistical_model_checking(SharedModelState* model, float c
    // Adjust threads to be multiple of warp size
    int warp_size = deviceProp.warpSize;
    // int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
-   int threads_per_block = 1028; // 100 components
+   int threads_per_block = 512; // 100 components
    int runs_per_block = 1;
    int num_blocks = 1;
 
@@ -1161,8 +1168,12 @@ if(host_model.invariants != nullptr) {
     if constexpr (VERBOSE) {
         cout << "Launching kernel..." << endl;
     }
+
+    cudaFuncSetAttribute(simulation_kernel, cudaFuncAttributeMaxDynamicSharedMemorySize, 65536);
+
+
    // Launch kernel
-   simulation_kernel<<<num_blocks, threads_per_block>>>(
+   simulation_kernel<<<num_blocks, threads_per_block, 65536>>>(
        model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars);
 
    // Check for launch error

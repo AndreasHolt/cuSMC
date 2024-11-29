@@ -5,7 +5,7 @@
 #ifndef SHAREDRUNSTATE_CUH
 #define SHAREDRUNSTATE_CUH
 #include "SharedModelState.cuh"
-#define MAX_COMPONENTS 100
+#define MAX_COMPONENTS 350
 
 //TODO: Make the below dynamic based on analysis of the model
 constexpr int MAX_VALUE_STACK_SIZE = 64;  // Can handle deeply nested expressions
