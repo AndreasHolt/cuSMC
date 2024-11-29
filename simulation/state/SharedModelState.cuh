@@ -150,10 +150,10 @@ __device__ __forceinline__ const expr* fetch_expr(const expr* ptr) {
 
 __device__ __forceinline__ double fetch_expr_value(const expr* ptr) {
 #if __CUDA_ARCH__ >= 350
-    printf("Using __ldg for fetch_expr_value, ptr->value: %f\n", ptr ? ptr->value : 0.0);
+    // printf("Using __ldg for fetch_expr_value, ptr->value: %f\n", ptr ? ptr->value : 0.0);
     return ptr ? __ldg((const double*)&ptr->value) : 0.0;
 #else
-    printf("Using regular load for fetch_expr_value, ptr->value: %f\n", ptr ? ptr->value : 0.0);
+    // printf("Using regular load for fetch_expr_value, ptr->value: %f\n", ptr ? ptr->value : 0.0);
     return ptr ? ptr->value : 0.0;
 #endif
 }

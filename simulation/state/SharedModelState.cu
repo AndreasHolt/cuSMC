@@ -32,7 +32,9 @@ expr* copy_expression_to_device(const expr* host_expr) {
                host_expr ? host_expr->operand : -1);
     }
     if(host_expr == nullptr) {
-        printf("Null expression, returning nullptr\n");
+        if constexpr (VERBOSE) {
+            printf("Null expression, returning nullptr\n");
+        }
         return nullptr;
     }
 
