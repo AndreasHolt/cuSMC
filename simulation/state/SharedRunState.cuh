@@ -32,14 +32,14 @@ struct ComponentState {
 
 struct SharedBlockMemory {
     // Global simulation state
-    double global_time;
-    unsigned urgent_count;
-    unsigned committed_count;
+    float global_time;
+    //uint8_t urgent_count;
+    //unsigned committed_count;
     unsigned simulation_id;
 
     // Variables (fixed size array in shared memory)
     struct Variable {
-        double value;
+        float value;
         int rate;
         VariableKind kind;
         int last_writer;
@@ -58,8 +58,8 @@ struct SharedBlockMemory {
     // Static initialization method
     __device__ static void init(SharedBlockMemory* shared, int sim_id) {
         shared->global_time = 0.0;
-        shared->urgent_count = 0;
-        shared->committed_count = 0;
+        //shared->urgent_count = 0;
+        //shared->committed_count = 0;
         shared->simulation_id = sim_id;
         shared->ready_count = 0;
         shared->has_urgent = false;
@@ -83,8 +83,8 @@ struct SharedBlockMemory {
 };
 
 struct BlockSimulationState {
-    SharedModelState* model;          // Global memory
-    SharedBlockMemory* shared;        // Shared memory
+    //SharedModelState* model;          // Global memory
+    //SharedBlockMemory* shared;        // Shared memory
     ComponentState* my_component;      // Points to thread's component in shared memory
     curandState* random;              // Thread's RNG state
 };

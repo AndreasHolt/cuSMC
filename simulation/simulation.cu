@@ -13,7 +13,7 @@
 
 
 
-__device__ double evaluate_expression(const expr* e, BlockSimulationState* block_state) {
+__device__ double evaluate_expression(const expr* e, SharedBlockMemory* shared) {
     if(e == nullptr) {
         printf("Warning: Null expression in evaluate_expression\n");
         return 0.0;
@@ -46,7 +46,7 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
                 case expr::clock_variable_ee: {
                     int var_id = current.variable_id;  // Union access, single read
                     value_stack[stack_top++] =
-                        block_state->shared->variables[var_id].value;
+                        shared->variables[var_id].value;
                     break;
                 }
 
@@ -109,7 +109,7 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
         case expr::clock_variable_ee: {
             int var_id = e->variable_id;  // Union access, single read
             if(var_id < MAX_VARIABLES) {
-                return block_state->shared->variables[var_id].value;
+                return shared->variables[var_id].value;
             }
             printf("Warning: Invalid variable ID %d in expression\n", var_id);
             return 0.0;
@@ -119,8 +119,8 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
             const expr* left = fetch_expr(e->left);
             const expr* right = fetch_expr(e->right);
             if(left && right) {
-                double left_val = evaluate_expression(left, block_state);
-                double right_val = evaluate_expression(right, block_state);
+                double left_val = evaluate_expression(left, shared);
+                double right_val = evaluate_expression(right, shared);
                 printf("Left and right values: %f, %f\n", left_val, right_val);
                 if constexpr (VERBOSE) {
                     printf("DEBUG: Plus operation: %f + %f = %f\n",
@@ -135,8 +135,8 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
             const expr* left = fetch_expr(e->left);
             const expr* right = fetch_expr(e->right);
             if(left && right) {
-                double left_val = evaluate_expression(left, block_state);
-                double right_val = evaluate_expression(right, block_state);
+                double left_val = evaluate_expression(left, shared);
+                double right_val = evaluate_expression(right, shared);
                 return left_val - right_val;
             }
             break;
@@ -146,8 +146,8 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
             const expr* left = fetch_expr(e->left);
             const expr* right = fetch_expr(e->right);
             if(left && right) {
-                double left_val = evaluate_expression(left, block_state);
-                double right_val = evaluate_expression(right, block_state);
+                double left_val = evaluate_expression(left, shared);
+                double right_val = evaluate_expression(right, shared);
                 return left_val * right_val;
             }
             break;
@@ -157,8 +157,8 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
             const expr* left = fetch_expr(e->left);
             const expr* right = fetch_expr(e->right);
             if(left && right) {
-                double left_val = evaluate_expression(left, block_state);
-                double right_val = evaluate_expression(right, block_state);
+                double left_val = evaluate_expression(left, shared);
+                double right_val = evaluate_expression(right, shared);
 
                 printf("Left and right values: %f, %f\n", left_val, right_val);
 
@@ -180,7 +180,7 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
 
         case expr::pn_skips_ee:
             if(e->left) {
-                return evaluate_expression(fetch_expr(e->left), block_state);
+                return evaluate_expression(fetch_expr(e->left), shared);
             }
             break;
 
@@ -196,13 +196,13 @@ __device__ double evaluate_expression(const expr* e, BlockSimulationState* block
 // Calculate sum of edges from enabled set
 __device__ int get_sum_edge_weight(const ComponentState* my_state,
                                     const SharedModelState* model,
-                                    BlockSimulationState* block_state) {
+                                    SharedBlockMemory* shared) {
     double sum = 0;
     const NodeInfo* node = my_state->current_node;
     for (int i = 0; i < node->num_edges; i++) {
         for (int j = 0; j < my_state->num_enabled_edges; j++) {
             if (my_state->enabled_edges[j] == node->first_edge_index+i) {
-                sum += evaluate_expression(model->edges[node->first_edge_index+i].weight,block_state);
+                sum += evaluate_expression(model->edges[node->first_edge_index+i].weight, shared);
             }
         }
     }
@@ -229,14 +229,14 @@ __device__ void take_transition(ComponentState* my_state,
         }
     } else {
         // Random selection between enabled edges
-        const int weights = get_sum_edge_weight(my_state, model, block_state);
+        const int weights = get_sum_edge_weight(my_state, model, shared);
         const int rand = static_cast<int>(static_cast<float>(weights) * curand_uniform(block_state->random));
         int temp = weights;
         const NodeInfo* node = my_state->current_node;
 
         for (int i = my_state->num_enabled_edges-1; i<=0; i--) {
             int weight_of_edge = static_cast<int>(
-                evaluate_expression(model->edges[node->first_edge_index+i].weight, block_state));
+                evaluate_expression(model->edges[node->first_edge_index+i].weight, shared));
             if ( temp-weight_of_edge <= rand ) {
                 selected_idx = my_state->enabled_edges[i];
                 break;
@@ -275,7 +275,7 @@ __device__ void take_transition(ComponentState* my_state,
         int var_id = update.variable_id;
 
         // Evaluate update expression
-        double new_value = evaluate_expression(update.expression, block_state);
+        double new_value = evaluate_expression(update.expression, shared);
         if constexpr (VERBOSE) {
             printf("Thread %d: Update %d - Setting var_%d (%s) from %f to %f\n",
                    threadIdx.x, i, var_id,
@@ -354,7 +354,7 @@ __device__ void take_transition(ComponentState* my_state,
 
 
 __device__ bool check_edge_enabled(const EdgeInfo& edge,
-                                 const SharedBlockMemory* shared,
+                                 SharedBlockMemory* shared,
                                  SharedModelState* model,
                                  BlockSimulationState* block_state, bool is_broadcast_sync) {
     if constexpr (VERBOSE) {
@@ -377,7 +377,7 @@ __device__ bool check_edge_enabled(const EdgeInfo& edge,
         if(guard.uses_variable) {
             int var_id = guard.var_info.variable_id;
             double var_value = shared->variables[var_id].value;
-            double bound = evaluate_expression(guard.expression, block_state);
+            double bound = evaluate_expression(guard.expression, shared);
             if constexpr (VERBOSE) {
                 printf("  Guard %d: var_%d (%s) = %f %s %f\n",
                        i, var_id,
@@ -579,7 +579,7 @@ __device__ void compute_possible_delay(
             }
 
             // Evaluate bound expression
-            double bound = evaluate_expression(inv.expression, block_state);
+            double bound = evaluate_expression(inv.expression, shared);
             if constexpr (VERBOSE) {
                 printf("Thread %d: Clock %d invariant: current=%f, bound=%f, rate=%d\n",
                        threadIdx.x, var_id, current_val, bound, var.rate); // TODO: remove rate from var. Rates are dependent on the location
@@ -626,7 +626,7 @@ __device__ void compute_possible_delay(
 
         double rate = 1.0; // Default rate if no rate is specified on the node
         if(node.lambda != nullptr) {
-            rate = evaluate_expression(node.lambda, block_state);
+            rate = evaluate_expression(node.lambda, shared);
         }
 
         // Sample from the exponential distribution
@@ -846,8 +846,8 @@ __global__ void simulation_kernel(SharedModelState* model, bool* results,
 
     // Setup block state
     BlockSimulationState block_state;
-    block_state.model = model;
-    block_state.shared = &shared_mem;
+    //block_state.model = model;
+    //block_state.shared = &shared_mem;
     block_state.my_component = &components[threadIdx.x];
     if constexpr (VERBOSE) {
         if(threadIdx.x == 0) {
