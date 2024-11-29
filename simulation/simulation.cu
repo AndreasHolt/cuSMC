@@ -2,6 +2,7 @@
 
 #include "simulation.cuh"
 #include <cmath>
+#include <cfloat>
 
 #include "state/SharedModelState.cuh"
 #include "state/SharedRunState.cuh"
