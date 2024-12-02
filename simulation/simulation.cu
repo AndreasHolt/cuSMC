@@ -9,7 +9,7 @@
 #include "../main.cuh"
 
 #define NUM_RUNS 6
-#define TIME_BOUND 100.0
+#define TIME_BOUND 1000.0
 #define MAX_VARIABLES 8
 
 
@@ -207,11 +207,10 @@ __device__ int get_sum_edge_weight(const ComponentState *my_state,
     double sum = 0;
     const NodeInfo *node = my_state->current_node;
     for (int i = 0; i < node->num_edges; i++) {
-        for (int j = 0; j < my_state->num_enabled_edges; j++) {
-            if (my_state->enabled_edges[j] == node->first_edge_index + i) {
-                sum += evaluate_expression(model->edges[node->first_edge_index + i].weight, shared);
-            }
+        if (my_state->enabled_edges[i]+node->first_edge_index == node->first_edge_index+i) {
+            sum += evaluate_expression(model->edges[node->first_edge_index + i].weight, shared);
         }
+
     }
     return static_cast<int>(sum);
 }
@@ -239,11 +238,12 @@ __device__ void take_transition(ComponentState *my_state,
     } else {
         // Random selection between enabled edges
         const int weights = get_sum_edge_weight(my_state, model, shared);
-        const int rand = static_cast<int>(static_cast<float>(weights) * curand_uniform(block_state->random));
+        float random = curand_uniform(block_state->random);
+        const int rand = static_cast<int>(static_cast<float>(weights) * random);
         int temp = weights;
         const NodeInfo *node = my_state->current_node;
 
-        for (int i = my_state->num_enabled_edges - 1; i <= 0; i--) {
+        for (int i = my_state->num_enabled_edges - 1; i >= 0; i--) {
             int weight_of_edge = static_cast<int>(
                 evaluate_expression(model->edges[node->first_edge_index + i].weight, shared));
             if (temp - weight_of_edge <= rand) {
@@ -252,10 +252,11 @@ __device__ void take_transition(ComponentState *my_state,
             }
             temp -= weight_of_edge;
         }
+
         //selected_idx = my_state->enabled_edges[(int)(rand * my_state->num_enabled_edges)];
         if constexpr (VERBOSE) {
-            printf("Thread %d: Randomly selected edge %d from %d enabled edges (rand=%f)\n",
-                   threadIdx.x, selected_idx, my_state->num_enabled_edges, rand);
+            printf("Thread %d: Randomly selected edge %d from %d enabled edges (rand=%d)\n",
+                               threadIdx.x, selected_idx, my_state->num_enabled_edges, rand);
         }
     }
 
@@ -1007,6 +1008,7 @@ void simulation::run_statistical_model_checking(SharedModelState *model, float c
 
     // Adjust threads to be multiple of warp size
     int warp_size = deviceProp.warpSize;
+    //int threads_per_block = 512; // 100 components
     // int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
     int threads_per_block = 1024; // 100 components
     int runs_per_block = 1;
