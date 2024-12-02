@@ -98,15 +98,58 @@ int main()
     parser, num_vars
     );
 
-    __device__ int* goals = new int[model.automatas.size];
+    // Simulation count
+    int simulations = config.total_simulations();
 
-    sim.run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars, goals);
+    // Create dynamically allocated location_hits array
+    int* location_hits = new int[simulations];
 
-    int sum = 0;
-    for (int i = 0; i < model.automatas.size; i++){
-        sum += goals[i];
+    // Initialize values of array to 0
+    for (int itr = 0; itr < model.automatas.size; itr++){
+        location_hits[itr] = 0;
     }
-    float res = sum / model.automatas.size;
+
+    // Run the SMC simulations
+    sim.run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars, location_hits);
+
+    /* 
+    // Query analysis loop (Sidenote: Fuck unordered sets)
+    for (auto& itr = query_set->cbegin(); itr != query_set->cend(); itr++){
+        // Query string
+        string query = *(*query_set).find(*itr);
+
+        if constexpr (VERBOSE){
+            cout << "Recorded query is: " + query << endl;
+        }
+
+
+        // String split
+        std::vector<char> component;
+        for (int i = 0; i < query.length(); i++){
+            
+            // Guards
+            if (query[i] == 'c'){continue;}
+            if (query[i] == '.'){break;}
+
+            component.push_back(query[i]);
+        }
+
+        char* acc;
+        for (int i = 0; i < component.size(); i++){
+            acc = acc + component[i];
+        }
+
+        int hits;
+        for (int i = 0; i < simulations; i++) {hits += location_hits[i];}
+
+        float res = hits / simulations;
+
+        string output = "The answer to 'insert query name here' is " + std::to_string(res);
+
+        cout << output;
+    }*/
+
+    delete[] location_hits;
 
     // Kernels for debugging purposes
     if constexpr (VERBOSE) {

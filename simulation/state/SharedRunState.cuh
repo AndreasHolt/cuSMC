@@ -36,6 +36,7 @@ struct SharedBlockMemory {
     unsigned urgent_count;
     unsigned committed_count;
     unsigned simulation_id;
+    bool has_hit_goal = false;
 
     // Variables (fixed size array in shared memory)
     struct Variable {
