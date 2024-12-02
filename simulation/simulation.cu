@@ -13,6 +13,10 @@
 #define MAX_VARIABLES 8
 
 
+constexpr bool USE_GLOBAL_MEMORY_CURAND = true;
+
+
+
 __device__ double evaluate_expression(const expr *e, SharedBlockMemory *shared) {
     if (e == nullptr) {
         printf("Warning: Null expression in evaluate_expression\n");
@@ -773,11 +777,13 @@ __device__ double find_minimum_delay(
 }
 
 __global__ void simulation_kernel(SharedModelState *model, bool *results,
-                                  int runs_per_block, float time_bound, VariableKind *kinds, int num_vars) {
+                                  int runs_per_block, float time_bound, VariableKind *kinds, int num_vars, curandState *rng_states_global) {
     // #if __CUDA_ARCH__ >= 860
     //     // Request maximum L1/shared memory configuration on Ampere
     //     __cuda_maxDynamicSharedMemorySize = 100 * 1024; // 100KB for A10
     // #endif
+
+
 
 
     if constexpr (VERBOSE) {
@@ -799,10 +805,19 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         }
     }
 
+
     __shared__ SharedBlockMemory shared_mem;
-    printf("CREATED SHARED_MEM");
     __shared__ ComponentState components[MAX_COMPONENTS];
-    __shared__ curandState rng_states[MAX_COMPONENTS];
+    curandState *rng_states;
+
+    if constexpr(USE_GLOBAL_MEMORY_CURAND) {
+        // extern __shared__ curandState *rng_states_global;
+        rng_states = rng_states_global;
+    } else {
+        __shared__ curandState rng_states_shared[MAX_COMPONENTS];
+        rng_states = rng_states_shared;
+    }
+
     if constexpr (VERBOSE) {
         if (threadIdx.x < model->num_components) {
             // Only debug print for actual components
@@ -989,7 +1004,7 @@ void simulation::run_statistical_model_checking(SharedModelState *model, float c
     // Adjust threads to be multiple of warp size
     int warp_size = deviceProp.warpSize;
     // int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
-    int threads_per_block = 512; // 100 components
+    int threads_per_block = 1024; // 100 components
     int runs_per_block = 1;
     int num_blocks = 1;
 
@@ -1178,22 +1193,33 @@ void simulation::run_statistical_model_checking(SharedModelState *model, float c
     }
 
 
-    cudaGetDeviceProperties(&deviceProp, 0); // Assuming device 0, change if necessary
+    // RNG States
+    curandState *rng_states_global;
 
-    if (deviceProp.major >= 8 && deviceProp.minor >= 6) {
-        // Set attribute for Ampere and newer architectures
-        cudaFuncSetAttribute(simulation_kernel, cudaFuncAttributeMaxDynamicSharedMemorySize, 65536);
-
-        // Launch with dynamic shared memory size for architectures >= 8.6
-        simulation_kernel<<<num_blocks, threads_per_block, 65536>>>(
-            model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars);
-    } else {
-        // Launch with no dynamic shared memory for other architectures
-        simulation_kernel<<<num_blocks, threads_per_block>>>(
-            model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars);
+    if constexpr(USE_GLOBAL_MEMORY_CURAND) {
+        cudaMalloc(&rng_states_global, MAX_COMPONENTS * sizeof(curandState));
     }
 
 
+    cudaGetDeviceProperties(&deviceProp, 0); // Assuming device 0, change if necessary
+
+    // if (deviceProp.major >= 8 && deviceProp.minor >= 6) {
+    //     // Set attribute for Ampere and newer architectures
+    //     cudaFuncSetAttribute(simulation_kernel, cudaFuncAttributeMaxDynamicSharedMemorySize, 65536);
+    //
+    //     // Launch with dynamic shared memory size for architectures >= 8.6
+    //     simulation_kernel<<<num_blocks, threads_per_block, 65536>>>(
+    //         model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, rng_states_global);
+    // } else {
+        // Launch with no dynamic shared memory for other architectures
+        simulation_kernel<<<num_blocks, threads_per_block>>>(
+            model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, rng_states_global);
+    // }
+
+
+    // if (USE_GLOBAL_MEMORY_CURAND) {
+    //     cudaFree(rng_states_global);
+    // }
 
     // Check for launch error
     error = cudaGetLastError();
