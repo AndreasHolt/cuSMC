@@ -16,7 +16,6 @@
 constexpr bool USE_GLOBAL_MEMORY_CURAND = true;
 
 
-
 __device__ double evaluate_expression(const expr *e, SharedBlockMemory *shared) {
     if (e == nullptr) {
         printf("Warning: Null expression in evaluate_expression\n");
@@ -223,7 +222,9 @@ __device__ void take_transition(ComponentState *my_state,
                                 SharedModelState *model,
                                 BlockSimulationState *block_state) {
     if (my_state->num_enabled_edges == 0) {
-        printf("Thread %d: No enabled edges to take\n", threadIdx.x);
+        if constexpr (MINIMAL_PRINTS) {
+            printf("Thread %d: No enabled edges to take\n", threadIdx.x);
+        }
         return;
     }
 
@@ -777,13 +778,12 @@ __device__ double find_minimum_delay(
 }
 
 __global__ void simulation_kernel(SharedModelState *model, bool *results,
-                                  int runs_per_block, float time_bound, VariableKind *kinds, int num_vars, curandState *rng_states_global) {
+                                  int runs_per_block, float time_bound, VariableKind *kinds, int num_vars,
+                                  curandState *rng_states_global) {
     // #if __CUDA_ARCH__ >= 860
     //     // Request maximum L1/shared memory configuration on Ampere
     //     __cuda_maxDynamicSharedMemorySize = 100 * 1024; // 100KB for A10
     // #endif
-
-
 
 
     if constexpr (VERBOSE) {
@@ -810,7 +810,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
     __shared__ ComponentState components[MAX_COMPONENTS];
     curandState *rng_states;
 
-    if constexpr(USE_GLOBAL_MEMORY_CURAND) {
+    if constexpr (USE_GLOBAL_MEMORY_CURAND) {
         // extern __shared__ curandState *rng_states_global;
         rng_states = rng_states_global;
     } else {
@@ -929,8 +929,10 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 
     // Initialize component state
     if (threadIdx.x >= model->num_components) {
-        printf("Thread %d: Exiting - thread ID exceeds number of components\n",
-               threadIdx.x);
+        if constexpr (MINIMAL_PRINTS) {
+            printf("Thread %d: Exiting - thread ID exceeds number of components\n",
+                   threadIdx.x);
+        }
         return;
     }
 
@@ -977,7 +979,9 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         __syncthreads();
     }
 
-    printf("Thread %d: Simulation complete\n", threadIdx.x);
+    if constexpr (MINIMAL_PRINTS) {
+        printf("Thread %d: Simulation complete\n", threadIdx.x);
+    }
 }
 
 void simulation::run_statistical_model_checking(SharedModelState *model, float confidence, float precision,
@@ -1006,7 +1010,7 @@ void simulation::run_statistical_model_checking(SharedModelState *model, float c
     // int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
     int threads_per_block = 1024; // 100 components
     int runs_per_block = 1;
-    int num_blocks = 1;
+    int num_blocks = 100;
 
     // Print detailed device information
     if constexpr (VERBOSE) {
@@ -1196,7 +1200,7 @@ void simulation::run_statistical_model_checking(SharedModelState *model, float c
     // RNG States
     curandState *rng_states_global;
 
-    if constexpr(USE_GLOBAL_MEMORY_CURAND) {
+    if constexpr (USE_GLOBAL_MEMORY_CURAND) {
         cudaMalloc(&rng_states_global, MAX_COMPONENTS * sizeof(curandState));
     }
 
@@ -1211,9 +1215,9 @@ void simulation::run_statistical_model_checking(SharedModelState *model, float c
     //     simulation_kernel<<<num_blocks, threads_per_block, 65536>>>(
     //         model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, rng_states_global);
     // } else {
-        // Launch with no dynamic shared memory for other architectures
-        simulation_kernel<<<num_blocks, threads_per_block>>>(
-            model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, rng_states_global);
+    // Launch with no dynamic shared memory for other architectures
+    simulation_kernel<<<num_blocks, threads_per_block>>>(
+        model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, rng_states_global);
     // }
 
 
