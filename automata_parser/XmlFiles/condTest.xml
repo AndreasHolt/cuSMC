@@ -26,8 +26,8 @@
         <transition id="id4">
             <source ref="id0"/>
             <target ref="id1"/>
-            <label kind="guard" x="-58" y="-34">x &gt;= 3</label>
-            <label kind="assignment" x="-58" y="0">i:=x&lt;2 ? 0 : 5</label>
+            <label kind="guard" x="-58" y="-34">x &lt; 2</label>
+            <label kind="assignment" x="-58" y="0">i:=x&lt;2 ? 5 : 0</label>
         </transition>
     </template>
     <system>// Place template instantiations here.

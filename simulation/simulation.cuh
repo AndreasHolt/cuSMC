@@ -9,7 +9,12 @@
 #include "../automata_parser/uppaal_xml_parser.h"
 #include "../automata_parser/abstract_parser.h"
 #include "state/SharedModelState.cuh"
+#include <cmath>
+#include <cfloat>
 
+#include "state/SharedModelState.cuh"
+#include "state/SharedRunState.cuh"
+#include "../main.cuh"
 
 class simulation {
 public:
@@ -21,6 +26,8 @@ public:
 
 
 };
+
+double evaluate_expression_node_coalesced(const expr*, SharedBlockMemory*, double*, int);
 
 
 #endif //SIMULATION_CUH

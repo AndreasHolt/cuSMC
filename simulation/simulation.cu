@@ -1,20 +1,127 @@
 // Created by andwh on 24/10/2024.
 
 #include "simulation.cuh"
-#include <cmath>
-#include <cfloat>
 
-#include "state/SharedModelState.cuh"
-#include "state/SharedRunState.cuh"
-#include "../main.cuh"
 
 #define NUM_RUNS 6
-#define TIME_BOUND 1000.0
+#define TIME_BOUND 10.0
 #define MAX_VARIABLES 8
 
 
 constexpr bool USE_GLOBAL_MEMORY_CURAND = true;
 
+__device__ double evaluate_pn_expr_coalesced(const expr* pn, SharedBlockMemory* shared)
+{
+    int stack_top = 0;
+    double value_stack[10];
+
+    for (int i = 1; i < pn->length; ++i)
+    {
+        const expr* current = &pn[i];
+        if(current->operand == expr::pn_skips_ee)
+        {
+            if(abs(value_stack[--stack_top]) > DBL_EPSILON)
+            {
+                i += current->length;
+            }
+            continue;
+        }
+
+        const double value = evaluate_expression_node_coalesced(current, shared, value_stack, stack_top);
+        value_stack[stack_top++] = value;
+    }
+
+    return value_stack[--stack_top];
+}
+
+__device__ double evaluate_expression_node_coalesced(const expr* expr, SharedBlockMemory* shared, double* value_stack, int stack_top)
+{
+    double v1, v2;
+    switch (expr->operand) {
+    case expr::literal_ee:
+        return fetch_expr_value(expr);
+    case expr::clock_variable_ee:
+        return shared->variables[expr->variable_id].value;
+    case expr::random_ee:
+        printf("Error: Unsupported Random operater.\n");
+        return 1.0;
+        //v1 = value_stack[--stack_top];
+        //return (1.0 - curand_uniform_double(state->random)) * v1;
+    case expr::plus_ee:
+        v2 = value_stack[--stack_top];
+        v1 = value_stack[--stack_top];
+        return v1 + v2;
+    case expr::minus_ee:
+        v2 = value_stack[--stack_top];
+        v1 = value_stack[--stack_top];
+        return v1 - v2;
+    case expr::multiply_ee:
+        v2 = value_stack[--stack_top];
+        v1 = value_stack[--stack_top];
+        return v1 * v2;
+    case expr::division_ee:
+        v2 = value_stack[--stack_top];
+        v1 = value_stack[--stack_top];
+        return v1 / v2;
+    case expr::power_ee:
+        v2 = value_stack[--stack_top];
+        v1 = value_stack[--stack_top];
+        return pow(v1, v2);
+    case expr::negation_ee:
+        v1 = value_stack[--stack_top];
+        return -v1;
+    case expr::sqrt_ee:
+        v1 = value_stack[--stack_top];
+        return sqrt(v1);
+    case expr::modulo_ee:
+        v2 = value_stack[--stack_top];
+        v1 = value_stack[--stack_top];
+        return static_cast<double>(static_cast<int>(v1) % static_cast<int>(v2 + DBL_EPSILON));
+    case expr::and_ee:
+        v2 = value_stack[--stack_top];
+        v1 = value_stack[--stack_top];
+        return static_cast<double>(abs(v1) > DBL_EPSILON && abs(v2) > DBL_EPSILON);
+    case expr::or_ee:
+        v2 = value_stack[--stack_top];
+        v1 = value_stack[--stack_top];
+        return static_cast<double>(abs(v1) > DBL_EPSILON || abs(v2) > DBL_EPSILON);
+    case expr::less_equal_ee:
+        v2 = value_stack[--stack_top];
+        v1 = value_stack[--stack_top];
+        return v1 <= v2;
+    case expr::greater_equal_ee:
+        v2 = value_stack[--stack_top];
+        v1 = value_stack[--stack_top];
+        return v1 >= v2;
+    case expr::less_ee:
+        v2 = value_stack[--stack_top];
+        v1 = value_stack[--stack_top];
+        return v1 < v2;
+    case expr::greater_ee:
+        v2 = value_stack[--stack_top];
+        v1 = value_stack[--stack_top];
+        return v1 > v2;
+    case expr::equal_ee:
+        v2 = value_stack[--stack_top];
+        v1 = value_stack[--stack_top];
+        return abs(v1 - v2) <= DBL_EPSILON;
+    case expr::not_equal_ee:
+        v2 = value_stack[--stack_top];
+        v1 = value_stack[--stack_top];
+        return abs(v1 - v2) > DBL_EPSILON;
+    case expr::not_ee:
+        v1 = value_stack[--stack_top];
+        return (abs(v1) < DBL_EPSILON);
+    case expr::conditional_ee:
+        v1 = value_stack[--stack_top];
+        stack_top--;
+        return v1;
+    case expr::compiled_ee:
+    case expr::pn_compiled_ee:
+    case expr::pn_skips_ee: return 0.0;
+    }
+    return 0.0;
+}
 
 __device__ double evaluate_expression(const expr *e, SharedBlockMemory *shared) {
     if (e == nullptr) {
@@ -26,81 +133,7 @@ __device__ double evaluate_expression(const expr *e, SharedBlockMemory *shared) 
     int op = fetch_expr_operand(e);
 
     if (op == expr::pn_compiled_ee) {
-        if constexpr (VERBOSE) {
-            printf("DEBUG: Evaluating Polish notation expression of length %d\n",
-                   e->length); // Direct access ok since we're just reading length once
-        }
-
-        // Create a stack for evaluation
-        __shared__ double value_stack[10];
-        // TODO: We can probably get the exact number from the optimizer, and pass it in as a parameter
-        int stack_top = 0;
-
-        // Evaluate the Polish notation expression
-        // Since e[i] are contiguous (we use polish notation), we can access them directly
-        for (int i = 1; i < e->length; i++) {
-            // Start from 1 to skip the header
-            const expr &current = e[i];
-            int current_op = fetch_expr_operand(&current);
-
-            switch (current_op) {
-                case expr::literal_ee:
-                    value_stack[stack_top++] = fetch_expr_value(&current);
-                // stack_top++ increments the stack_top after adding the value
-                    break;
-
-                case expr::clock_variable_ee: {
-                    int var_id = current.variable_id; // Union access, single read
-                    value_stack[stack_top++] =
-                            shared->variables[var_id].value;
-                    break;
-                }
-
-                case expr::plus_ee: {
-                    double b = value_stack[--stack_top]; // --stack_top first decrements then accesses
-                    double a = value_stack[--stack_top];
-                    value_stack[stack_top++] = a + b;
-                    break;
-                }
-
-                case expr::minus_ee: {
-                    double b = value_stack[--stack_top];
-                    double a = value_stack[--stack_top];
-                    value_stack[stack_top++] = a - b;
-                    break;
-                }
-
-                case expr::multiply_ee: {
-                    double b = value_stack[--stack_top];
-                    double a = value_stack[--stack_top];
-                    value_stack[stack_top++] = a * b;
-                    break;
-                }
-
-                case expr::division_ee: {
-                    double b = value_stack[--stack_top];
-                    double a = value_stack[--stack_top];
-
-                    if (b == 0.0) {
-                        printf("Warning: Division by zero in PN expression, rate cannot be zero\n");
-                        value_stack[stack_top++] = DBL_MIN; // Use smallest positive double instead of 0
-                    } else {
-                        value_stack[stack_top++] = a / b;
-                        if constexpr (VERBOSE) {
-                            printf("DEBUG: Division %f / %f = %f\n", a, b, value_stack[stack_top - 1]);
-                        }
-                    }
-                    break;
-                }
-
-                // TODO: Add more operators as needed
-
-                default:
-                    printf("Warning: Unknown operator %d in PN expression\n", current_op);
-                    break;
-            }
-        }
-        return value_stack[stack_top - 1];
+        return evaluate_pn_expr_coalesced(e, shared);
     }
 
     // Handle non-PN expressions
@@ -1010,9 +1043,9 @@ void simulation::run_statistical_model_checking(SharedModelState *model, float c
     int warp_size = deviceProp.warpSize;
     //int threads_per_block = 512; // 100 components
     // int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
-    int threads_per_block = 1024; // 100 components
+    int threads_per_block = 128; // 100 components
     int runs_per_block = 1;
-    int num_blocks = 100;
+    int num_blocks = 1;
 
     // Print detailed device information
     if constexpr (VERBOSE) {
