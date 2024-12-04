@@ -114,7 +114,12 @@ int main()
         if constexpr (VERBOSE){
             cout << "Recorded query is: " + query << endl;
         }
-
+        // Variable queries:
+        int variable_id = -1; //Val : -1 implies not variable checking query
+        // IF Query : refs : variable {
+        //      x <- Find variable id from name
+        //      variable_id = x
+        //  }
 
         // String split
         std::vector<char> component;
@@ -164,7 +169,7 @@ int main()
         cudaMemcpy(goal_flags_device_ptr, goal_flags_host_ptr, simulations*sizeof(bool), cudaMemcpyHostToDevice);
 
         // Run the SMC simulations
-        sim.run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars, goal_flags_device_ptr);
+        sim.run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars, goal_flags_device_ptr, variable_id);
 
         cudaMemcpy(goal_flags_host_ptr, goal_flags_device_ptr, simulations*sizeof(bool), cudaMemcpyDeviceToHost);
         cout << cudaGetErrorString(cudaGetLastError()) << endl;
