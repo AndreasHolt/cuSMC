@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<!DOCTYPE nta PUBLIC "-//Uppaal Team//DTD Flat System 1.1//En" "http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd">
+<nta>
+<declaration>int p = 5000; 
+const double brn = 2.4; 
+const double alpha = 1.0/5.1; 
+const double gamma = 1.0/3.4; 
+const double beta = brn * gamma; 
+const double pH = 9.0/10000.0; 
+const double kappa = gamma * pH / (1.0-pH); 
+const double tau = 1.0/10.12; 
+int inf = 50;
+</declaration>
+<template>
+<name x="5" y="5">person0
+</name>
+<declaration>// Place local declarations here.
+</declaration>
+<location id="id0" x="-144" y="-161">
+<name x="-154" y="-195">S</name>
+<label kind="exponentialrate" x="-154" y="-127">beta * inf / p</label>
+</location>
+<location id="id1" x="-42" y="-161">
+<name x="-52" y="-195">E</name>
+<label kind="exponentialrate" x="-52" y="-127">alpha</label>
+</location>
+<location id="id2" x="59" y="-161">
+<name x="49" y="-195">I
+</name>
+<label kind="exponentialrate" x="17" y="-127">kappa+gamma</label>
+</location>
+<location id="id3" x="212" y="-161">
+<name x="202" y="-195">R
+</name>
+</location>
+<location id="id4" x="119" y="-51">
+<name x="93" y="-59">H
+</name>
+<label kind="exponentialrate" x="110" y="-34">tau</label>
+</location>
+<branchpoint id="id5" x="119" y="-161">
+</branchpoint>
+<init ref="id0"/>
+<transition>
+<source ref="id4"/>
+<target ref="id3"/>
+</transition>
+<transition>
+<source ref="id5"/>
+<target ref="id4"/>
+<label kind="assignment" x="119" y="-106">inf = inf - 1</label>
+<label kind="probability" x="119" y="-89">265
+</label>
+</transition>
+<transition>
+<source ref="id5"/>
+<target ref="id3"/>
+<label kind="assignment" x="137" y="-157">inf = inf - 1</label>
+<label kind="probability" x="137" y="-140">294117
+</label>
+</transition>
+<transition>
+<source ref="id2"/>
+<target ref="id5"/>
+</transition>
+<transition>
+<source ref="id1"/>
+<target ref="id2"/>
+<label kind="assignment" x="-24" y="-161">inf = inf + 1</label>
+</transition>
+<transition>
+<source ref="id0"/>
+<target ref="id1"/>
+</transition>
+</template>
+<system>system person0;
+</system>
+<queries>
+<query>
+<formula>simulate[&lt;=100; 1]{inf}
+</formula>
+<comment>
+</comment>
+</query>
+</queries>
+</nta>
