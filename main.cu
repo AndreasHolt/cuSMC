@@ -26,18 +26,9 @@ VariableKind* createKindArray(const std::unordered_map<int, VariableTrackingVisi
     return kinds;
 }
 
+
 int main()
 {
-    // Hardcode testing set for times to match SMAcc
-     // AgentBaseCovid
-    
-     // AlohaSingle
-
-     // CSMA
-
-     // Fischer
-
-
     // Hardcoded path to the XML file
     std::string filename = "../automata_parser/XmlFiles/condTest.xml";
     string query1 = "c2.g3";
