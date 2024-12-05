@@ -308,91 +308,104 @@ SharedModelState* init_shared_model_state(
 
     // Helper function for creating variable-based guards
     auto create_variable_guard = [&](const constraint& guard) -> GuardInfo {
-   if(guard.uses_variable) {
-       // Handle direct variable reference (clocks)
-       auto var_it = variable_registry.find(guard.variable_id);
-       if(var_it != variable_registry.end()) {
-           const auto& var_usage = var_it->second;
-
-           // Get initial value from network/parser
-           double initial_value = 0.0;
-           for(int i = 0; i < cpu_network->variables.size; i++) {
-               if(cpu_network->variables.store[i].id == guard.variable_id) {
-                   initial_value = cpu_network->variables.store[i].value;
-
-                   initial_values[guard.variable_id] = initial_value; // Add to initial values array
-                   if constexpr (VERBOSE) {
-                       printf("Appending initial value %f for int variable %d\n", initial_value, guard.variable_id);
-                       printf("DEBUG: Initial value of clock variable %d is %f\n",
-                              guard.variable_id, initial_value);
-                   }
-                   break;
+        if(guard.uses_variable) {
+            // Handle direct variable reference (clocks)
+            auto var_it = variable_registry.find(guard.variable_id);
+            if(var_it != variable_registry.end()) {
+                const auto& var_usage = var_it->second;
+                // Clear any previous error
+                error = cudaGetLastError();
+               if (error != cudaSuccess) {
+                   cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
                }
-           }
+               // Get initial value from network/parser
+               double initial_value = 0.0;
+               for(int i = 0; i < cpu_network->variables.size; i++) {
+                   if(cpu_network->variables.store[i].id == guard.variable_id) {
+                       initial_value = cpu_network->variables.store[i].value;
 
-           VariableInfo var_info{
-               guard.variable_id,
-               var_usage.kind,
-               var_usage.name.c_str(),
-               initial_value
-           };
-
-           expr* device_expression = copy_expression_to_device(guard.expression);
-           return GuardInfo(guard.operand, var_info, device_expression);
-       }
-   } else if(guard.value != nullptr &&
-             guard.value->operand == expr::clock_variable_ee) {
-       // Handle variable reference in expression (integers)
-       int var_id = guard.value->variable_id;
-       auto var_it = variable_registry.find(var_id);
-       if(var_it != variable_registry.end()) {
-           const auto& var_usage = var_it->second;
-
-           // Get initial value from network
-           double initial_value = 0.0;
-           for(int i = 0; i < cpu_network->variables.size; i++) {
-               if(cpu_network->variables.store[i].id == var_id) {
-                   initial_value = cpu_network->variables.store[i].value;
-                   if constexpr (VERBOSE) {
-                       printf("Appending initial value %f for int variable %d\n", initial_value, var_id);
+                       initial_values[guard.variable_id] = initial_value; // Add to initial values array
+                       if constexpr (VERBOSE) {
+                           printf("Appending initial value %f for int variable %d\n", initial_value, guard.variable_id);
+                           printf("DEBUG: Initial value of clock variable %d is %f\n",
+                                  guard.variable_id, initial_value);
+                       }
+                       break;
                    }
-                   initial_values[var_id] = initial_value; // Add to initial values array
-                   if constexpr (VERBOSE) {
-                       printf("DEBUG: Initial value of integer variable %d is %f\n",
-                              var_id, initial_value);
-                   }
-                   break;
                }
-           }
+
+               VariableInfo var_info{
+                   guard.variable_id,
+                   var_usage.kind,
+                   var_usage.name.c_str(),
+                   initial_value
+               };
+
+               // Clear any previous error
+               error = cudaGetLastError();
+               if (error != cudaSuccess) {
+                   cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
+               }
+               expr* device_expression = copy_expression_to_device(guard.expression);
+               // Clear any previous error
+               error = cudaGetLastError();
+               if (error != cudaSuccess) {
+                   cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
+               }
+               return GuardInfo(guard.operand, var_info, device_expression);
+            }
+        } else if(guard.value != nullptr && guard.value->operand == expr::clock_variable_ee) {
+            // Handle variable reference in expression (integers)
+               int var_id = guard.value->variable_id;
+               auto var_it = variable_registry.find(var_id);
+               if(var_it != variable_registry.end()) {
+               const auto& var_usage = var_it->second;
+
+               // Get initial value from network
+               double initial_value = 0.0;
+               for(int i = 0; i < cpu_network->variables.size; i++) {
+                   if(cpu_network->variables.store[i].id == var_id) {
+                       initial_value = cpu_network->variables.store[i].value;
+                       if constexpr (VERBOSE) {
+                           printf("Appending initial value %f for int variable %d\n", initial_value, var_id);
+                       }
+                       initial_values[var_id] = initial_value; // Add to initial values array
+                       if constexpr (VERBOSE) {
+                           printf("DEBUG: Initial value of integer variable %d is %f\n",
+                                  var_id, initial_value);
+                       }
+                       break;
+                   }
+               }
 
 
-           VariableInfo var_info{
-               var_id,
-               var_usage.kind,
-               var_usage.name.c_str(),
-               initial_value
-           };
+               VariableInfo var_info{
+                   var_id,
+                   var_usage.kind,
+                   var_usage.name.c_str(),
+                   initial_value
+               };
 
-           expr* device_expression = copy_expression_to_device(guard.expression);
-           return GuardInfo(guard.operand, var_info, device_expression);
+               expr* device_expression = copy_expression_to_device(guard.expression);
+               return GuardInfo(guard.operand, var_info, device_expression);
+            }
        }
-   }
 
-   // Default case if no variable found
-   printf("Warning: Variable not found in registry\n");
-   char default_name[MAX_VAR_NAME_LENGTH];
-   snprintf(default_name, MAX_VAR_NAME_LENGTH, "var_unknown");
+       // Default case if no variable found
+       printf("Warning: Variable not found in registry\n");
+       char default_name[MAX_VAR_NAME_LENGTH];
+       snprintf(default_name, MAX_VAR_NAME_LENGTH, "var_unknown");
 
-   VariableInfo var_info{
-       -1,  // Invalid ID
-       VariableKind::INT,
-       default_name,
-       0.0  // Default value
-   };
+       VariableInfo var_info{
+           -1,  // Invalid ID
+           VariableKind::INT,
+           default_name,
+           0.0  // Default value
+       };
 
-   expr* device_expression = copy_expression_to_device(guard.expression);
-   return GuardInfo(guard.operand, var_info, device_expression);
-};
+       expr* device_expression = copy_expression_to_device(guard.expression);
+       return GuardInfo(guard.operand, var_info, device_expression);
+    };
 
 
 
