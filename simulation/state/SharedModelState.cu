@@ -142,8 +142,7 @@ SharedModelState* init_shared_model_state(
     const std::unordered_map<int, std::list<edge>>& node_edge_map,
     const std::unordered_map<int, node*>& node_map,
     const std::unordered_map<int, VariableTrackingVisitor::VariableUsage>& variable_registry,
-    const abstract_parser* parser, const int num_vars)
-{
+    const abstract_parser* parser, const int num_vars) {
     if constexpr (VERBOSE) {
         cout << "\nInitializing SharedModelState:" << endl;
         cout << "Component mapping:" << endl;
@@ -152,7 +151,7 @@ SharedModelState* init_shared_model_state(
         }
     }
 
-    // First organize nodes by component
+    // First organize nodes by component. Vectors of Components as vectors containing nodes
     std::vector<std::vector<std::pair<int, const std::list<edge>*>>> components_nodes;
     int max_component_id = -1;
 
@@ -175,6 +174,8 @@ SharedModelState* init_shared_model_state(
         std::sort(component.begin(), component.end(),
                   [](const auto& a, const auto& b) { return a.first < b.first; });
     }
+
+    // After grouping nodes by component:
     if constexpr (VERBOSE) {
         cout << "\nSorted nodes by component:" << endl;
         for(int i = 0; i < components_nodes.size(); i++) {
@@ -184,32 +185,22 @@ SharedModelState* init_shared_model_state(
             }
             cout << endl;
         }
-    }
 
-    // After grouping nodes by component:
-    if constexpr (VERBOSE) {
         cout << "\nNodes by component:" << endl;
-    }
-    for(int i = 0; i < components_nodes.size(); i++) {
-        if constexpr (VERBOSE) {
+        for(int i = 0; i < components_nodes.size(); i++) {
             cout << "Component " << i << " has " << components_nodes[i].size() << " nodes:" << endl;
-        }
-        for(const auto& node_pair : components_nodes[i]) {
-            node* current_node = node_map.at(node_pair.first);
-            if constexpr (VERBOSE) {
+            for(const auto& node_pair : components_nodes[i]) {
+                node* current_node = node_map.at(node_pair.first);
                 cout << "  Node " << node_pair.first
                      << " with " << current_node->invariants.size << " invariants" << endl;
-            }
 
-            // Print invariant details
-            for(int j = 0; j < current_node->invariants.size; j++) {
-                const constraint& inv = current_node->invariants.store[j];
-                if constexpr (VERBOSE) {
+                // Print invariant details
+                for(int j = 0; j < current_node->invariants.size; j++) {
+                    const constraint& inv = current_node->invariants.store[j];
                     cout << "    Invariant " << j << ": uses_variable=" << inv.uses_variable;
                     if(inv.uses_variable) {
                         cout << ", var_id=" << inv.variable_id;
                     }
-
                     cout << endl;
                 }
             }
@@ -227,11 +218,17 @@ SharedModelState* init_shared_model_state(
 
     // Allocate device memory for component sizes
     int* device_component_sizes;
-    cudaMalloc(&device_component_sizes,
+    auto error = cudaMalloc(&device_component_sizes,
                components_nodes.size() * sizeof(int));
-    cudaMemcpy(device_component_sizes, component_sizes.data(),
+    if (error != cudaSuccess) {
+        cout << "Error cudamalloc for component sizes: " << cudaGetErrorString(error) << endl;
+    }
+    error = cudaMemcpy(device_component_sizes, component_sizes.data(),
                components_nodes.size() * sizeof(int),
                cudaMemcpyHostToDevice);
+    if (error != cudaSuccess) {
+        cout << "Error copying component sizes to device: " << cudaGetErrorString(error) << endl;
+    }
 
     std::vector<int> initial_values(num_vars);
     for(const auto& [var_id, var_usage] : variable_registry) {
@@ -249,7 +246,11 @@ SharedModelState* init_shared_model_state(
             }
         }
     }
-
+    // Clear any previous error
+    error = cudaGetLastError();
+    if (error != cudaSuccess) {
+        cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
+    }
 
     // Count total edges, guards, updates and invariants
     int total_edges = 0;
@@ -286,7 +287,11 @@ SharedModelState* init_shared_model_state(
     cudaMalloc(&device_guards, total_guards * sizeof(GuardInfo));
     cudaMalloc(&device_updates, total_updates * sizeof(UpdateInfo));
     cudaMalloc(&device_invariants, total_invariants * sizeof(GuardInfo));
-
+    // Clear any previous error
+    error = cudaGetLastError();
+    if (error != cudaSuccess) {
+        cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
+    }
     // Create host arrays
     std::vector<NodeInfo> host_nodes;
     std::vector<EdgeInfo> host_edges;
@@ -305,7 +310,11 @@ SharedModelState* init_shared_model_state(
     int current_update_index = 0;
     int current_invariant_index = 0;
 
-
+    // Clear any previous error
+    error = cudaGetLastError();
+    if (error != cudaSuccess) {
+        cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
+    }
     // Helper function for creating variable-based guards
     auto create_variable_guard = [&](const constraint& guard) -> GuardInfo {
         if(guard.uses_variable) {
@@ -408,7 +417,6 @@ SharedModelState* init_shared_model_state(
     };
 
 
-
     // Helper function for creating updates
     auto create_update = [&](const update& upd) -> UpdateInfo {
         auto var_it = variable_registry.find(upd.variable_id);
@@ -431,7 +439,11 @@ SharedModelState* init_shared_model_state(
             };
         }
     };
-
+    // Clear any previous error
+    error = cudaGetLastError();
+    if (error != cudaSuccess) {
+        cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
+    }
     // For each node level
     for(int node_idx = 0; node_idx < max_nodes_per_component; node_idx++) {
         // For each component at this level
