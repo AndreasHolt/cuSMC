@@ -9,7 +9,6 @@
 
 #include "../../automata_parser/abstract_parser.h"
 
-#define MAX_NODES_PER_COMPONENT 5
 
 class uppaal_xml_parser;
 

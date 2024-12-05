@@ -5,17 +5,17 @@
 #ifndef SHAREDRUNSTATE_CUH
 #define SHAREDRUNSTATE_CUH
 #include "SharedModelState.cuh"
-#define MAX_COMPONENTS 2
+#define MAX_COMPONENTS 3
 
 //TODO: Make the below dynamic based on analysis of the model
 constexpr int MAX_VALUE_STACK_SIZE = 64;  // Can handle deeply nested expressions
-constexpr int MAX_CHANNELS = 2;          // Can handle many channels
-constexpr int MAX_VARIABLES = 8;         // Can handle many variables
+constexpr int MAX_CHANNELS = 5;          // Can handle many channels
+constexpr int MAX_VARIABLES = 20;         // Can handle many variables
 #define MAX_EDGES_PER_NODE 8
 
 
 namespace Constants {
-    constexpr int MAX_VARIABLES = 8;
+    constexpr int MAX_VARIABLES = 20;
 
 }
 
@@ -50,6 +50,9 @@ struct SharedBlockMemory {
     //uint8_t urgent_count;
     //unsigned committed_count;
     unsigned simulation_id;
+    int lol;
+    int lol2 = 0;
+    double lol3;
 
     // Variables (fixed size array in shared memory)
     struct Variable {

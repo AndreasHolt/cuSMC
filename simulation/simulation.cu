@@ -5,7 +5,7 @@
 
 #define NUM_RUNS 6
 #define TIME_BOUND 10.0
-#define MAX_VARIABLES 8
+#define MAX_VARIABLES 20
 
 
 constexpr bool USE_GLOBAL_MEMORY_CURAND = true;
@@ -253,6 +253,7 @@ __device__ void take_transition(ComponentState *my_state,
                                 SharedBlockMemory *shared,
                                 SharedModelState *model,
                                 BlockSimulationState *block_state) {
+
     if (my_state->num_enabled_edges == 0) {
         if constexpr (MINIMAL_PRINTS) {
             printf("Thread %d: No enabled edges to take\n", threadIdx.x);
@@ -451,6 +452,11 @@ __device__ bool check_edge_enabled(const EdgeInfo &edge,
                 case constraint::greater_equal_c:
                     satisfied = var_value >= bound;
                     break;
+                case constraint::equal_c:
+                    satisfied = var_value = bound;
+                    break;
+                case constraint::not_equal_c:
+                    satisfied = var_value != bound;
                 default:
                     printf("  Warning: Unknown operator %d\n", guard.operand);
                     return false;
@@ -1043,7 +1049,7 @@ void simulation::run_statistical_model_checking(SharedModelState *model, float c
     int warp_size = deviceProp.warpSize;
     //int threads_per_block = 512; // 100 components
     // int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
-    int threads_per_block = 128; // 100 components
+    int threads_per_block = 32; // 100 components
     int runs_per_block = 1;
     int num_blocks = 1;
 
