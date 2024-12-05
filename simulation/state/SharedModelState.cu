@@ -141,8 +141,7 @@ SharedModelState* init_shared_model_state(
     const std::unordered_map<int, std::list<edge>>& node_edge_map,
     const std::unordered_map<int, node*>& node_map,
     const std::unordered_map<int, VariableTrackingVisitor::VariableUsage>& variable_registry,
-    const abstract_parser* parser, const int num_vars)
-{
+    const abstract_parser* parser, const int num_vars) {
     if constexpr (VERBOSE) {
         cout << "\nInitializing SharedModelState:" << endl;
         cout << "Component mapping:" << endl;
@@ -151,7 +150,7 @@ SharedModelState* init_shared_model_state(
         }
     }
 
-    // First organize nodes by component
+    // First organize nodes by component. Vectors of Components as vectors containing nodes
     std::vector<std::vector<std::pair<int, const std::list<edge>*>>> components_nodes;
     int max_component_id = -1;
 
@@ -174,6 +173,8 @@ SharedModelState* init_shared_model_state(
         std::sort(component.begin(), component.end(),
                   [](const auto& a, const auto& b) { return a.first < b.first; });
     }
+
+    // After grouping nodes by component:
     if constexpr (VERBOSE) {
         cout << "\nSorted nodes by component:" << endl;
         for(int i = 0; i < components_nodes.size(); i++) {
@@ -183,32 +184,22 @@ SharedModelState* init_shared_model_state(
             }
             cout << endl;
         }
-    }
 
-    // After grouping nodes by component:
-    if constexpr (VERBOSE) {
         cout << "\nNodes by component:" << endl;
-    }
-    for(int i = 0; i < components_nodes.size(); i++) {
-        if constexpr (VERBOSE) {
+        for(int i = 0; i < components_nodes.size(); i++) {
             cout << "Component " << i << " has " << components_nodes[i].size() << " nodes:" << endl;
-        }
-        for(const auto& node_pair : components_nodes[i]) {
-            node* current_node = node_map.at(node_pair.first);
-            if constexpr (VERBOSE) {
+            for(const auto& node_pair : components_nodes[i]) {
+                node* current_node = node_map.at(node_pair.first);
                 cout << "  Node " << node_pair.first
                      << " with " << current_node->invariants.size << " invariants" << endl;
-            }
 
-            // Print invariant details
-            for(int j = 0; j < current_node->invariants.size; j++) {
-                const constraint& inv = current_node->invariants.store[j];
-                if constexpr (VERBOSE) {
+                // Print invariant details
+                for(int j = 0; j < current_node->invariants.size; j++) {
+                    const constraint& inv = current_node->invariants.store[j];
                     cout << "    Invariant " << j << ": uses_variable=" << inv.uses_variable;
                     if(inv.uses_variable) {
                         cout << ", var_id=" << inv.variable_id;
                     }
-
                     cout << endl;
                 }
             }
@@ -226,11 +217,17 @@ SharedModelState* init_shared_model_state(
 
     // Allocate device memory for component sizes
     int* device_component_sizes;
-    cudaMalloc(&device_component_sizes,
+    auto error = cudaMalloc(&device_component_sizes,
                components_nodes.size() * sizeof(int));
-    cudaMemcpy(device_component_sizes, component_sizes.data(),
+    if (error != cudaSuccess) {
+        cout << "Error cudamalloc for component sizes: " << cudaGetErrorString(error) << endl;
+    }
+    error = cudaMemcpy(device_component_sizes, component_sizes.data(),
                components_nodes.size() * sizeof(int),
                cudaMemcpyHostToDevice);
+    if (error != cudaSuccess) {
+        cout << "Error copying component sizes to device: " << cudaGetErrorString(error) << endl;
+    }
 
     std::vector<int> initial_values(num_vars);
     for(const auto& [var_id, var_usage] : variable_registry) {
@@ -248,7 +245,11 @@ SharedModelState* init_shared_model_state(
             }
         }
     }
-
+    // Clear any previous error
+    error = cudaGetLastError();
+    if (error != cudaSuccess) {
+        cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
+    }
 
     // Count total edges, guards, updates and invariants
     int total_edges = 0;
@@ -285,7 +286,11 @@ SharedModelState* init_shared_model_state(
     cudaMalloc(&device_guards, total_guards * sizeof(GuardInfo));
     cudaMalloc(&device_updates, total_updates * sizeof(UpdateInfo));
     cudaMalloc(&device_invariants, total_invariants * sizeof(GuardInfo));
-
+    // Clear any previous error
+    error = cudaGetLastError();
+    if (error != cudaSuccess) {
+        cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
+    }
     // Create host arrays
     std::vector<NodeInfo> host_nodes;
     std::vector<EdgeInfo> host_edges;
@@ -304,95 +309,111 @@ SharedModelState* init_shared_model_state(
     int current_update_index = 0;
     int current_invariant_index = 0;
 
-
+    // Clear any previous error
+    error = cudaGetLastError();
+    if (error != cudaSuccess) {
+        cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
+    }
     // Helper function for creating variable-based guards
     auto create_variable_guard = [&](const constraint& guard) -> GuardInfo {
-   if(guard.uses_variable) {
-       // Handle direct variable reference (clocks)
-       auto var_it = variable_registry.find(guard.variable_id);
-       if(var_it != variable_registry.end()) {
-           const auto& var_usage = var_it->second;
-
-           // Get initial value from network/parser
-           double initial_value = 0.0;
-           for(int i = 0; i < cpu_network->variables.size; i++) {
-               if(cpu_network->variables.store[i].id == guard.variable_id) {
-                   initial_value = cpu_network->variables.store[i].value;
-
-                   initial_values[guard.variable_id] = initial_value; // Add to initial values array
-                   if constexpr (VERBOSE) {
-                       printf("Appending initial value %f for int variable %d\n", initial_value, guard.variable_id);
-                       printf("DEBUG: Initial value of clock variable %d is %f\n",
-                              guard.variable_id, initial_value);
-                   }
-                   break;
+        if(guard.uses_variable) {
+            // Handle direct variable reference (clocks)
+            auto var_it = variable_registry.find(guard.variable_id);
+            if(var_it != variable_registry.end()) {
+                const auto& var_usage = var_it->second;
+                // Clear any previous error
+                error = cudaGetLastError();
+               if (error != cudaSuccess) {
+                   cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
                }
-           }
+               // Get initial value from network/parser
+               double initial_value = 0.0;
+               for(int i = 0; i < cpu_network->variables.size; i++) {
+                   if(cpu_network->variables.store[i].id == guard.variable_id) {
+                       initial_value = cpu_network->variables.store[i].value;
 
-           VariableInfo var_info{
-               guard.variable_id,
-               var_usage.kind,
-               var_usage.name.c_str(),
-               initial_value
-           };
-
-           expr* device_expression = copy_expression_to_device(guard.expression);
-           return GuardInfo(guard.operand, var_info, device_expression);
-       }
-   } else if(guard.value != nullptr &&
-             guard.value->operand == expr::clock_variable_ee) {
-       // Handle variable reference in expression (integers)
-       int var_id = guard.value->variable_id;
-       auto var_it = variable_registry.find(var_id);
-       if(var_it != variable_registry.end()) {
-           const auto& var_usage = var_it->second;
-
-           // Get initial value from network
-           double initial_value = 0.0;
-           for(int i = 0; i < cpu_network->variables.size; i++) {
-               if(cpu_network->variables.store[i].id == var_id) {
-                   initial_value = cpu_network->variables.store[i].value;
-                   if constexpr (VERBOSE) {
-                       printf("Appending initial value %f for int variable %d\n", initial_value, var_id);
+                       initial_values[guard.variable_id] = initial_value; // Add to initial values array
+                       if constexpr (VERBOSE) {
+                           printf("Appending initial value %f for int variable %d\n", initial_value, guard.variable_id);
+                           printf("DEBUG: Initial value of clock variable %d is %f\n",
+                                  guard.variable_id, initial_value);
+                       }
+                       break;
                    }
-                   initial_values[var_id] = initial_value; // Add to initial values array
-                   if constexpr (VERBOSE) {
-                       printf("DEBUG: Initial value of integer variable %d is %f\n",
-                              var_id, initial_value);
-                   }
-                   break;
                }
-           }
+
+               VariableInfo var_info{
+                   guard.variable_id,
+                   var_usage.kind,
+                   var_usage.name.c_str(),
+                   initial_value
+               };
+
+               // Clear any previous error
+               error = cudaGetLastError();
+               if (error != cudaSuccess) {
+                   cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
+               }
+               expr* device_expression = copy_expression_to_device(guard.expression);
+               // Clear any previous error
+               error = cudaGetLastError();
+               if (error != cudaSuccess) {
+                   cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
+               }
+               return GuardInfo(guard.operand, var_info, device_expression);
+            }
+        } else if(guard.value != nullptr && guard.value->operand == expr::clock_variable_ee) {
+            // Handle variable reference in expression (integers)
+               int var_id = guard.value->variable_id;
+               auto var_it = variable_registry.find(var_id);
+               if(var_it != variable_registry.end()) {
+               const auto& var_usage = var_it->second;
+
+               // Get initial value from network
+               double initial_value = 0.0;
+               for(int i = 0; i < cpu_network->variables.size; i++) {
+                   if(cpu_network->variables.store[i].id == var_id) {
+                       initial_value = cpu_network->variables.store[i].value;
+                       if constexpr (VERBOSE) {
+                           printf("Appending initial value %f for int variable %d\n", initial_value, var_id);
+                       }
+                       initial_values[var_id] = initial_value; // Add to initial values array
+                       if constexpr (VERBOSE) {
+                           printf("DEBUG: Initial value of integer variable %d is %f\n",
+                                  var_id, initial_value);
+                       }
+                       break;
+                   }
+               }
 
 
-           VariableInfo var_info{
-               var_id,
-               var_usage.kind,
-               var_usage.name.c_str(),
-               initial_value
-           };
+               VariableInfo var_info{
+                   var_id,
+                   var_usage.kind,
+                   var_usage.name.c_str(),
+                   initial_value
+               };
 
-           expr* device_expression = copy_expression_to_device(guard.expression);
-           return GuardInfo(guard.operand, var_info, device_expression);
+               expr* device_expression = copy_expression_to_device(guard.expression);
+               return GuardInfo(guard.operand, var_info, device_expression);
+            }
        }
-   }
 
-   // Default case if no variable found
-   printf("Warning: Variable not found in registry\n");
-   char default_name[MAX_VAR_NAME_LENGTH];
-   snprintf(default_name, MAX_VAR_NAME_LENGTH, "var_unknown");
+       // Default case if no variable found
+       printf("Warning: Variable not found in registry\n");
+       char default_name[MAX_VAR_NAME_LENGTH];
+       snprintf(default_name, MAX_VAR_NAME_LENGTH, "var_unknown");
 
-   VariableInfo var_info{
-       -1,  // Invalid ID
-       VariableKind::INT,
-       default_name,
-       0.0  // Default value
-   };
+       VariableInfo var_info{
+           -1,  // Invalid ID
+           VariableKind::INT,
+           default_name,
+           0.0  // Default value
+       };
 
-   expr* device_expression = copy_expression_to_device(guard.expression);
-   return GuardInfo(guard.operand, var_info, device_expression);
-};
-
+       expr* device_expression = copy_expression_to_device(guard.expression);
+       return GuardInfo(guard.operand, var_info, device_expression);
+    };
 
 
     // Helper function for creating updates
@@ -417,7 +438,11 @@ SharedModelState* init_shared_model_state(
             };
         }
     };
-
+    // Clear any previous error
+    error = cudaGetLastError();
+    if (error != cudaSuccess) {
+        cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
+    }
     // For each node level
     for(int node_idx = 0; node_idx < max_nodes_per_component; node_idx++) {
         // For each component at this level
