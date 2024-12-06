@@ -245,11 +245,6 @@ SharedModelState* init_shared_model_state(
             }
         }
     }
-    // Clear any previous error
-    error = cudaGetLastError();
-    if (error != cudaSuccess) {
-        cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
-    }
 
     // Count total edges, guards, updates and invariants
     int total_edges = 0;
@@ -286,11 +281,7 @@ SharedModelState* init_shared_model_state(
     cudaMalloc(&device_guards, total_guards * sizeof(GuardInfo));
     cudaMalloc(&device_updates, total_updates * sizeof(UpdateInfo));
     cudaMalloc(&device_invariants, total_invariants * sizeof(GuardInfo));
-    // Clear any previous error
-    error = cudaGetLastError();
-    if (error != cudaSuccess) {
-        cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
-    }
+
     // Create host arrays
     std::vector<NodeInfo> host_nodes;
     std::vector<EdgeInfo> host_edges;
@@ -309,11 +300,7 @@ SharedModelState* init_shared_model_state(
     int current_update_index = 0;
     int current_invariant_index = 0;
 
-    // Clear any previous error
-    error = cudaGetLastError();
-    if (error != cudaSuccess) {
-        cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
-    }
+
     // Helper function for creating variable-based guards
     auto create_variable_guard = [&](const constraint& guard) -> GuardInfo {
         if(guard.uses_variable) {
@@ -321,11 +308,7 @@ SharedModelState* init_shared_model_state(
             auto var_it = variable_registry.find(guard.variable_id);
             if(var_it != variable_registry.end()) {
                 const auto& var_usage = var_it->second;
-                // Clear any previous error
-                error = cudaGetLastError();
-               if (error != cudaSuccess) {
-                   cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
-               }
+
                // Get initial value from network/parser
                double initial_value = 0.0;
                for(int i = 0; i < cpu_network->variables.size; i++) {
@@ -349,17 +332,8 @@ SharedModelState* init_shared_model_state(
                    initial_value
                };
 
-               // Clear any previous error
-               error = cudaGetLastError();
-               if (error != cudaSuccess) {
-                   cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
-               }
+
                expr* device_expression = copy_expression_to_device(guard.expression);
-               // Clear any previous error
-               error = cudaGetLastError();
-               if (error != cudaSuccess) {
-                   cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
-               }
                return GuardInfo(guard.operand, var_info, device_expression);
             }
         } else if(guard.value != nullptr && guard.value->operand == expr::clock_variable_ee) {
@@ -438,11 +412,6 @@ SharedModelState* init_shared_model_state(
             };
         }
     };
-    // Clear any previous error
-    error = cudaGetLastError();
-    if (error != cudaSuccess) {
-        cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
-    }
     // For each node level
     for(int node_idx = 0; node_idx < max_nodes_per_component; node_idx++) {
         // For each component at this level
