@@ -53,6 +53,7 @@ struct SharedBlockMemory {
     int lol;
     int lol2 = 0;
     double lol3;
+    bool has_hit_goal = false;
 
     // Variables (fixed size array in shared memory)
     struct Variable {
