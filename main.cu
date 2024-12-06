@@ -30,7 +30,7 @@ VariableKind* createKindArray(const std::unordered_map<int, VariableTrackingVisi
 int main()
 {
     // Hardcoded path to the XML file
-    std::string filename = "../automata_parser/XmlFiles/bluetoothSmacc.xml";
+    std::string filename = "../automata_parser/XmlFiles/condTest.xml";
     string query1 = "c1.f2";
     string query2 = "c2.g4";
     std::unordered_set<std::string>* query_set = new std::unordered_set<std::string>();

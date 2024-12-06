@@ -26,6 +26,7 @@ void print_node_info(const node* n, const std::string& prefix = "") {
 std::vector<expr*> allocated_expressions;  // Global to track allocations
 
 expr* copy_expression_to_device(const expr* host_expr) {
+    cudaError_t error;
     if constexpr (VERBOSE) {
         printf("Copying expression with operand %d\n",
                host_expr ? host_expr->operand : -1);
@@ -51,12 +52,22 @@ expr* copy_expression_to_device(const expr* host_expr) {
         }
         // Allocate device memory for the entire array at once
         expr* device_expr_array;
-        cudaMalloc(&device_expr_array, array_size * sizeof(expr));
+        error = cudaMalloc(&device_expr_array, array_size * sizeof(expr));
+        if (error != cudaSuccess) {
+            cout << "Malloc error: " << cudaGetErrorString(error) << endl;
+            cudaFree(device_expr_array);
+            throw std::runtime_error(std::string("Failed: "));
+        }
         allocated_expressions.push_back(device_expr_array);
 
         // Copy the entire array
-        cudaMemcpy(device_expr_array, host_expr, array_size * sizeof(expr),
+        error = cudaMemcpy(device_expr_array, host_expr, array_size * sizeof(expr),
                    cudaMemcpyHostToDevice);
+        if (error != cudaSuccess) {
+            cout << "Mem copy error: " << cudaGetErrorString(error) << endl;
+            cudaFree(device_expr_array);
+            throw std::runtime_error(std::string("Failed: "));
+        }
         if constexpr (VERBOSE) {
             printf("Copied Polish notation array to device at %p\n",
                    static_cast<void*>(device_expr_array));
@@ -64,8 +75,13 @@ expr* copy_expression_to_device(const expr* host_expr) {
 
         // Verify first element
         expr verify_expr;
-        cudaMemcpy(&verify_expr, device_expr_array, sizeof(expr),
+        error = cudaMemcpy(&verify_expr, device_expr_array, sizeof(expr),
                    cudaMemcpyDeviceToHost);
+        if (error != cudaSuccess) {
+            cout << "Mem copy error: " << cudaGetErrorString(error) << endl;
+            cudaFree(device_expr_array);
+            throw std::runtime_error(std::string("Failed: "));
+        }
         if constexpr (VERBOSE) {
             printf("Verified first element - operand=%d, length=%d\n",
                    verify_expr.operand, verify_expr.length);
@@ -78,7 +94,12 @@ expr* copy_expression_to_device(const expr* host_expr) {
     // If it's not a PN expression, we need to handle it differently
     // Allocate device memory for this node
     expr* device_expr;
-    cudaMalloc(&device_expr, sizeof(expr));
+    error = cudaMalloc(&device_expr, sizeof(expr));
+    if (error != cudaSuccess) {
+        cout << "Malloc error: " << cudaGetErrorString(error) << endl;
+        cudaFree(device_expr);
+        throw std::runtime_error(std::string("Failed: "));
+    }
     if constexpr (VERBOSE) {
         printf("Allocated device memory at %p for operand %d\n",
                static_cast<void*>(device_expr), host_expr->operand);
@@ -118,13 +139,22 @@ expr* copy_expression_to_device(const expr* host_expr) {
     }
 
     // Copy the node to device
-    cudaMemcpy(device_expr, &temp_expr, sizeof(expr), cudaMemcpyHostToDevice);
+    error = cudaMemcpy(device_expr, &temp_expr, sizeof(expr), cudaMemcpyHostToDevice);
+    if (error != cudaSuccess) {
+        cout << "Mem copy error: " << cudaGetErrorString(error) << endl;
+        cudaFree(device_expr);
+        throw std::runtime_error(std::string("Failed: "));
+    }
     if constexpr (VERBOSE) {
         printf("DEBUG: Copy complete - device_expr=%p\n", static_cast<void*>(device_expr));
     }
     // Verify it's readable
     expr verify_expr;
-    cudaMemcpy(&verify_expr, device_expr, sizeof(expr), cudaMemcpyHostToDevice);
+    error = cudaMemcpy(&verify_expr, device_expr, sizeof(expr), cudaMemcpyDeviceToHost);
+    if (error != cudaSuccess) {
+        cout << "Mem copy error: " << cudaGetErrorString(error) << endl;
+        throw std::runtime_error(std::string("Failed: "));
+    }
     if constexpr (VERBOSE) {
         printf("DEBUG: Verification read - operand=%d\n", verify_expr.operand);
     }
@@ -217,7 +247,7 @@ SharedModelState* init_shared_model_state(
 
     // Allocate device memory for component sizes
     int* device_component_sizes;
-    auto error = cudaMalloc(&device_component_sizes,
+    cudaError_t error = cudaMalloc(&device_component_sizes,
                components_nodes.size() * sizeof(int));
     if (error != cudaSuccess) {
         cout << "Error cudamalloc for component sizes: " << cudaGetErrorString(error) << endl;
@@ -244,11 +274,6 @@ SharedModelState* init_shared_model_state(
                 break;
             }
         }
-    }
-    // Clear any previous error
-    error = cudaGetLastError();
-    if (error != cudaSuccess) {
-        cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
     }
 
     // Count total edges, guards, updates and invariants
@@ -286,11 +311,7 @@ SharedModelState* init_shared_model_state(
     cudaMalloc(&device_guards, total_guards * sizeof(GuardInfo));
     cudaMalloc(&device_updates, total_updates * sizeof(UpdateInfo));
     cudaMalloc(&device_invariants, total_invariants * sizeof(GuardInfo));
-    // Clear any previous error
-    error = cudaGetLastError();
-    if (error != cudaSuccess) {
-        cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
-    }
+
     // Create host arrays
     std::vector<NodeInfo> host_nodes;
     std::vector<EdgeInfo> host_edges;
@@ -309,23 +330,16 @@ SharedModelState* init_shared_model_state(
     int current_update_index = 0;
     int current_invariant_index = 0;
 
-    // Clear any previous error
-    error = cudaGetLastError();
-    if (error != cudaSuccess) {
-        cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
-    }
+
     // Helper function for creating variable-based guards
     auto create_variable_guard = [&](const constraint& guard) -> GuardInfo {
+
         if(guard.uses_variable) {
             // Handle direct variable reference (clocks)
             auto var_it = variable_registry.find(guard.variable_id);
             if(var_it != variable_registry.end()) {
                 const auto& var_usage = var_it->second;
-                // Clear any previous error
-                error = cudaGetLastError();
-               if (error != cudaSuccess) {
-                   cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
-               }
+
                // Get initial value from network/parser
                double initial_value = 0.0;
                for(int i = 0; i < cpu_network->variables.size; i++) {
@@ -349,17 +363,8 @@ SharedModelState* init_shared_model_state(
                    initial_value
                };
 
-               // Clear any previous error
-               error = cudaGetLastError();
-               if (error != cudaSuccess) {
-                   cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
-               }
+
                expr* device_expression = copy_expression_to_device(guard.expression);
-               // Clear any previous error
-               error = cudaGetLastError();
-               if (error != cudaSuccess) {
-                   cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
-               }
                return GuardInfo(guard.operand, var_info, device_expression);
             }
         } else if(guard.value != nullptr && guard.value->operand == expr::clock_variable_ee) {
@@ -438,11 +443,7 @@ SharedModelState* init_shared_model_state(
             };
         }
     };
-    // Clear any previous error
-    error = cudaGetLastError();
-    if (error != cudaSuccess) {
-        cout << "Previous error cleared: " << cudaGetErrorString(error) << endl;
-    }
+
     // For each node level
     for(int node_idx = 0; node_idx < max_nodes_per_component; node_idx++) {
         // For each component at this level
@@ -494,7 +495,6 @@ SharedModelState* init_shared_model_state(
                     current_invariant_index++;
 
                 }
-
                 // Create node info
                 NodeInfo node_info{
                     node_id,
@@ -506,6 +506,7 @@ SharedModelState* init_shared_model_state(
                     invariants_start,
                     static_cast<int>(current_node->invariants.size)
                 };
+
                 host_nodes.push_back(node_info);
 
                 // Process edges
@@ -519,6 +520,7 @@ SharedModelState* init_shared_model_state(
                             if constexpr (VERBOSE) {
                                 cout << "    Direct variable guard" << endl;
                             }
+
                             host_guards.push_back(create_variable_guard(guard));
                         } else if(guard.value != nullptr && guard.value->operand == expr::clock_variable_ee) {
                             if constexpr (VERBOSE) {
@@ -615,29 +617,49 @@ SharedModelState* init_shared_model_state(
     }
 
     // Copy everything to device
-    cudaMemcpy(device_nodes, host_nodes.data(),
+    error = cudaMemcpy(device_nodes, host_nodes.data(),
                total_node_slots * sizeof(NodeInfo),
                cudaMemcpyHostToDevice);
-    cudaMemcpy(device_edges, host_edges.data(),
+    if (error != cudaSuccess) {
+        cout << "Error copying nodes to device: " << cudaGetErrorString(error) << endl;
+    }
+    error = cudaMemcpy(device_edges, host_edges.data(),
                total_edges * sizeof(EdgeInfo),
                cudaMemcpyHostToDevice);
-    cudaMemcpy(device_guards, host_guards.data(),
+    if (error != cudaSuccess) {
+        cout << "Error copying edges to device: " << cudaGetErrorString(error) << endl;
+    }
+    error = cudaMemcpy(device_guards, host_guards.data(),
                total_guards * sizeof(GuardInfo),
                cudaMemcpyHostToDevice);
-    cudaMemcpy(device_updates, host_updates.data(),
+    if (error != cudaSuccess) {
+        cout << "Error copying guards to device: " << cudaGetErrorString(error) << endl;
+    }
+    error = cudaMemcpy(device_updates, host_updates.data(),
                total_updates * sizeof(UpdateInfo),
                cudaMemcpyHostToDevice);
-    cudaMemcpy(device_invariants, host_invariants.data(),
+    if (error != cudaSuccess) {
+        cout << "Error copying updates to device: " << cudaGetErrorString(error) << endl;
+    }
+    error = cudaMemcpy(device_invariants, host_invariants.data(),
                total_invariants * sizeof(GuardInfo),
                cudaMemcpyHostToDevice);
+    if (error != cudaSuccess) {
+        cout << "Error copying invariants to device: " << cudaGetErrorString(error) << endl;
+    }
 
     // Copy initial values to device
     int* device_initial_values;
-    cudaMalloc(&device_initial_values, num_vars * sizeof(int));
-    cudaMemcpy(device_initial_values, initial_values.data(),
+    error = cudaMalloc(&device_initial_values, num_vars * sizeof(int));
+    if (error != cudaSuccess) {
+        cout << "Error performing Malloc: " << cudaGetErrorString(error) << endl;
+    }
+    error = cudaMemcpy(device_initial_values, initial_values.data(),
                num_vars * sizeof(int),
                cudaMemcpyHostToDevice);
-
+    if (error != cudaSuccess) {
+        cout << "Error copying initial values to device: " << cudaGetErrorString(error) << endl;
+    }
 
 
     // Create and copy SharedModelState
@@ -654,11 +676,15 @@ SharedModelState* init_shared_model_state(
     };
 
     SharedModelState* device_model;
-    cudaMalloc(&device_model, sizeof(SharedModelState));
-    cudaMemcpy(device_model, &host_model, sizeof(SharedModelState),
+    error = cudaMalloc(&device_model, sizeof(SharedModelState));
+    if (error != cudaSuccess) {
+        cout << "Error copying component sizes to device: " << cudaGetErrorString(error) << endl;
+    }
+    error = cudaMemcpy(device_model, &host_model, sizeof(SharedModelState),
                cudaMemcpyHostToDevice);
-
-
+    if (error != cudaSuccess) {
+        cout << "Error copying model to device: " << cudaGetErrorString(error) << endl;
+    }
 
     return device_model;
 }
