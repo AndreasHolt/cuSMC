@@ -373,6 +373,11 @@ __device__ void take_transition(ComponentState *my_state,
         const NodeInfo &node = model->nodes[level * model->num_components + threadIdx.x];
         if (node.id == edge.dest_node_id) {
             dest_node = &node;
+
+            if (dest_node->type == 1){
+                shared->has_hit_goal = true;
+            }
+
             if constexpr (VERBOSE) {
                 printf("Thread %d: Found destination node at level %d, index %d\n",
                        threadIdx.x, level, (threadIdx.x));
@@ -818,7 +823,7 @@ __device__ double find_minimum_delay(
 }
 
 __global__ void simulation_kernel(SharedModelState *model, bool *results,
-                                  int runs_per_block, float time_bound, VariableKind *kinds, int num_vars,
+                                  int runs_per_block, float time_bound, VariableKind *kinds, int num_vars, bool* flags, int variable_id,
                                   curandState *rng_states_global) {
     // #if __CUDA_ARCH__ >= 860
     //     // Request maximum L1/shared memory configuration on Ampere
@@ -1016,6 +1021,11 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
                        blockIdx.x, shared_mem.global_time);
             }
         }
+        if (shared_mem.has_hit_goal) {
+            printf("Flag was true");
+            flags[blockIdx.x] = true;
+            break;
+        }
         __syncthreads();
     }
 
@@ -1025,7 +1035,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 }
 
 void simulation::run_statistical_model_checking(SharedModelState *model, float confidence, float precision,
-                                                VariableKind *kinds, int num_vars) {
+                                                VariableKind *kinds, int num_vars, bool* flags, int variable_id) {
     int total_runs = 1;
     if constexpr (VERBOSE) {
         cout << "total_runs = " << total_runs << endl;
@@ -1258,7 +1268,7 @@ void simulation::run_statistical_model_checking(SharedModelState *model, float c
     // } else {
     // Launch with no dynamic shared memory for other architectures
     simulation_kernel<<<num_blocks, threads_per_block>>>(
-        model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, rng_states_global);
+        model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, flags, variable_id, rng_states_global);
     // }
 
 

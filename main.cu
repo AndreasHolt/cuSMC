@@ -30,7 +30,7 @@ VariableKind* createKindArray(const std::unordered_map<int, VariableTrackingVisi
 int main()
 {
     // Hardcoded path to the XML file
-    std::string filename = "../automata_parser/XmlFiles/condTest.xml";
+    std::string filename = "../automata_parser/XmlFiles/UppaalBehaviorTest3.xml";
     string query1 = "c1.f2";
     string query2 = "c2.g4";
     std::unordered_set<std::string>* query_set = new std::unordered_set<std::string>();
@@ -58,6 +58,18 @@ int main()
     properties.variable_names = new std::unordered_map<int, std::string>(*parser->get_clock_names());    // this can create mem leaks.
     properties.node_network = new std::unordered_map<int, int>(*parser->get_subsystems());
     properties.node_names = new std::unordered_map<int, std::string>(*parser->get_nodes_with_name());
+
+
+    std::unordered_map<std::string, int> template_name_int_map;
+    for (auto itr = properties.template_names->cbegin(); itr != properties.template_names->cend(); itr++) {
+        template_name_int_map.insert({itr->second, itr->first});
+    }
+
+    std::unordered_map<std::string, int> node_name_int_map;
+    for (auto itr = properties.node_names->cbegin(); itr != properties.node_names->cend(); itr++) {
+        node_name_int_map.insert({itr->second, itr->first});
+    }
+
 
     domain_optimization_visitor optimizer = domain_optimization_visitor(
         query_set,
@@ -87,16 +99,101 @@ int main()
         }
     }
 
-    SharedModelState* state = init_shared_model_state(
+    /* SharedModelState* state = init_shared_model_state(
     &model,  // cpu_network
     *optimizer.get_node_subsystems_map(),
     *properties.node_edge_map,
     optimizer.get_node_map(),
     var_tracker.get_variable_registry(),
     parser, num_vars
-    );
+    );*/
 
-    sim.run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars);
+    // Simulation count
+    size_t simulations = config.total_simulations();
+
+    // Query analysis loop (Sidenote: Fuck unordered sets)
+    for (auto itr = query_set->cbegin(); itr != query_set->cend(); itr++){
+        // Query string
+        string query = *(*query_set).find(*itr);
+
+        if constexpr (VERBOSE){
+            cout << "Recorded query is: " + query << endl;
+        }
+        // Variable queries:
+        int variable_id = -1; //Val : -1 implies not variable checking query
+        // IF Query : refs : variable {
+        //      x <- Find variable id from name
+        //      variable_id = x
+        //  }
+
+        // String split
+        std::vector<char> component;
+        std::vector<char> goal_node;
+        bool period_reached = false;
+        for (int i = 0; i < query.length(); i++){
+            // Guard
+            if (query[i] == '.'){period_reached = true; continue;}
+            if (!period_reached) {
+                component.push_back(query[i]);
+            }
+            if (period_reached) {
+                goal_node.push_back(query[i]);
+            }
+        }
+        std::string component_name(component.begin(), component.end());
+        //template_name_int_map.find(component_name);
+
+        std::string node_name(goal_node.begin(), goal_node.end());
+        auto temp = node_name_int_map.find(node_name);
+        std::unordered_map<int, node*> node_map = optimizer.get_node_map();
+
+        if (temp != node_name_int_map.cend()) {
+            int goal_node_idx = (*temp).second;
+
+            (*node_map.find(goal_node_idx)).second->type = node::goal;
+        }
+
+        SharedModelState* state = init_shared_model_state(
+            &model,  // cpu_network
+            *optimizer.get_node_subsystems_map(),
+            *properties.node_edge_map,
+            node_map,
+            var_tracker.get_variable_registry(),
+            parser,
+            num_vars);
+
+
+        bool* goal_flags_host_ptr = (bool*)malloc(simulations*sizeof(bool));
+        for (int i = 0; i < simulations*sizeof(bool); i++) {
+            goal_flags_host_ptr[i] = false;
+        }
+
+        bool* goal_flags_device_ptr;
+        cudaMalloc(&goal_flags_device_ptr, simulations*sizeof(bool));
+
+        cudaMemcpy(goal_flags_device_ptr, goal_flags_host_ptr, simulations*sizeof(bool), cudaMemcpyHostToDevice);
+
+        // Run the SMC simulations
+        sim.run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars, goal_flags_device_ptr, variable_id);
+
+        cudaMemcpy(goal_flags_host_ptr, goal_flags_device_ptr, simulations*sizeof(bool), cudaMemcpyDeviceToHost);
+        cout << cudaGetErrorString(cudaGetLastError()) << endl;
+        int hits = 0;
+        for (int i = 0; i < simulations*sizeof(bool); i++) {
+            if (goal_flags_host_ptr[i]) {hits += 1;}
+        }
+
+        free(goal_flags_host_ptr);
+        cudaFree(goal_flags_device_ptr);
+
+        cout << "Total number of simulations: " + std::to_string(simulations) << endl;
+
+        float res = hits / simulations;
+
+        string output = "The answer to " + query + " is " + std::to_string(res);
+
+        cout << output << endl;
+    }
 
 
     // Kernels for debugging purposes

@@ -443,7 +443,7 @@ SharedModelState* init_shared_model_state(
             };
         }
     };
-
+  
     // For each node level
     for(int node_idx = 0; node_idx < max_nodes_per_component; node_idx++) {
         // For each component at this level
