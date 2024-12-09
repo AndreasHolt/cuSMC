@@ -470,11 +470,6 @@ __device__ bool check_edge_enabled(const EdgeInfo &edge,
                 case constraint::greater_equal_c:
                     satisfied = var_value >= bound;
                     break;
-                case constraint::equal_c:
-                    satisfied = var_value = bound;
-                    break;
-                case constraint::not_equal_c:
-                    satisfied = var_value != bound;
                 default:
                     printf("  Warning: Unknown operator %d\n", guard.operand);
                     return false;
@@ -540,6 +535,8 @@ __device__ void check_cuda_error(const char *location) {
 }
 
 #define CHECK_ERROR(loc) check_cuda_error(loc)
+
+
 
 __device__ void compute_possible_delay(
     ComponentState *my_state,
@@ -984,6 +981,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 
 
     // Initialize component state
+    // TODO: Move this to the top of the function?
     if (threadIdx.x >= model->num_components) {
         if constexpr (MINIMAL_PRINTS) {
             printf("Thread %d: Exiting - thread ID exceeds number of components\n",
