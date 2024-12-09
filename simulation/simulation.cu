@@ -371,11 +371,13 @@ __device__ void take_transition(ComponentState *my_state,
         // We know relevant nodes are stored at each level offset by the index of the component idx
         // The component idx is equivalent to threadIdx
         const NodeInfo &node = model->nodes[level * model->num_components + threadIdx.x];
+        printf("Dest node with id %d is type %d\n", node.id, node.type);
         if (node.id == edge.dest_node_id) {
             dest_node = &node;
 
             if (dest_node->type == 1){
                 shared->has_hit_goal = true;
+                printf("Block %d thread %d has reached the goal state at node %d\n", blockIdx.x, threadIdx.x, edge.dest_node_id);
             }
 
             if constexpr (VERBOSE) {
@@ -597,10 +599,10 @@ __device__ void compute_possible_delay(
     if constexpr (VERBOSE) {
         printf("Node idx %d has type: %d \n", node.id, node.type);
     }
-    // Node types with 3 (Urgent) or 4 (Comitted) need to return 0 as their delay
+    // Node types with 3 (Urgent) or 4 (Commited) need to return 0 as their delay
     if (node.type > 2) {
         if constexpr (VERBOSE) {
-            printf("Node idx %d has type: %d, therefore it is urgent or comitted and selecting delay 0 \n", node.id,
+            printf("Node idx %d has type: %d, therefore it is urgent or commited and selecting delay 0 \n", node.id,
                    node.type);
         }
         my_state->next_delay = 0;
@@ -881,12 +883,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
     if (threadIdx.x == 0) {
         // TODO: remove. Double with the init function.
         // Initialize variables with default values
-        for (int i = 0; i < MAX_VARIABLES; i++) {
-            shared_mem.variables[i].value = 0.0;
-            shared_mem.variables[i].rate = 0; // Will be set when needed based on guards
-            shared_mem.variables[i].kind = VariableKind::INT; // Default
-            shared_mem.variables[i].last_writer = -1;
-        }
+
 
         // For debug: print all variables and their initial values. TODO: remove later
         if constexpr (VERBOSE) {
@@ -942,7 +939,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
     // Initialize RNG
     int sim_id = blockIdx.x * runs_per_block;
     int comp_id = threadIdx.x;
-    curand_init(12345 + sim_id * blockDim.x + comp_id, 0, 0,
+    curand_init(12345678 + sim_id * blockDim.x + comp_id, 0, 0,
                 &rng_states[threadIdx.x]);
     block_state.random = &rng_states[threadIdx.x];
 
@@ -981,6 +978,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         return;
     }
 
+
     ComponentState *my_state = block_state.my_component;
     my_state->component_id = comp_id;
     my_state->current_node = &model->nodes[comp_id];
@@ -993,6 +991,17 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 
     // Main simulation loop
     while (shared_mem.global_time < time_bound) {
+        __syncthreads(); // Synchronize before continuing to make sure all threads have the latest value of shared_mem.has_hit_goal etc.
+
+        if (shared_mem.has_hit_goal) { // All threads should check whether the goal has been reached
+            if(threadIdx.x == 0) {
+                printf("Flag was true for block %d\n", blockIdx.x);
+                flags[blockIdx.x] = true; // ... but only a single thread should write to the flag to avoid race conditions
+            }
+            break;
+        }
+        printf("Flag is %d\n", shared_mem.has_hit_goal);
+
         if constexpr (VERBOSE) {
             printf("Thread %d: Time=%f\n", threadIdx.x, shared_mem.global_time);
         }
@@ -1021,12 +1030,11 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
                        blockIdx.x, shared_mem.global_time);
             }
         }
-        if (shared_mem.has_hit_goal) {
-            printf("Flag was true");
-            flags[blockIdx.x] = true;
-            break;
-        }
-        __syncthreads();
+
+
+
+
+        __syncthreads(); // Sync to make sure all threads see the break condition
     }
 
     if constexpr (MINIMAL_PRINTS) {
@@ -1035,7 +1043,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 }
 
 void simulation::run_statistical_model_checking(SharedModelState *model, float confidence, float precision,
-                                                VariableKind *kinds, int num_vars, bool* flags, int variable_id) {
+                                                VariableKind *kinds, int num_vars, bool* flags, int variable_id, int num_simulations) {
     int total_runs = 1;
     if constexpr (VERBOSE) {
         cout << "total_runs = " << total_runs << endl;
@@ -1061,7 +1069,7 @@ void simulation::run_statistical_model_checking(SharedModelState *model, float c
     // int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
     int threads_per_block = 32; // 100 components
     int runs_per_block = 1;
-    int num_blocks = 1;
+    int num_blocks = num_simulations;
 
     // Print detailed device information
     if constexpr (VERBOSE) {

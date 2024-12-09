@@ -30,7 +30,7 @@ namespace Constants {
 //     uint8_t num_enabled_edges;                  // Number of currently enabled edges
 // };
 
-struct alignas(4) ComponentState {  // We force 4-byte alignment instead of 8
+struct alignas(8) ComponentState {  // We force 4-byte alignment instead of 8
     // Pack these 4 bytes
     uint16_t component_id;
     uint8_t num_enabled_edges;
@@ -50,10 +50,7 @@ struct SharedBlockMemory {
     //uint8_t urgent_count;
     //unsigned committed_count;
     unsigned simulation_id;
-    int lol;
-    int lol2 = 0;
-    double lol3;
-    bool has_hit_goal = false;
+    bool has_hit_goal;
 
     // Variables (fixed size array in shared memory)
     struct Variable {
@@ -82,6 +79,7 @@ struct SharedBlockMemory {
         shared->ready_count = 0;
         shared->has_urgent = false;
         shared->has_committed = false;
+        shared->has_hit_goal = false;
 
         // Initialize variables explicitly
         for(int i = 0; i < Constants::MAX_VARIABLES; i++) {

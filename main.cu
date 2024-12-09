@@ -31,10 +31,10 @@ int main()
 {
     // Hardcoded path to the XML file
     std::string filename = "../automata_parser/XmlFiles/UppaalBehaviorTest3.xml";
-    string query1 = "c1.f2";
-    string query2 = "c2.g4";
+    // string query1 = "c1.f2";
+    string query2 = "c1.f4";
     std::unordered_set<std::string>* query_set = new std::unordered_set<std::string>();
-    query_set->insert(query1);
+    // query_set->insert(query1);
     query_set->insert(query2);
 
     abstract_parser* parser = new uppaal_xml_parser();
@@ -109,7 +109,9 @@ int main()
     );*/
 
     // Simulation count
-    size_t simulations = config.total_simulations();
+    // size_t simulations = config.total_simulations();
+    int simulations = 10000;
+
 
     // Query analysis loop (Sidenote: Fuck unordered sets)
     for (auto itr = query_set->cbegin(); itr != query_set->cend(); itr++){
@@ -163,33 +165,52 @@ int main()
             num_vars);
 
 
+        cudaError_t error;
+
         bool* goal_flags_host_ptr = (bool*)malloc(simulations*sizeof(bool));
-        for (int i = 0; i < simulations*sizeof(bool); i++) {
-            goal_flags_host_ptr[i] = false;
+        if (!goal_flags_host_ptr) {
+            cout << "Error: Host memory allocation failed" << endl;
+            return 0;
         }
 
-        bool* goal_flags_device_ptr;
-        cudaMalloc(&goal_flags_device_ptr, simulations*sizeof(bool));
+        memset(goal_flags_host_ptr, 0, simulations * sizeof(bool));
 
-        cudaMemcpy(goal_flags_device_ptr, goal_flags_host_ptr, simulations*sizeof(bool), cudaMemcpyHostToDevice);
+
+
+        bool* goal_flags_device_ptr;
+        error = cudaMalloc(&goal_flags_device_ptr, simulations*sizeof(bool));
+        if (error != cudaSuccess) {
+            cout << "Error: Device memory allocation failed: " << cudaGetErrorString(error) << endl;
+            free(goal_flags_host_ptr);
+            return 0;
+        }
+
+        error = cudaMemcpy(goal_flags_device_ptr, goal_flags_host_ptr, simulations*sizeof(bool), cudaMemcpyHostToDevice);
 
         // Run the SMC simulations
-        sim.run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars, goal_flags_device_ptr, variable_id);
+        sim.run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars, goal_flags_device_ptr, variable_id, simulations);
 
-        cudaMemcpy(goal_flags_host_ptr, goal_flags_device_ptr, simulations*sizeof(bool), cudaMemcpyDeviceToHost);
-        cout << cudaGetErrorString(cudaGetLastError()) << endl;
+        error = cudaMemcpy(goal_flags_host_ptr, goal_flags_device_ptr, simulations*sizeof(bool), cudaMemcpyDeviceToHost);
+        if (error != cudaSuccess) {
+            cout << "Error: Memory copy from device failed: " << cudaGetErrorString(error) << endl;
+            free(goal_flags_host_ptr);
+            cudaFree(goal_flags_device_ptr);
+            return 0;
+        }
+
         int hits = 0;
-        for (int i = 0; i < simulations*sizeof(bool); i++) {
+        for (int i = 0; i < simulations; i++) {
+            printf("Flag in host is %d\n", goal_flags_host_ptr[i]);
             if (goal_flags_host_ptr[i]) {hits += 1;}
         }
 
         free(goal_flags_host_ptr);
         cudaFree(goal_flags_device_ptr);
 
-        cout << "Total number of simulations: " + std::to_string(simulations) << endl;
+        float res = static_cast<float>(hits) / static_cast<float>(simulations);
 
-        float res = hits / simulations;
-
+        cout << "Number of simulations: " << simulations << endl;
+        cout << "Number of hits: " << hits << endl;
         string output = "The answer to " + query + " is " + std::to_string(res);
 
         cout << output << endl;

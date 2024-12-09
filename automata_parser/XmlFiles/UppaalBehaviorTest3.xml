@@ -113,6 +113,7 @@ int g = 1;</declaration>
 			<name x="338" y="-42">f3</name>
 		</location>
 		<location id="id21" x="187" y="-136">
+			<name x="177" y="-170">f4</name>
 		</location>
 		<init ref="id18"/>
 		<transition id="id22">
