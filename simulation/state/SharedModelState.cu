@@ -12,26 +12,26 @@
 
 class uppaal_xml_parser;
 
-void print_node_info(const node* n, const std::string& prefix = "") {
+void print_node_info(const node *n, const std::string &prefix = "") {
     std::cout << prefix << "Node ID: " << n->id << " Type: " << n->type << "\n";
     std::cout << prefix << "Edges:\n";
-    for(int i = 0; i < n->edges.size; i++) {
-        const edge& e = n->edges[i];
+    for (int i = 0; i < n->edges.size; i++) {
+        const edge &e = n->edges[i];
         std::cout << prefix << "  -> Dest ID: " << e.dest->id
-                 << " Channel: " << e.channel << "\n";
+                << " Channel: " << e.channel << "\n";
     }
 }
 
 // Add this before init_shared_model_state
-std::vector<expr*> allocated_expressions;  // Global to track allocations
+std::vector<expr *> allocated_expressions; // Global to track allocations
 
-expr* copy_expression_to_device(const expr* host_expr) {
+expr *copy_expression_to_device(const expr *host_expr) {
     cudaError_t error;
     if constexpr (VERBOSE) {
         printf("Copying expression with operand %d\n",
                host_expr ? host_expr->operand : -1);
     }
-    if(host_expr == nullptr) {
+    if (host_expr == nullptr) {
         if constexpr (VERBOSE) {
             printf("Null expression, returning nullptr\n");
         }
@@ -39,48 +39,55 @@ expr* copy_expression_to_device(const expr* host_expr) {
     }
 
     // Add safety check
-    if(reinterpret_cast<uintptr_t>(host_expr) < 1000) {
-        printf("Invalid pointer detected: %p\n", static_cast<const void*>(host_expr));
+    if (reinterpret_cast<uintptr_t>(host_expr) < 1000) {
+        printf("Invalid pointer detected: %p\n", static_cast<const void *>(host_expr));
         return nullptr;
     }
 
     // Check if this is a Polish notation expression
-    if(host_expr->operand == expr::pn_compiled_ee) {
+    if (host_expr->operand == expr::pn_compiled_ee) {
         int array_size = host_expr->length;
         if constexpr (VERBOSE) {
             printf("Copying Polish notation expression array of size %d\n", array_size);
         }
         // Allocate device memory for the entire array at once
-        expr* device_expr_array;
+        expr *device_expr_array;
         error = cudaMalloc(&device_expr_array, array_size * sizeof(expr));
         if (error != cudaSuccess) {
-            cout << "Malloc error: " << cudaGetErrorString(error) << endl;
+            const std::string error_msg =
+                    "CUDA malloc failed in copy_expression_to_device: " +
+                    std::string(cudaGetErrorString(error));
+
             cudaFree(device_expr_array);
-            throw std::runtime_error(std::string("Failed: "));
+            throw std::runtime_error(error_msg);
         }
         allocated_expressions.push_back(device_expr_array);
 
         // Copy the entire array
         error = cudaMemcpy(device_expr_array, host_expr, array_size * sizeof(expr),
-                   cudaMemcpyHostToDevice);
+                           cudaMemcpyHostToDevice);
         if (error != cudaSuccess) {
-            cout << "Mem copy error: " << cudaGetErrorString(error) << endl;
+            const std::string error_msg =
+                    "CUDA mem copy failed in copy_expression_to_device: " +
+                    std::string(cudaGetErrorString(error));
             cudaFree(device_expr_array);
-            throw std::runtime_error(std::string("Failed: "));
+            throw std::runtime_error(error_msg);
         }
         if constexpr (VERBOSE) {
             printf("Copied Polish notation array to device at %p\n",
-                   static_cast<void*>(device_expr_array));
+                   static_cast<void *>(device_expr_array));
         }
 
         // Verify first element
         expr verify_expr;
         error = cudaMemcpy(&verify_expr, device_expr_array, sizeof(expr),
-                   cudaMemcpyDeviceToHost);
+                           cudaMemcpyDeviceToHost);
         if (error != cudaSuccess) {
-            cout << "Mem copy error: " << cudaGetErrorString(error) << endl;
+            const std::string error_msg =
+                    "CUDA mem copy failed in copy_expression_to_device: " +
+                    std::string(cudaGetErrorString(error));
             cudaFree(device_expr_array);
-            throw std::runtime_error(std::string("Failed: "));
+            throw std::runtime_error(error_msg);
         }
         if constexpr (VERBOSE) {
             printf("Verified first element - operand=%d, length=%d\n",
@@ -93,16 +100,18 @@ expr* copy_expression_to_device(const expr* host_expr) {
 
     // If it's not a PN expression, we need to handle it differently
     // Allocate device memory for this node
-    expr* device_expr;
+    expr *device_expr;
     error = cudaMalloc(&device_expr, sizeof(expr));
     if (error != cudaSuccess) {
-        cout << "Malloc error: " << cudaGetErrorString(error) << endl;
+        const std::string error_msg =
+                "CUDA malloc failed in copy_expression_to_device: " +
+                std::string(cudaGetErrorString(error));
         cudaFree(device_expr);
-        throw std::runtime_error(std::string("Failed: "));
+        throw std::runtime_error(error_msg);
     }
     if constexpr (VERBOSE) {
         printf("Allocated device memory at %p for operand %d\n",
-               static_cast<void*>(device_expr), host_expr->operand);
+               static_cast<void *>(device_expr), host_expr->operand);
     }
     allocated_expressions.push_back(device_expr);
 
@@ -110,7 +119,7 @@ expr* copy_expression_to_device(const expr* host_expr) {
     expr temp_expr;
     if constexpr (VERBOSE) {
         printf("DEBUG: Original expression details: operand=%d, value=%f, variable_id=%d\n",
-           host_expr->operand, host_expr->value, host_expr->variable_id);
+               host_expr->operand, host_expr->value, host_expr->variable_id);
     }
 
     try {
@@ -119,8 +128,8 @@ expr* copy_expression_to_device(const expr* host_expr) {
         if constexpr (VERBOSE) {
             printf("Copying children for operand %d - Left: %p, Right: %p\n",
                    host_expr->operand,
-                   static_cast<const void*>(host_expr->left),
-                   static_cast<const void*>(host_expr->right));
+                   static_cast<const void *>(host_expr->left),
+                   static_cast<const void *>(host_expr->right));
         }
 
         // Recursively copy left and right subtrees
@@ -129,9 +138,8 @@ expr* copy_expression_to_device(const expr* host_expr) {
         if constexpr (VERBOSE) {
             printf("Finished copying children for operand %d\n", host_expr->operand);
         }
-    }
-    catch(...) {
-        printf("Exception while accessing host expression with operand %d\n",
+    } catch (...) {
+        printf("Exception in copy_expression_to_device while accessing host expression with operand %d\n",
                host_expr->operand);
         cudaFree(device_expr);
         allocated_expressions.pop_back();
@@ -141,93 +149,94 @@ expr* copy_expression_to_device(const expr* host_expr) {
     // Copy the node to device
     error = cudaMemcpy(device_expr, &temp_expr, sizeof(expr), cudaMemcpyHostToDevice);
     if (error != cudaSuccess) {
-        cout << "Mem copy error: " << cudaGetErrorString(error) << endl;
+        const std::string error_msg =
+                "CUDA mem copy failed in copy_expression_to_device: " +
+                std::string(cudaGetErrorString(error));
         cudaFree(device_expr);
-        throw std::runtime_error(std::string("Failed: "));
+        throw std::runtime_error(error_msg);
     }
     if constexpr (VERBOSE) {
-        printf("DEBUG: Copy complete - device_expr=%p\n", static_cast<void*>(device_expr));
+        printf("DEBUG: Copy complete - device_expr=%p\n", static_cast<void *>(device_expr));
     }
     // Verify it's readable
     expr verify_expr;
     error = cudaMemcpy(&verify_expr, device_expr, sizeof(expr), cudaMemcpyDeviceToHost);
     if (error != cudaSuccess) {
-        cout << "Mem copy error: " << cudaGetErrorString(error) << endl;
-        throw std::runtime_error(std::string("Failed: "));
+        const std::string error_msg =
+                "CUDA mem copy failed in copy_expression_to_device: " +
+                std::string(cudaGetErrorString(error));
+        throw std::runtime_error(error_msg);
     }
     if constexpr (VERBOSE) {
         printf("DEBUG: Verification read - operand=%d\n", verify_expr.operand);
     }
     return device_expr;
-
 }
 
 
-
-
-SharedModelState* init_shared_model_state(
-    const network* cpu_network,
-    const std::unordered_map<int, int>& node_subsystems_map,
-    const std::unordered_map<int, std::list<edge>>& node_edge_map,
-    const std::unordered_map<int, node*>& node_map,
-    const std::unordered_map<int, VariableTrackingVisitor::VariableUsage>& variable_registry,
-    const abstract_parser* parser, const int num_vars) {
+SharedModelState *init_shared_model_state(
+    const network *cpu_network,
+    const std::unordered_map<int, int> &node_subsystems_map,
+    const std::unordered_map<int, std::list<edge> > &node_edge_map,
+    const std::unordered_map<int, node *> &node_map,
+    const std::unordered_map<int, VariableTrackingVisitor::VariableUsage> &variable_registry,
+    const abstract_parser *parser, const int num_vars) {
     if constexpr (VERBOSE) {
         cout << "\nInitializing SharedModelState:" << endl;
         cout << "Component mapping:" << endl;
-        for(const auto& pair : node_subsystems_map) {
+        for (const auto &pair: node_subsystems_map) {
             cout << "  Node " << pair.first << " -> Component " << pair.second << endl;
         }
     }
 
     // First organize nodes by component. Vectors of Components as vectors containing nodes
-    std::vector<std::vector<std::pair<int, const std::list<edge>*>>> components_nodes;
+    std::vector<std::vector<std::pair<int, const std::list<edge> *> > > components_nodes;
     int max_component_id = -1;
 
     // Find number of components
-    for(const auto& pair : node_subsystems_map) {
+    for (const auto &pair: node_subsystems_map) {
         max_component_id = std::max(max_component_id, pair.second);
     }
     components_nodes.resize(max_component_id + 1);
 
     // Group nodes by component
-    for(const auto& pair : node_edge_map) {
+    for (const auto &pair: node_edge_map) {
         int node_id = pair.first;
-        const std::list<edge>& edges = pair.second;
+        const std::list<edge> &edges = pair.second;
         int component_id = node_subsystems_map.at(node_id);
         components_nodes[component_id].push_back({node_id, &edges});
     }
 
     // Sort nodes in each component by ID for consistent ordering
-    for(auto& component : components_nodes) {
+    for (auto &component: components_nodes) {
         std::sort(component.begin(), component.end(),
-                  [](const auto& a, const auto& b) { return a.first < b.first; });
+                  [](const auto &a, const auto &b) { return a.first < b.first; });
     }
 
     // After grouping nodes by component:
     if constexpr (VERBOSE) {
         cout << "\nSorted nodes by component:" << endl;
-        for(int i = 0; i < components_nodes.size(); i++) {
+        for (int i = 0; i < components_nodes.size(); i++) {
             cout << "Component " << i << " nodes: ";
-            for(const auto& node_pair : components_nodes[i]) {
+            for (const auto &node_pair: components_nodes[i]) {
                 cout << node_pair.first << " ";
             }
             cout << endl;
         }
 
         cout << "\nNodes by component:" << endl;
-        for(int i = 0; i < components_nodes.size(); i++) {
+        for (int i = 0; i < components_nodes.size(); i++) {
             cout << "Component " << i << " has " << components_nodes[i].size() << " nodes:" << endl;
-            for(const auto& node_pair : components_nodes[i]) {
-                node* current_node = node_map.at(node_pair.first);
+            for (const auto &node_pair: components_nodes[i]) {
+                node *current_node = node_map.at(node_pair.first);
                 cout << "  Node " << node_pair.first
-                     << " with " << current_node->invariants.size << " invariants" << endl;
+                        << " with " << current_node->invariants.size << " invariants" << endl;
 
                 // Print invariant details
-                for(int j = 0; j < current_node->invariants.size; j++) {
-                    const constraint& inv = current_node->invariants.store[j];
+                for (int j = 0; j < current_node->invariants.size; j++) {
+                    const constraint &inv = current_node->invariants.store[j];
                     cout << "    Invariant " << j << ": uses_variable=" << inv.uses_variable;
-                    if(inv.uses_variable) {
+                    if (inv.uses_variable) {
                         cout << ", var_id=" << inv.variable_id;
                     }
                     cout << endl;
@@ -239,32 +248,32 @@ SharedModelState* init_shared_model_state(
     // Find max nodes per component for array sizing
     int max_nodes_per_component = 0;
     std::vector<int> component_sizes(components_nodes.size());
-    for(int i = 0; i < components_nodes.size(); i++) {
+    for (int i = 0; i < components_nodes.size(); i++) {
         component_sizes[i] = components_nodes[i].size();
         max_nodes_per_component = std::max(max_nodes_per_component,
-                                         component_sizes[i]);
+                                           component_sizes[i]);
     }
 
     // Allocate device memory for component sizes
-    int* device_component_sizes;
+    int *device_component_sizes;
     cudaError_t error = cudaMalloc(&device_component_sizes,
-               components_nodes.size() * sizeof(int));
+                                   components_nodes.size() * sizeof(int));
     if (error != cudaSuccess) {
         cout << "Error cudamalloc for component sizes: " << cudaGetErrorString(error) << endl;
     }
     error = cudaMemcpy(device_component_sizes, component_sizes.data(),
-               components_nodes.size() * sizeof(int),
-               cudaMemcpyHostToDevice);
+                       components_nodes.size() * sizeof(int),
+                       cudaMemcpyHostToDevice);
     if (error != cudaSuccess) {
         cout << "Error copying component sizes to device: " << cudaGetErrorString(error) << endl;
     }
 
     std::vector<int> initial_values(num_vars);
-    for(const auto& [var_id, var_usage] : variable_registry) {
+    for (const auto &[var_id, var_usage]: variable_registry) {
         // Get initial value from network if available
         double initial_value = 0.0;
-        for(int i = 0; i < cpu_network->variables.size; i++) {
-            if(cpu_network->variables.store[i].id == var_id) {
+        for (int i = 0; i < cpu_network->variables.size; i++) {
+            if (cpu_network->variables.store[i].id == var_id) {
                 initial_value = cpu_network->variables.store[i].value;
                 initial_values[var_id] = initial_value;
                 if constexpr (VERBOSE) {
@@ -281,13 +290,13 @@ SharedModelState* init_shared_model_state(
     int total_guards = 0;
     int total_updates = 0;
     int total_invariants = 0;
-    for(const auto& pair : node_edge_map) {
-        for(const auto& edge : pair.second) {
+    for (const auto &pair: node_edge_map) {
+        for (const auto &edge: pair.second) {
             total_edges++;
             total_guards += edge.guards.size;
             total_updates += edge.updates.size;
         }
-        node* current_node = node_map.at(pair.first);
+        node *current_node = node_map.at(pair.first);
         total_invariants += current_node->invariants.size;
     }
 
@@ -300,11 +309,11 @@ SharedModelState* init_shared_model_state(
 
     // Allocate device memory
     const int total_node_slots = max_nodes_per_component * components_nodes.size();
-    NodeInfo* device_nodes;
-    EdgeInfo* device_edges;
-    GuardInfo* device_guards;
-    UpdateInfo* device_updates;
-    GuardInfo* device_invariants;
+    NodeInfo *device_nodes;
+    EdgeInfo *device_edges;
+    GuardInfo *device_guards;
+    UpdateInfo *device_updates;
+    GuardInfo *device_invariants;
 
     cudaMalloc(&device_nodes, total_node_slots * sizeof(NodeInfo));
     cudaMalloc(&device_edges, total_edges * sizeof(EdgeInfo));
@@ -332,101 +341,101 @@ SharedModelState* init_shared_model_state(
 
 
     // Helper function for creating variable-based guards
-    auto create_variable_guard = [&](const constraint& guard) -> GuardInfo {
-
-        if(guard.uses_variable) {
+    auto create_variable_guard = [&](const constraint &guard) -> GuardInfo {
+        if (guard.uses_variable) {
             // Handle direct variable reference (clocks)
             auto var_it = variable_registry.find(guard.variable_id);
-            if(var_it != variable_registry.end()) {
-                const auto& var_usage = var_it->second;
+            if (var_it != variable_registry.end()) {
+                const auto &var_usage = var_it->second;
 
-               // Get initial value from network/parser
-               double initial_value = 0.0;
-               for(int i = 0; i < cpu_network->variables.size; i++) {
-                   if(cpu_network->variables.store[i].id == guard.variable_id) {
-                       initial_value = cpu_network->variables.store[i].value;
+                // Get initial value from network/parser
+                double initial_value = 0.0;
+                for (int i = 0; i < cpu_network->variables.size; i++) {
+                    if (cpu_network->variables.store[i].id == guard.variable_id) {
+                        initial_value = cpu_network->variables.store[i].value;
 
-                       initial_values[guard.variable_id] = initial_value; // Add to initial values array
-                       if constexpr (VERBOSE) {
-                           printf("Appending initial value %f for int variable %d\n", initial_value, guard.variable_id);
-                           printf("DEBUG: Initial value of clock variable %d is %f\n",
-                                  guard.variable_id, initial_value);
-                       }
-                       break;
-                   }
-               }
+                        initial_values[guard.variable_id] = initial_value; // Add to initial values array
+                        if constexpr (VERBOSE) {
+                            printf("Appending initial value %f for int variable %d\n", initial_value,
+                                   guard.variable_id);
+                            printf("DEBUG: Initial value of clock variable %d is %f\n",
+                                   guard.variable_id, initial_value);
+                        }
+                        break;
+                    }
+                }
 
-               VariableInfo var_info{
-                   guard.variable_id,
-                   var_usage.kind,
-                   var_usage.name.c_str(),
-                   initial_value
-               };
+                VariableInfo var_info{
+                    guard.variable_id,
+                    var_usage.kind,
+                    var_usage.name.c_str(),
+                    initial_value
+                };
 
 
-               expr* device_expression = copy_expression_to_device(guard.expression);
-               return GuardInfo(guard.operand, var_info, device_expression);
+                expr *device_expression = copy_expression_to_device(guard.expression);
+                return GuardInfo(guard.operand, var_info, device_expression);
             }
-        } else if(guard.value != nullptr && guard.value->operand == expr::clock_variable_ee) {
+        } else if (guard.value != nullptr && guard.value->operand == expr::clock_variable_ee) {
             // Handle variable reference in expression (integers)
-               int var_id = guard.value->variable_id;
-               auto var_it = variable_registry.find(var_id);
-               if(var_it != variable_registry.end()) {
-               const auto& var_usage = var_it->second;
+            int var_id = guard.value->variable_id;
+            auto var_it = variable_registry.find(var_id);
+            if (var_it != variable_registry.end()) {
+                const auto &var_usage = var_it->second;
 
-               // Get initial value from network
-               double initial_value = 0.0;
-               for(int i = 0; i < cpu_network->variables.size; i++) {
-                   if(cpu_network->variables.store[i].id == var_id) {
-                       initial_value = cpu_network->variables.store[i].value;
-                       if constexpr (VERBOSE) {
-                           printf("Appending initial value %f for int variable %d\n", initial_value, var_id);
-                       }
-                       initial_values[var_id] = initial_value; // Add to initial values array
-                       if constexpr (VERBOSE) {
-                           printf("DEBUG: Initial value of integer variable %d is %f\n",
-                                  var_id, initial_value);
-                       }
-                       break;
-                   }
-               }
+                // Get initial value from network
+                double initial_value = 0.0;
+                for (int i = 0; i < cpu_network->variables.size; i++) {
+                    if (cpu_network->variables.store[i].id == var_id) {
+                        initial_value = cpu_network->variables.store[i].value;
+                        if constexpr (VERBOSE) {
+                            printf("Appending initial value %f for int variable %d\n", initial_value, var_id);
+                        }
+                        initial_values[var_id] = initial_value; // Add to initial values array
+                        if constexpr (VERBOSE) {
+                            printf("DEBUG: Initial value of integer variable %d is %f\n",
+                                   var_id, initial_value);
+                        }
+                        break;
+                    }
+                }
 
 
-               VariableInfo var_info{
-                   var_id,
-                   var_usage.kind,
-                   var_usage.name.c_str(),
-                   initial_value
-               };
+                VariableInfo var_info{
+                    var_id,
+                    var_usage.kind,
+                    var_usage.name.c_str(),
+                    initial_value
+                };
 
-               expr* device_expression = copy_expression_to_device(guard.expression);
-               return GuardInfo(guard.operand, var_info, device_expression);
+                expr *device_expression = copy_expression_to_device(guard.expression);
+                return GuardInfo(guard.operand, var_info, device_expression);
             }
-       }
+        }
 
-       // Default case if no variable found
-       printf("Warning: Variable not found in registry\n");
-       char default_name[MAX_VAR_NAME_LENGTH];
-       snprintf(default_name, MAX_VAR_NAME_LENGTH, "var_unknown");
+        // Default case if no variable found
+        printf("Warning: Variable not found in registry\n");
+        char default_name[MAX_VAR_NAME_LENGTH];
+        snprintf(default_name, MAX_VAR_NAME_LENGTH, "var_unknown");
 
-       VariableInfo var_info{
-           -1,  // Invalid ID
-           VariableKind::INT,
-           default_name,
-           0.0  // Default value
-       };
+        VariableInfo var_info{
+            -1, // Invalid ID
+            VariableKind::INT,
+            default_name,
+            0.0 // Default value
+        };
 
-       expr* device_expression = copy_expression_to_device(guard.expression);
-       return GuardInfo(guard.operand, var_info, device_expression);
+        expr *device_expression = copy_expression_to_device(guard.expression);
+        return GuardInfo(guard.operand, var_info, device_expression);
     };
 
 
     // Helper function for creating updates
-    auto create_update = [&](const update& upd) -> UpdateInfo {
+    auto create_update = [&](const update &upd) -> UpdateInfo {
         auto var_it = variable_registry.find(upd.variable_id);
-        if(var_it != variable_registry.end()) {
-            const auto& var_usage = var_it->second;
-            expr* device_expression = copy_expression_to_device(upd.expression);
+        if (var_it != variable_registry.end()) {
+            const auto &var_usage = var_it->second;
+            expr *device_expression = copy_expression_to_device(upd.expression);
 
             return UpdateInfo{
                 upd.variable_id,
@@ -435,56 +444,57 @@ SharedModelState* init_shared_model_state(
             };
         } else {
             printf("Warning: Variable ID %d not found in registry for update\n", upd.variable_id);
-            expr* device_expression = copy_expression_to_device(upd.expression);
+            expr *device_expression = copy_expression_to_device(upd.expression);
             return UpdateInfo{
                 upd.variable_id,
                 device_expression,
-                VariableKind::INT  // Default to INT
+                VariableKind::INT // Default to INT
             };
         }
     };
-  
+
     // For each node level
-    for(int node_idx = 0; node_idx < max_nodes_per_component; node_idx++) {
+    for (int node_idx = 0; node_idx < max_nodes_per_component; node_idx++) {
         // For each component at this level
-        for(int comp_idx = 0; comp_idx < components_nodes.size(); comp_idx++) {
-            if(node_idx < components_nodes[comp_idx].size()) {
-                const auto& node_pair = components_nodes[comp_idx][node_idx];
+        for (int comp_idx = 0; comp_idx < components_nodes.size(); comp_idx++) {
+            if (node_idx < components_nodes[comp_idx].size()) {
+                const auto &node_pair = components_nodes[comp_idx][node_idx];
                 int node_id = node_pair.first;
-                const std::list<edge>& edges = *node_pair.second;
-                node* current_node = node_map.at(node_id);
+                const std::list<edge> &edges = *node_pair.second;
+                node *current_node = node_map.at(node_id);
 
                 // Store invariants
                 int invariants_start = current_invariant_index;
                 if constexpr (VERBOSE) {
                     cout << "Processing invariants for node " << node_id
-                         << " starting at index " << invariants_start << endl;
+                            << " starting at index " << invariants_start << endl;
                 }
 
-                for(int i = 0; i < current_node->invariants.size; i++) {
-                    const constraint& inv = current_node->invariants.store[i];
+                for (int i = 0; i < current_node->invariants.size; i++) {
+                    const constraint &inv = current_node->invariants.store[i];
                     if constexpr (VERBOSE) {
                         cout << "  Adding invariant " << i << " at index "
-                             << current_invariant_index << endl;
+                                << current_invariant_index << endl;
                     }
 
                     // For invariants:
-                    if(inv.uses_variable) {
+                    if (inv.uses_variable) {
                         if constexpr (VERBOSE) {
                             cout << "    Variable-based guard for var_id " << inv.variable_id << endl;
                         }
                         host_invariants.push_back(create_variable_guard(inv));
-                    } else if(inv.value != nullptr && inv.value->operand == expr::clock_variable_ee) {
+                    } else if (inv.value != nullptr && inv.value->operand == expr::clock_variable_ee) {
                         if constexpr (VERBOSE) {
                             cout << "    Value-based guard with integer variable " << inv.value->variable_id << endl;
                         }
-                        host_invariants.push_back(create_variable_guard(inv));  // Modified create_variable_guard will handle this
+                        host_invariants.push_back(create_variable_guard(inv));
+                        // Modified create_variable_guard will handle this
                     } else {
                         if constexpr (VERBOSE) {
                             cout << "    Non-variable value-based guard" << endl;
                         }
-                        expr* device_value = copy_expression_to_device(inv.value);
-                        expr* device_expression = copy_expression_to_device(inv.expression);
+                        expr *device_value = copy_expression_to_device(inv.value);
+                        expr *device_expression = copy_expression_to_device(inv.expression);
                         host_invariants.push_back(GuardInfo(
                             inv.operand,
                             false,
@@ -493,7 +503,6 @@ SharedModelState* init_shared_model_state(
                         ));
                     }
                     current_invariant_index++;
-
                 }
                 // Create node info
                 NodeInfo node_info{
@@ -510,32 +519,33 @@ SharedModelState* init_shared_model_state(
                 host_nodes.push_back(node_info);
 
                 // Process edges
-                for(const edge& e : edges) {
+                for (const edge &e: edges) {
                     // Store guards
                     int guards_start = current_guard_index;
-                    for(int g = 0; g < e.guards.size; g++) {
-                        const constraint& guard = e.guards.store[g];
+                    for (int g = 0; g < e.guards.size; g++) {
+                        const constraint &guard = e.guards.store[g];
 
-                        if(guard.uses_variable) {
+                        if (guard.uses_variable) {
                             if constexpr (VERBOSE) {
                                 cout << "    Direct variable guard" << endl;
                             }
 
                             host_guards.push_back(create_variable_guard(guard));
-                        } else if(guard.value != nullptr && guard.value->operand == expr::clock_variable_ee) {
+                        } else if (guard.value != nullptr && guard.value->operand == expr::clock_variable_ee) {
                             if constexpr (VERBOSE) {
                                 cout << "    Integer variable in expression" << endl;
                             }
-                            host_guards.push_back(create_variable_guard(guard));  // Modified create_variable_guard will handle this
+                            host_guards.push_back(create_variable_guard(guard));
+                            // Modified create_variable_guard will handle this
                         } else {
                             if constexpr (VERBOSE) {
                                 cout << "    Non-variable guard" << endl;
                             }
-                            expr* device_value = copy_expression_to_device(guard.value);
-                            expr* device_expression = copy_expression_to_device(guard.expression);
+                            expr *device_value = copy_expression_to_device(guard.value);
+                            expr *device_expression = copy_expression_to_device(guard.expression);
                             if constexpr (VERBOSE) {
                                 printf("DEBUG: Creating guard with expression ptr=%p\n",
-                                       static_cast<const void*>(device_expression));
+                                       static_cast<const void *>(device_expression));
                             }
                             host_guards.push_back(GuardInfo(
                                 guard.operand,
@@ -545,17 +555,16 @@ SharedModelState* init_shared_model_state(
                             ));
                             if constexpr (VERBOSE) {
                                 printf("DEBUG: Added guard, expression ptr=%p\n",
-                                       static_cast<const void*>(host_guards.back().expression));
+                                       static_cast<const void *>(host_guards.back().expression));
                             }
                         }
                         current_guard_index++;
-
                     }
 
                     // Store updates
                     int updates_start = current_update_index;
-                    for(int u = 0; u < e.updates.size; u++) {
-                        const update& upd = e.updates.store[u];
+                    for (int u = 0; u < e.updates.size; u++) {
+                        const update &upd = e.updates.store[u];
                         host_updates.push_back(create_update(upd));
                         current_update_index++;
                     }
@@ -580,35 +589,35 @@ SharedModelState* init_shared_model_state(
             } else {
                 // Padding for components with fewer nodes
                 host_nodes.push_back(NodeInfo{
-                    -1,                    // Invalid node ID
-                    node::location,        // Default type
-                    -1,                    // Invalid level
-                    nullptr,               // No lambda
-                    -1,                    // No edges
-                    0,                     // Zero edges
-                    -1,                    // No invariants
-                    0                      // Zero invariants
+                    -1, // Invalid node ID
+                    node::location, // Default type
+                    -1, // Invalid level
+                    nullptr, // No lambda
+                    -1, // No edges
+                    0, // Zero edges
+                    -1, // No invariants
+                    0 // Zero invariants
                 });
             }
         }
     }
     if constexpr (VERBOSE) {
         printf("DEBUG: About to copy guards to device, first guard expr=%p\n",
-           static_cast<const void*>(host_guards[0].expression));
+               static_cast<const void *>(host_guards[0].expression));
 
         // Before copying to device
         cout << "\nFinal arrays before device copy:" << endl;
         cout << "Nodes:" << endl;
-        for(const auto& node : host_nodes) {
+        for (const auto &node: host_nodes) {
             cout << "  ID: " << node.id
-                 << ", invariants: " << node.num_invariants
-                 << " starting at " << node.first_invariant_index << endl;
+                    << ", invariants: " << node.num_invariants
+                    << " starting at " << node.first_invariant_index << endl;
         }
 
         cout << "Invariants:" << endl;
-        for(const auto& inv : host_invariants) {
+        for (const auto &inv: host_invariants) {
             cout << "  Uses variable: " << inv.uses_variable;
-            if(inv.uses_variable) {
+            if (inv.uses_variable) {
                 cout << ", var_id: " << inv.var_info.variable_id;
                 cout << ", initial_value: " << inv.var_info.initial_value;
             }
@@ -618,45 +627,45 @@ SharedModelState* init_shared_model_state(
 
     // Copy everything to device
     error = cudaMemcpy(device_nodes, host_nodes.data(),
-               total_node_slots * sizeof(NodeInfo),
-               cudaMemcpyHostToDevice);
+                       total_node_slots * sizeof(NodeInfo),
+                       cudaMemcpyHostToDevice);
     if (error != cudaSuccess) {
         cout << "Error copying nodes to device: " << cudaGetErrorString(error) << endl;
     }
     error = cudaMemcpy(device_edges, host_edges.data(),
-               total_edges * sizeof(EdgeInfo),
-               cudaMemcpyHostToDevice);
+                       total_edges * sizeof(EdgeInfo),
+                       cudaMemcpyHostToDevice);
     if (error != cudaSuccess) {
         cout << "Error copying edges to device: " << cudaGetErrorString(error) << endl;
     }
     error = cudaMemcpy(device_guards, host_guards.data(),
-               total_guards * sizeof(GuardInfo),
-               cudaMemcpyHostToDevice);
+                       total_guards * sizeof(GuardInfo),
+                       cudaMemcpyHostToDevice);
     if (error != cudaSuccess) {
         cout << "Error copying guards to device: " << cudaGetErrorString(error) << endl;
     }
     error = cudaMemcpy(device_updates, host_updates.data(),
-               total_updates * sizeof(UpdateInfo),
-               cudaMemcpyHostToDevice);
+                       total_updates * sizeof(UpdateInfo),
+                       cudaMemcpyHostToDevice);
     if (error != cudaSuccess) {
         cout << "Error copying updates to device: " << cudaGetErrorString(error) << endl;
     }
     error = cudaMemcpy(device_invariants, host_invariants.data(),
-               total_invariants * sizeof(GuardInfo),
-               cudaMemcpyHostToDevice);
+                       total_invariants * sizeof(GuardInfo),
+                       cudaMemcpyHostToDevice);
     if (error != cudaSuccess) {
         cout << "Error copying invariants to device: " << cudaGetErrorString(error) << endl;
     }
 
     // Copy initial values to device
-    int* device_initial_values;
+    int *device_initial_values;
     error = cudaMalloc(&device_initial_values, num_vars * sizeof(int));
     if (error != cudaSuccess) {
         cout << "Error performing Malloc: " << cudaGetErrorString(error) << endl;
     }
     error = cudaMemcpy(device_initial_values, initial_values.data(),
-               num_vars * sizeof(int),
-               cudaMemcpyHostToDevice);
+                       num_vars * sizeof(int),
+                       cudaMemcpyHostToDevice);
     if (error != cudaSuccess) {
         cout << "Error copying initial values to device: " << cudaGetErrorString(error) << endl;
     }
@@ -675,13 +684,13 @@ SharedModelState* init_shared_model_state(
         device_initial_values
     };
 
-    SharedModelState* device_model;
+    SharedModelState *device_model;
     error = cudaMalloc(&device_model, sizeof(SharedModelState));
     if (error != cudaSuccess) {
         cout << "Error copying component sizes to device: " << cudaGetErrorString(error) << endl;
     }
     error = cudaMemcpy(device_model, &host_model, sizeof(SharedModelState),
-               cudaMemcpyHostToDevice);
+                       cudaMemcpyHostToDevice);
     if (error != cudaSuccess) {
         cout << "Error copying model to device: " << cudaGetErrorString(error) << endl;
     }
@@ -690,38 +699,31 @@ SharedModelState* init_shared_model_state(
 }
 
 
-
-
-
-
-
-
-__device__ const char* variable_kind_to_string(VariableKind kind) {
-    switch(kind) {
-        case VariableKind::CLOCK:  return "local_clock";
-        case VariableKind::INT:    return "local_int";
+__device__ const char *variable_kind_to_string(VariableKind kind) {
+    switch (kind) {
+        case VariableKind::CLOCK: return "local_clock";
+        case VariableKind::INT: return "local_int";
         default: return "unknown";
     }
 }
 
 
-
-__device__ void debug_print_expression(const expr* e, int depth = 0) {
+__device__ void debug_print_expression(const expr *e, int depth = 0) {
     printf("\nDEBUG: Entering debug_print_expression with ptr=%p\n",
-           static_cast<const void*>(e));
+           static_cast<const void *>(e));
 
-    if(depth > 10) {
+    if (depth > 10) {
         printf("[max_depth]");
         return;
     }
 
-    if(e == nullptr) {
+    if (e == nullptr) {
         printf("[null]");
         return;
     }
 
     // Try to read the operand value first
-    printf("DEBUG: About to read operand at %p\n", static_cast<const void*>(e));
+    printf("DEBUG: About to read operand at %p\n", static_cast<const void *>(e));
     int op = e->operand;
     printf("DEBUG: Got operand=%d\n", op);
 
@@ -729,8 +731,8 @@ __device__ void debug_print_expression(const expr* e, int depth = 0) {
 
     // Print operator type - with safety check
     printf("DEBUG: Checking operand...\n");
-    if(e->operand >= 0 && e->operand <= expr::pn_skips_ee) {
-        switch(e->operand) {
+    if (e->operand >= 0 && e->operand <= expr::pn_skips_ee) {
+        switch (e->operand) {
             case expr::literal_ee:
                 printf("DEBUG: Processing literal, value=%f\n", e->value);
                 printf("literal=%f", e->value);
@@ -767,20 +769,20 @@ __device__ void debug_print_expression(const expr* e, int depth = 0) {
 
     // Print children info before recursing
     printf("DEBUG: Left=%p, Right=%p\n",
-           static_cast<const void*>(e->left),
-           static_cast<const void*>(e->right));
+           static_cast<const void *>(e->left),
+           static_cast<const void *>(e->right));
 
     // Print subtrees if they exist
-    if(e->left != nullptr || e->right != nullptr) {
+    if (e->left != nullptr || e->right != nullptr) {
         printf("DEBUG: Processing children...\n");
-        if(e->left != nullptr) {
+        if (e->left != nullptr) {
             printf("left=");
             debug_print_expression(e->left, depth + 1);
         } else {
             printf("left=[null]");
         }
 
-        if(e->right != nullptr) {
+        if (e->right != nullptr) {
             printf(" right=");
             debug_print_expression(e->right, depth + 1);
         } else {
@@ -789,9 +791,9 @@ __device__ void debug_print_expression(const expr* e, int depth = 0) {
     }
 
     // Special handling for conditional with extra safety
-    if(e->operand == expr::conditional_ee) {
+    if (e->operand == expr::conditional_ee) {
         printf(" else=");
-        if(e->conditional_else != nullptr) {
+        if (e->conditional_else != nullptr) {
             debug_print_expression(e->conditional_else, depth + 1);
         } else {
             printf("[null]");
@@ -802,27 +804,25 @@ __device__ void debug_print_expression(const expr* e, int depth = 0) {
 }
 
 
-
-
-__global__ void verify_expressions_kernel(SharedModelState* model) {
+__global__ void verify_expressions_kernel(SharedModelState *model) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
         printf("\nVerifying Model Structure with Variable Types:\n");
         printf("==========================================\n");
 
         printf("Number of components: %d\n", model->num_components);
-        for(int comp = 0; comp < model->num_components; comp++) {
+        for (int comp = 0; comp < model->num_components; comp++) {
             printf("Component %d size: %d\n", comp, model->component_sizes[comp]);
         }
 
-        for(int node_idx = 0; node_idx < model->component_sizes[0]; node_idx++) {
+        for (int node_idx = 0; node_idx < model->component_sizes[0]; node_idx++) {
             printf("\nProcessing Node Level %d:\n", node_idx);
 
-            for(int comp = 0; comp < model->num_components; comp++) {
+            for (int comp = 0; comp < model->num_components; comp++) {
                 printf("  Checking component %d...\n", comp);
 
-                if(node_idx < model->component_sizes[comp]) {
-                    const NodeInfo& node = model->nodes[node_idx * model->num_components + comp];
-                    if(node.id == -1) {
+                if (node_idx < model->component_sizes[comp]) {
+                    const NodeInfo &node = model->nodes[node_idx * model->num_components + comp];
+                    if (node.id == -1) {
                         printf("  Skipping padding node\n");
                         continue;
                     }
@@ -837,19 +837,19 @@ __global__ void verify_expressions_kernel(SharedModelState* model) {
 
                     // Print invariants with safety checks
                     printf("  Invariants (%d):\n", node.num_invariants);
-                    for(int i = 0; i < node.num_invariants; i++) {
+                    for (int i = 0; i < node.num_invariants; i++) {
                         printf("    Processing invariant %d...\n", i);
 
-                        if(node.first_invariant_index + i >= 0) {
+                        if (node.first_invariant_index + i >= 0) {
                             printf("DEBUG: Accessing invariant at index %d\n", i);
-                            const GuardInfo& inv = model->invariants[node.first_invariant_index + i];
+                            const GuardInfo &inv = model->invariants[node.first_invariant_index + i];
                             printf("DEBUG: Got invariant, uses_variable=%d, operand=%d\n",
                                    inv.uses_variable, inv.operand);
                             printf("DEBUG: About to print expression at %p\n",
-                                   static_cast<const void*>(inv.expression));
+                                   static_cast<const void *>(inv.expression));
                             printf("    Invariant %d: ", i);
 
-                            if(inv.uses_variable) {
+                            if (inv.uses_variable) {
                                 printf("%s [%s] (ID: %d) ",
                                        inv.var_info.name,
                                        inv.var_info.type == VariableKind::CLOCK ? "CLOCK" : "INT",
@@ -859,21 +859,20 @@ __global__ void verify_expressions_kernel(SharedModelState* model) {
                             printf("operator: %d, expression: ", inv.operand);
                             debug_print_expression(inv.expression);
                             printf("\n");
-                        }
-                         else {
+                        } else {
                             printf("    Invalid invariant index!\n");
                         }
                     }
 
                     // Print edges with safety checks
                     printf("  Processing edges...\n");
-                    if(node.num_edges > 0 && node.first_edge_index >= 0) {
+                    if (node.num_edges > 0 && node.first_edge_index >= 0) {
                         printf("  Edges (%d-%d):\n",
                                node.first_edge_index,
                                node.first_edge_index + node.num_edges - 1);
 
-                        for(int e = 0; e < node.num_edges; e++) {
-                            const EdgeInfo& edge = model->edges[node.first_edge_index + e];
+                        for (int e = 0; e < node.num_edges; e++) {
+                            const EdgeInfo &edge = model->edges[node.first_edge_index + e];
                             printf("    Edge %d: %d -> %d (channel: %d)\n",
                                    node.first_edge_index + e,
                                    edge.source_node_id,
@@ -881,13 +880,13 @@ __global__ void verify_expressions_kernel(SharedModelState* model) {
                                    edge.channel);
 
                             // Print guards with safety checks
-                            if(edge.num_guards > 0 && edge.guards_start_index >= 0) {
+                            if (edge.num_guards > 0 && edge.guards_start_index >= 0) {
                                 printf("      Guards (%d):\n", edge.num_guards);
-                                for(int g = 0; g < edge.num_guards; g++) {
-                                    const GuardInfo& guard = model->guards[edge.guards_start_index + g];
+                                for (int g = 0; g < edge.num_guards; g++) {
+                                    const GuardInfo &guard = model->guards[edge.guards_start_index + g];
                                     printf("        Guard %d: ", g);
 
-                                    if(guard.uses_variable) {
+                                    if (guard.uses_variable) {
                                         printf("%s [%s] (ID: %d) ",
                                                guard.var_info.name,
                                                guard.var_info.type == VariableKind::CLOCK ? "CLOCK" : "INT",
@@ -895,7 +894,7 @@ __global__ void verify_expressions_kernel(SharedModelState* model) {
                                     }
 
                                     printf("operator: %d, ", guard.operand);
-                                    if(guard.expression) {
+                                    if (guard.expression) {
                                         printf("expression: ");
                                         debug_print_expression(guard.expression);
                                     } else {
@@ -906,16 +905,16 @@ __global__ void verify_expressions_kernel(SharedModelState* model) {
                             }
 
                             // Print updates with safety checks
-                            if(edge.num_updates > 0 && edge.updates_start_index >= 0) {
+                            if (edge.num_updates > 0 && edge.updates_start_index >= 0) {
                                 printf("      Updates (%d):\n", edge.num_updates);
-                                for(int u = 0; u < edge.num_updates; u++) {
-                                    const UpdateInfo& update = model->updates[edge.updates_start_index + u];
+                                for (int u = 0; u < edge.num_updates; u++) {
+                                    const UpdateInfo &update = model->updates[edge.updates_start_index + u];
                                     printf("        Update %d: var_%d [%s] = ",
                                            u,
                                            update.variable_id,
                                            update.kind == VariableKind::CLOCK ? "CLOCK" : "INT");
 
-                                    if(update.expression) {
+                                    if (update.expression) {
                                         debug_print_expression(update.expression);
                                     } else {
                                         printf("(null expression)");
@@ -935,15 +934,3 @@ __global__ void verify_expressions_kernel(SharedModelState* model) {
         printf("\n==========================================\n");
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
