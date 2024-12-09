@@ -8,10 +8,16 @@
 #include <stdexcept>
 #include "../main.cuh"
 
+enum StatType {
+    NO_STAT,
+    COMP_STAT,
+    VAR_STAT
+};
+
 class Statistics {
 private:
     size_t simulations;
-    int stat_type;
+    StatType stat_type;
 
     // For component queries
     bool *goal_flags_host_ptr;
@@ -33,19 +39,19 @@ private:
 
 public:
     // Allocate memory for goal flags in constructor
-    Statistics(size_t num_simulations, int stat_type) : simulations(num_simulations), stat_type(stat_type) {
-        if (stat_type == 1) {
+    Statistics(size_t num_simulations, StatType stat_type) : simulations(num_simulations), stat_type(stat_type) {
+        if (stat_type == COMP_STAT) {
             // Initialize arrays
             goal_flags_host_ptr = (bool *) malloc(simulations * sizeof(bool));
             if (!goal_flags_host_ptr) {
-                throw std::runtime_error("Host memory allocation failed");
+                throw std::runtime_error("(STATS: COMP) Host memory allocation failed");
             }
             memset(goal_flags_host_ptr, 0, simulations * sizeof(bool)); // memset just initializes the values to 0
 
             cudaError_t error = cudaMalloc(&goal_flags_device_ptr, simulations * sizeof(bool));
             if (error != cudaSuccess) {
                 free(goal_flags_host_ptr);
-                throw std::runtime_error("(STATS) Device memory allocation failed: " +
+                throw std::runtime_error("(STATS: COMP) Device memory allocation failed: " +
                                          std::string(cudaGetErrorString(error)));
             }
 
@@ -56,11 +62,11 @@ public:
                 throw std::runtime_error("(STATS: COMP) Initial memory copy failed: " +
                                          std::string(cudaGetErrorString(error)));
             }
-        } else if (stat_type == 2) {
+        } else if (stat_type == VAR_STAT) {
             // Initialize arrays
             variable_value_host_ptr = (double *) malloc(simulations * sizeof(double));
             if (!variable_value_host_ptr) {
-                throw std::runtime_error("Host memory allocation failed");
+                throw std::runtime_error("(STATS: VARIABLE) Host memory allocation failed");
             }
 
             for(size_t i = 0; i < simulations; i++) {
@@ -86,16 +92,16 @@ public:
     }
 
     ~Statistics() {
-        if (stat_type == 1) {
+        if (stat_type == COMP_STAT) {
             cleanup();
         }
-        if (stat_type == 2) {
+        if (stat_type == VAR_STAT) {
             cleanup_var();
         }
     }
 
     bool *get_comp_device_ptr() {
-        if (stat_type == 1) {
+        if (stat_type == COMP_STAT) {
             return goal_flags_device_ptr;
         }
 
@@ -104,7 +110,7 @@ public:
 
     double *get_var_device_ptr() {
 
-        if (stat_type == 2) {
+        if (stat_type == VAR_STAT) {
             return variable_value_device_ptr;
         }
 
@@ -118,7 +124,7 @@ public:
     };
 
     Results collect_results() {
-        if (stat_type == 1) {
+        if (stat_type == COMP_STAT) {
             cudaError_t error = cudaMemcpy(goal_flags_host_ptr, goal_flags_device_ptr,
                                            simulations * sizeof(bool), cudaMemcpyDeviceToHost);
             if (error != cudaSuccess) {

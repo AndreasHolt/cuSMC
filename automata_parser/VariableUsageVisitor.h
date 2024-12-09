@@ -6,17 +6,12 @@
 #define VARIABLEUSAGEVISITOR_H
 #pragma once
 
-
 #include "../include/VariableTypes.h"
 #include <unordered_map>
-
 #include "../engine/Domain.h"
 #include "../network_optimization/visitor.h"
 #include <unordered_set>
 #include "../main.cuh"
-
-
-
 
 class VariableTrackingVisitor : public visitor {
 public:
@@ -54,6 +49,8 @@ private:
     int current_node_id_ = -1;
     int current_edge_id_ = -1;
     int next_var_id_ = 0;
+
+
 
     void track_expr_variables(expr* e) {
         if(e == nullptr) return;
@@ -126,7 +123,14 @@ private:
 
 
 public:
-    // New method to handle template-local variables
+    VariableKind* createKindArray(const std::unordered_map<int, VariableTrackingVisitor::VariableUsage>& registry) {
+        VariableKind* kinds = new VariableKind[registry.size()];
+        for(int i = 0; i < registry.size(); i++) {
+            kinds[i] = registry.at(i).kind;
+        }
+        return kinds;
+    }
+
     void register_template_variables(const std::string& template_name,
                                    const std::vector<clock_var>& vars) {
         current_template_ = template_name;

@@ -221,7 +221,6 @@ SharedModelState* init_shared_model_state(
 
 __global__ void test_kernel(SharedModelState* model);
 __global__ void validate_edge_indices(SharedModelState* model);
-// __global__ void verify_invariants_kernel(SharedModelState* model);
 __global__ void verify_expressions_kernel(SharedModelState* model);
 
 
