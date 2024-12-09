@@ -30,7 +30,7 @@ namespace Constants {
 //     uint8_t num_enabled_edges;                  // Number of currently enabled edges
 // };
 
-struct alignas(8) ComponentState {  // We force 4-byte alignment instead of 8
+struct alignas(4) ComponentState {  // We force 4-byte alignment instead of 8
     // Pack these 4 bytes
     uint16_t component_id;
     uint8_t num_enabled_edges;

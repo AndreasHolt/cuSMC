@@ -330,9 +330,11 @@ __device__ void take_transition(ComponentState *my_state,
 
         if (var_id == query_variable_id) {
             if (new_value > shared->query_variable_max) {
+                printf("Changing max to %f\n", new_value);
                 shared->query_variable_max = new_value;
             }
             if (new_value < shared->query_variable_min) {
+                printf("Changing min to %f\n", new_value);
                 shared->query_variable_min = new_value;
             }
         }
@@ -718,6 +720,7 @@ __device__ void compute_possible_delay(
 }
 
 
+// Finds the minimum delay and winning component takes a transition
 __device__ double find_minimum_delay(
     ComponentState *my_state,
     SharedBlockMemory *shared,
@@ -834,7 +837,7 @@ __device__ double find_minimum_delay(
 }
 
 __global__ void simulation_kernel(SharedModelState *model, bool *results,
-                                  int runs_per_block, float time_bound, VariableKind *kinds, int num_vars, bool* flags, int variable_id,
+                                  int runs_per_block, float time_bound, VariableKind *kinds, int num_vars, bool* flags, double* variable_flags, int variable_id, bool isMax,
                                   curandState *rng_states_global) {
     // #if __CUDA_ARCH__ >= 860
     //     // Request maximum L1/shared memory configuration on Ampere
@@ -1004,7 +1007,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
     while (shared_mem.global_time < time_bound) {
         __syncthreads(); // Synchronize before continuing to make sure all threads have the latest value of shared_mem.has_hit_goal etc.
 
-        if (shared_mem.has_hit_goal) { // All threads should check whether the goal has been reached
+        if (shared_mem.has_hit_goal && flags != nullptr) { // All threads should check whether the goal has been reached
             if(threadIdx.x == 0) {
                 printf("Flag was true for block %d\n", blockIdx.x);
                 flags[blockIdx.x] = true; // ... but only a single thread should write to the flag to avoid race conditions
@@ -1046,7 +1049,16 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 
 
 
+
         __syncthreads(); // Sync to make sure all threads see the break condition
+    }
+
+    if (variable_flags != nullptr) {
+        if (isMax) {
+            variable_flags[blockIdx.x] = shared_mem.query_variable_max;
+        } else {
+            variable_flags[blockIdx.x] = shared_mem.query_variable_min;
+        }
     }
 
     if constexpr (MINIMAL_PRINTS) {
@@ -1055,7 +1067,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 }
 
 void simulation::run_statistical_model_checking(SharedModelState *model, float confidence, float precision,
-                                                VariableKind *kinds, int num_vars, bool* flags, int variable_id, int num_simulations) {
+                                                VariableKind *kinds, int num_vars, bool* flags, double* variable_flags, int variable_id, bool isMax, int num_simulations) {
     int total_runs = 1;
     if constexpr (VERBOSE) {
         cout << "total_runs = " << total_runs << endl;
@@ -1288,7 +1300,7 @@ void simulation::run_statistical_model_checking(SharedModelState *model, float c
     // } else {
     // Launch with no dynamic shared memory for other architectures
     simulation_kernel<<<num_blocks, threads_per_block>>>(
-        model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, flags, variable_id, rng_states_global);
+        model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, flags, variable_flags, variable_id, isMax, rng_states_global);
     // }
 
 

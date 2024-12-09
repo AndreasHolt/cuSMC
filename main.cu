@@ -111,8 +111,7 @@ int main()
 
     // Simulation count
     // size_t simulations = config.total_simulations();
-    int simulations = 1;
-
+    int simulations = 1000;
 
     // Variable queries:
     int variable_id = -1; //Val : -1 implies not variable checking query
@@ -121,50 +120,12 @@ int main()
     //      variable_id = x
     //  }
 
+    int stat_type = 0; // 0 for no, 1 for comp stat, 2 for var stat
+    bool isMax = false;
 
-
-
-
-    // Query analysis loop (Sidenote: Fuck unordered sets)
-    for (auto itr = query_set->cbegin(); itr != query_set->cend(); itr++){
-        Statistics stats(simulations);
-
-        // Query string from set
-        string query = *(*query_set).find(*itr);
-
-        if constexpr (VERBOSE){
-            cout << "Recorded query is: " + query << endl;
-        }
-
-
-        // String split
-        std::vector<char> component;
-        std::vector<char> goal_node;
-        bool period_reached = false;
-        for (int i = 0; i < query.length(); i++){
-            // Guard
-            if (query[i] == '.'){period_reached = true; continue;}
-            if (!period_reached) {
-                component.push_back(query[i]);
-            }
-            if (period_reached) {
-                goal_node.push_back(query[i]);
-            }
-        }
-        std::string component_name(component.begin(), component.end());
-        //template_name_int_map.find(component_name);
-
-        std::string node_name(goal_node.begin(), goal_node.end());
-        auto temp = node_name_int_map.find(node_name);
-        std::unordered_map<int, node*> node_map = optimizer.get_node_map();
-
-        if (temp != node_name_int_map.cend()) {
-            int goal_node_idx = (*temp).second;
-
-            (*node_map.find(goal_node_idx)).second->type = node::goal;
-        }
-
-        SharedModelState* state = init_shared_model_state(
+    if (variable_id != -1) {
+    std::unordered_map<int, node*> node_map = optimizer.get_node_map();
+    SharedModelState* state = init_shared_model_state(
             &model,  // cpu_network
             *optimizer.get_node_subsystems_map(),
             *properties.node_edge_map,
@@ -172,25 +133,83 @@ int main()
             var_tracker.get_variable_registry(),
             parser,
             num_vars);
+    Statistics stats(simulations, 2);
 
 
-
-
-        // Run the SMC simulations
-        sim.run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars, stats.get_device_ptr(), variable_id, simulations);
-
-        try {
-            auto results = stats.collect_results();
-            stats.print_results(query, results);
-
-        }
-        catch (const std::runtime_error& e) {
-            cout << "Error while collcting the results from the simulations: " << e.what() << endl;
-            continue; // Decide whether to continue to the next query or to exit main
-        }
-
-
+    printf("Running SMC\n");
+    sim.run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars, stats.get_comp_device_ptr(), stats.get_var_device_ptr(), variable_id, isMax, simulations);
+    double *var_data = stats.collect_var_data();
+    for (int i = 0; i < simulations; i++) {
+        printf("Variable value for simulation %d is %f\n", i, var_data[i]);
     }
+    }
+
+        // Query analysis loop
+        for (auto itr = query_set->cbegin(); itr != query_set->cend(); itr++){
+            Statistics stats(simulations, 1);
+
+            // Query string from set
+            string query = *(*query_set).find(*itr);
+
+            if constexpr (VERBOSE){
+                cout << "Recorded query is: " + query << endl;
+            }
+
+
+            // String split
+            std::vector<char> component;
+            std::vector<char> goal_node;
+            bool period_reached = false;
+            for (int i = 0; i < query.length(); i++){
+                // Guard
+                if (query[i] == '.'){period_reached = true; continue;}
+                if (!period_reached) {
+                    component.push_back(query[i]);
+                }
+                if (period_reached) {
+                    goal_node.push_back(query[i]);
+                }
+            }
+            std::string component_name(component.begin(), component.end());
+            //template_name_int_map.find(component_name);
+
+            std::string node_name(goal_node.begin(), goal_node.end());
+            auto temp = node_name_int_map.find(node_name);
+            std::unordered_map<int, node*> node_map = optimizer.get_node_map();
+
+            if (temp != node_name_int_map.cend()) {
+                int goal_node_idx = (*temp).second;
+
+                (*node_map.find(goal_node_idx)).second->type = node::goal;
+            }
+
+            SharedModelState* state = init_shared_model_state(
+                &model,  // cpu_network
+                *optimizer.get_node_subsystems_map(),
+                *properties.node_edge_map,
+                node_map,
+                var_tracker.get_variable_registry(),
+                parser,
+                num_vars);
+
+
+
+
+            // Run the SMC simulations
+            sim.run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars, stats.get_comp_device_ptr(), stats.get_var_device_ptr(), variable_id, isMax, simulations);
+
+            try {
+                auto results = stats.collect_results();
+                stats.print_results(query, results);
+
+            }
+            catch (const std::runtime_error& e) {
+                cout << "Error while collecting the results from the simulations: " << e.what() << endl;
+                continue; // Decide whether to continue to the next query or to exit main
+            }
+
+
+        }
 
 
     // Kernels for debugging purposes
