@@ -13,12 +13,6 @@
 #include <utility>
 #include "variable_expression_evaluator.h"
 #include "declaration_parser.h"
-#include "../main.cuh"
-
-
-#include "../include/common_macros.h"
-// #define GPU __device__
-// #define CPU __host__
 
 using namespace std;
 using namespace pugi;

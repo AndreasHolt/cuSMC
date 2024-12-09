@@ -21,7 +21,6 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -arch=sm_75")
 
 # Add your source files
 add_executable(CudaIntro main.cu
-        cuda_example.cu
         # Parser
         automata_parser/uppaal_xml_parser.cpp automata_parser/uppaal_xml_parser.h
         automata_parser/declaration_parser.h automata_parser/declaration_parser.cpp
@@ -31,23 +30,17 @@ add_executable(CudaIntro main.cu
 
         # engine
         engine/Domain.cu engine/Domain.h
-        engine/model_oracle.cu engine/model_oracle.h
-        engine/automata_engine.cu
 
         # Includes
         include/common_macros.h
         include/common_macros.h
-        engine/interpreter.h
-        simulation/simulation_config.h
-        output.h
-        simulation/simulation_file_paths.h
+        network/network_props.h
         simulation/simulation.cu
         simulation/simulation.cuh
-        main.cpp
-        network_optimization/domain_optimization_visitor.h
-        network_optimization/domain_optimization_visitor.cpp
-        network_optimization/visitor.cpp
-        network_optimization/pn_compile_visitor.cpp
+        network/domain_optimization_visitor.h
+        network/domain_optimization_visitor.cpp
+        network/visitor.cpp
+        network/pn_compile_visitor.cpp
         simulation/state/SharedModelState.cu
         simulation/state/SharedModelState.cuh
         main.cu
@@ -58,6 +51,7 @@ add_executable(CudaIntro main.cu
         include/VariableTypes.h
         simulation/Statistics.cu
         simulation/Statistics.cuh
+        network/visitor.h
 )
 
 

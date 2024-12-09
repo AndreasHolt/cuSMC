@@ -8,10 +8,4 @@
 #define VERBOSE 0
 #define MINIMAL_PRINTS 0
 
-class main {
-
-};
-
-
-
 #endif //MAIN_CUH

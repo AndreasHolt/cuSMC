@@ -9,7 +9,7 @@
 #include "../include/VariableTypes.h"
 #include <unordered_map>
 #include "../engine/Domain.h"
-#include "../network_optimization/visitor.h"
+#include "../network/visitor.h"
 #include <unordered_set>
 #include "../main.cuh"
 

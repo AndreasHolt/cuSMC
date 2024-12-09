@@ -8,7 +8,6 @@
 enum class VariableKind {
     CLOCK,
     INT,
-
 };
 
 #endif //VARIABLETYPES_H

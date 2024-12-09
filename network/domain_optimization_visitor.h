@@ -4,9 +4,6 @@
 #include <unordered_set>
 
 #include "visitor.h"
-#include "../engine/model_oracle.h"
-
-
 
 class domain_optimization_visitor : public visitor
 {

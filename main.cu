@@ -8,29 +8,23 @@
 #include "engine/Domain.h"
 #include "automata_parser/uppaal_xml_parser.h"
 #include <iostream>
-#include "output.h"
-#include "network_optimization/domain_optimization_visitor.h"
-#include "network_optimization/pn_compile_visitor.h"
+#include "network/network_props.h"
+#include "network/domain_optimization_visitor.h"
+#include "network/pn_compile_visitor.h"
 #include "simulation/simulation.cuh"
-#include "simulation/simulation_config.h"
 #include "simulation/state/SharedModelState.cuh"
 #include "automata_parser/VariableUsageVisitor.h"
-#include "automata_parser/VariableUsageVisitor.cpp"
-#include "simulation/simulation.cuh"
 #include "simulation/Statistics.cuh"
-
-
-
 
 int main()
 {
     // Hardcoded path to the XML file
     std::string filename = "../automata_parser/XmlFiles/UppaalBehaviorTest3.xml";
     // string query1 = "c1.f2";
-    // string query2 = "c1.f4";
+    string query2 = "c1.f4";
     std::unordered_set<std::string>* query_set = new std::unordered_set<std::string>();
     // query_set->insert(query1);
-    // query_set->insert(query2);
+    query_set->insert(query2);
 
     abstract_parser* parser = new uppaal_xml_parser();
 
