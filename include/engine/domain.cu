@@ -1,6 +1,6 @@
 ﻿
-#include "Domain.h"
-#include "../include/common_macros.h"
+#include "domain.h"
+#include "../common_macros.h"
 #include "curand.h"
 
 

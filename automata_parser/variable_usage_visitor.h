@@ -6,10 +6,10 @@
 #define VARIABLEUSAGEVISITOR_H
 #pragma once
 
-#include "../include/VariableTypes.h"
+#include "../include/variable_types.h"
 #include <unordered_map>
-#include "../engine/Domain.h"
-#include "../network/visitor.h"
+#include "../include/engine/domain.h"
+#include "network/visitor.h"
 #include <unordered_set>
 #include "../main.cuh"
 

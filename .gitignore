@@ -18,5 +18,5 @@ build
 cmake-build-debug
 *.idea
 idea
-automata_parser/XmlFiles/LargeModels/*
-!automata_parser/XmlFiles/LargeModels/.gitkeep
+automata_parser/xml_files/LargeModels/*
+!automata_parser/xml_files/LargeModels/.gitkeep

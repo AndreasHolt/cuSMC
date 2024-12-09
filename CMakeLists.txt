@@ -29,29 +29,29 @@ add_executable(CudaIntro main.cu
         automata_parser/variable_expression_evaluator.cpp automata_parser/variable_expression_evaluator.h
 
         # engine
-        engine/Domain.cu engine/Domain.h
+        include/engine/domain.cu include/engine/domain.h
 
         # Includes
         include/common_macros.h
         include/common_macros.h
-        network/network_props.h
+        automata_parser/network/network_props.h
         simulation/simulation.cu
         simulation/simulation.cuh
-        network/domain_optimization_visitor.h
-        network/domain_optimization_visitor.cpp
-        network/visitor.cpp
-        network/pn_compile_visitor.cpp
-        simulation/state/SharedModelState.cu
-        simulation/state/SharedModelState.cuh
+        automata_parser/network/domain_optimization_visitor.h
+        automata_parser/network/domain_optimization_visitor.cpp
+        automata_parser/network/visitor.cpp
+        automata_parser/network/pn_compile_visitor.cpp
+        simulation/state/shared_model_state.cu
+        simulation/state/shared_model_state.cuh
         main.cu
         main.cuh
-        simulation/state/SharedRunState.cu
-        simulation/state/SharedRunState.cuh
-        automata_parser/VariableUsageVisitor.h
-        include/VariableTypes.h
-        simulation/Statistics.cu
-        simulation/Statistics.cuh
-        network/visitor.h
+        simulation/state/shared_run_state.cu
+        simulation/state/shared_run_state.cuh
+        automata_parser/variable_usage_visitor.h
+        include/variable_types.h
+        simulation/statistics.cu
+        simulation/statistics.cuh
+        automata_parser/network/visitor.h
 )
 
 

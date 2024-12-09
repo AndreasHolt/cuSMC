@@ -4,7 +4,7 @@
 
 #include <string>
 
-#include "../engine/Domain.h"
+#include "../include/engine/domain.h"
 #include <unordered_map>
 
 #define PI 3.14159265358979323846 

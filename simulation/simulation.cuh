@@ -7,23 +7,16 @@
 
 
 #include "../automata_parser/uppaal_xml_parser.h"
-#include "../automata_parser/abstract_parser.h"
-#include "state/SharedModelState.cuh"
-#include <cmath>
-#include <cfloat>
+#include "state/shared_model_state.cuh"
+#include "state/shared_run_state.cuh"
 
-#include "state/SharedModelState.cuh"
-#include "state/SharedRunState.cuh"
-#include "../main.cuh"
-
-class simulation {
+class Simulation {
 public:
     abstract_parser* parser;
 
-    simulation(abstract_parser* uppaal_xml_parser_instance) { parser = uppaal_xml_parser_instance; }
+    Simulation(abstract_parser* uppaal_xml_parser_instance) { parser = uppaal_xml_parser_instance; }
 
     void run_statistical_model_checking(SharedModelState* model, float confidence, float precision, VariableKind* kinds, int num_vars, bool* flags, double* variable_flags, int variable_id, bool isMax, int num_simulations);
-
 
 };
 

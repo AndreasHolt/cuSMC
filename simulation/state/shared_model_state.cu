@@ -2,7 +2,7 @@
 // Created by andwh on 04/11/2024.
 //
 
-#include "SharedModelState.cuh"
+#include "shared_model_state.cuh"
 
 #include <iostream>
 #include "../../main.cuh"

@@ -6,8 +6,8 @@
 #include <unordered_set>
 
 #include "helper_methods.h"
-#include "../engine/Domain.h"
-#include "../simulation/state/SharedModelState.cuh"
+#include "../include/engine/domain.h"
+#include "../simulation/state/shared_model_state.cuh"
 
 class abstract_parser
 {

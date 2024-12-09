@@ -1064,7 +1064,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
     }
 }
 
-void simulation::run_statistical_model_checking(SharedModelState *model, float confidence, float precision,
+void Simulation::run_statistical_model_checking(SharedModelState *model, float confidence, float precision,
                                                 VariableKind *kinds, int num_vars, bool* flags, double* variable_flags, int variable_id, bool isMax, int num_simulations) {
     int total_runs = 1;
     if constexpr (VERBOSE) {

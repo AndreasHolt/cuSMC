@@ -5,26 +5,30 @@
 #include "main.cuh"
 
 #include <chrono>
-#include "engine/Domain.h"
+#include "include/engine/domain.h"
 #include "automata_parser/uppaal_xml_parser.h"
 #include <iostream>
-#include "network/network_props.h"
-#include "network/domain_optimization_visitor.h"
-#include "network/pn_compile_visitor.h"
+#include "automata_parser/network/network_props.h"
+#include "automata_parser/network/domain_optimization_visitor.h"
+#include "automata_parser/network/pn_compile_visitor.h"
 #include "simulation/simulation.cuh"
-#include "simulation/state/SharedModelState.cuh"
-#include "automata_parser/VariableUsageVisitor.h"
-#include "simulation/Statistics.cuh"
+#include "simulation/state/shared_model_state.cuh"
+#include "automata_parser/variable_usage_visitor.h"
+#include "simulation/statistics.cuh"
 
 int main()
 {
-    // Hardcoded path to the XML file
-    std::string filename = "../automata_parser/XmlFiles/UppaalBehaviorTest3.xml";
+    std::string filename = "../automata_parser/xml_files/UppaalBehaviorTest3.xml";
+
+    // Regular queries
     // string query1 = "c1.f2";
     string query2 = "c1.f4";
     std::unordered_set<std::string>* query_set = new std::unordered_set<std::string>();
     // query_set->insert(query1);
     query_set->insert(query2);
+
+    // Variable queries
+    int variable_id = -1; // Val : -1 implies not variable checking query
 
     abstract_parser* parser = new uppaal_xml_parser();
 
@@ -38,7 +42,7 @@ int main()
 
     network_props properties = {};
 
-    auto sim = simulation(parser);
+    auto sim = Simulation(parser);
 
     properties.node_edge_map = new std::unordered_map<int, std::list<edge>>(parser->get_node_edge_map());
     properties.start_nodes = new std::list<int>(parser->get_start_nodes());
@@ -83,7 +87,6 @@ int main()
 
     // Statistics
     int simulations = 1000;
-    int variable_id = -1; // Val : -1 implies not variable checking query
     bool isMax = true; // Gather info on either the max value of the variable or the min
 
     if (variable_id != -1) {

@@ -7,9 +7,9 @@
 #ifndef SHAREDMODELSTATE_CUH
 #define SHAREDMODELSTATE_CUH
 
-#include "../../include/VariableTypes.h"
-#include "../../engine/Domain.h"
-#include "../../automata_parser/VariableUsageVisitor.h"
+#include "../../include/variable_types.h"
+#include "../../include/engine/domain.h"
+#include "../../automata_parser/variable_usage_visitor.h"
 #include <list>
 #include <cuda_runtime.h>
 
@@ -150,10 +150,8 @@ __device__ __forceinline__ const expr* fetch_expr(const expr* ptr) {
 
 __device__ __forceinline__ double fetch_expr_value(const expr* ptr) {
 #if __CUDA_ARCH__ >= 350
-    // printf("Using __ldg for fetch_expr_value, ptr->value: %f\n", ptr ? ptr->value : 0.0);
     return ptr ? __ldg((const double*)&ptr->value) : 0.0;
 #else
-    // printf("Using regular load for fetch_expr_value, ptr->value: %f\n", ptr ? ptr->value : 0.0);
     return ptr ? ptr->value : 0.0;
 #endif
 }
@@ -170,6 +168,7 @@ __device__ __forceinline__ int fetch_expr_operand(const expr* ptr) {
 /*
  Caching techniques:
  * We use __restrict__ for main data arrays, to enable L1 caching. We know that these arrays are laid out nicely and accessed predictably.
+ * We use __ldg wherever applicable for fetching expr's from global memory.
 */
 
 struct SharedModelState {
