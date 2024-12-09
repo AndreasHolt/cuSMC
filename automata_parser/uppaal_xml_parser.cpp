@@ -322,22 +322,42 @@ inline void add_timer(int i, const string& s, unordered_map<int, string>* map)
         map->insert(std::pair<int, string>(i, s));
 }
 
+// unordered_map<int, string>* uppaal_xml_parser::get_clock_names()
+// {
+//     unordered_map<int, string>* map = new unordered_map<int, string>();
+//
+//     for (const auto& pair : this->global_timers_map_) add_timer(pair.second, pair.first, map);
+//     for (const auto& pair : this->global_vars_map_) add_timer(pair.second, pair.first, map);
+//     for (const auto& pair : this->timers_map_) add_timer(pair.second, pair.first, map);
+//     for (const auto& pair : this->vars_map_) add_timer(pair.second, pair.first, map);
+//
+//     if constexpr (VERBOSE) {
+//         printf("Variable mapping:\n");
+//         for(const auto& pair : *map) {
+//             printf("  ID %d -> %s\n", pair.first, pair.second.c_str());
+//         }
+//     }
+//
+//     return map;
+// }
+
 unordered_map<int, string>* uppaal_xml_parser::get_clock_names()
 {
     unordered_map<int, string>* map = new unordered_map<int, string>();
-        
+
     for (const auto& pair : this->global_timers_map_) add_timer(pair.second, pair.first, map);
     for (const auto& pair : this->global_vars_map_) add_timer(pair.second, pair.first, map);
     for (const auto& pair : this->timers_map_) add_timer(pair.second, pair.first, map);
     for (const auto& pair : this->vars_map_) add_timer(pair.second, pair.first, map);
+    // for (const auto& pair : this->const_local_vars) add_timer(pair.second, pair.first, map);
 
     if constexpr (VERBOSE) {
-        printf("Variable mapping:\n");
+        printf("Variable mapping 2:\n");
         for(const auto& pair : *map) {
             printf("  ID %d -> %s\n", pair.first, pair.second.c_str());
         }
     }
-        
+
     return map;
 }
 
@@ -658,6 +678,12 @@ __host__ network uppaal_xml_parser::parse_xml(const char* file_path)
         }
         
         //Done with system, clear storage
+
+        for (const auto& [name, id] : vars_map_) {
+            if (variables_names_to_ids_map_.find(name) == variables_names_to_ids_map_.end()) {
+                variables_names_to_ids_map_[name] = id;
+            }
+        }
         vars_map_.clear();
         timers_map_.clear();
         this->system_count_++;

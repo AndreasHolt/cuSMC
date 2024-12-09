@@ -55,7 +55,10 @@ add_executable(CudaIntro main.cu
         simulation/state/SharedRunState.cu
         simulation/state/SharedRunState.cuh
         automata_parser/VariableUsageVisitor.h
-        include/VariableTypes.h)
+        include/VariableTypes.h
+        simulation/Statistics.cu
+        simulation/Statistics.cuh
+)
 
 
 # Enable separable compilation (optional, depends on your needs)

@@ -51,6 +51,8 @@ struct SharedBlockMemory {
     //unsigned committed_count;
     unsigned simulation_id;
     bool has_hit_goal;
+    double query_variable_min;
+    double query_variable_max;
 
     // Variables (fixed size array in shared memory)
     struct Variable {
@@ -80,6 +82,8 @@ struct SharedBlockMemory {
         shared->has_urgent = false;
         shared->has_committed = false;
         shared->has_hit_goal = false;
+        shared->query_variable_min = 0.0;
+        shared->query_variable_max = 0.0;
 
         // Initialize variables explicitly
         for(int i = 0; i < Constants::MAX_VARIABLES; i++) {

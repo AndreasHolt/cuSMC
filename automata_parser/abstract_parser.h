@@ -18,6 +18,7 @@ public:
     virtual std::unordered_map<int, std::string>* get_clock_names() = 0;
     virtual std::unordered_map<int, int>* get_subsystems() = 0;
     virtual std::unordered_map<int, string>* get_template_names() = 0;
+    virtual std::unordered_map<string, int> get_variables_names_to_ids_map() = 0;
 
     virtual std::unordered_map<int, std::list<edge>> get_node_edge_map() = 0;
     virtual std::list<int> get_start_nodes() = 0;

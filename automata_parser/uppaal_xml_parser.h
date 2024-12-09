@@ -43,6 +43,7 @@ private:
     unordered_map<string, int> timers_map_{};
     unordered_map<string, int> global_timers_map_{};
     unordered_map<string, int> vars_map_{};
+    unordered_map<string, int> variables_names_to_ids_map_{};
     unordered_map<string, int> global_vars_map_{};
     unordered_map<int, list<edge>> node_edge_map{};
     unordered_map<int, string>* node_names_ = new unordered_map<int, string>();
@@ -82,6 +83,7 @@ public:
     unordered_map<int, string>* get_template_names() override {return this->template_names;}
     unordered_map<int, int>* get_subsystems() override {return this->nodes_map_;}
     unordered_map<int, string>* get_clock_names() override;
+    unordered_map<string, int> get_variables_names_to_ids_map() override {return this->variables_names_to_ids_map_;}
     uppaal_xml_parser();
     network parse(const std::string& file) override;
     static bool try_parse_block_threads(const std::string& str, unsigned* out_blocks, unsigned* out_threads);

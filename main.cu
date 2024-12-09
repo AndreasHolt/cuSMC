@@ -17,6 +17,7 @@
 #include "automata_parser/VariableUsageVisitor.h"
 
 #include "simulation/simulation.cuh"
+#include "simulation/Statistics.cuh"
 
 VariableKind* createKindArray(const std::unordered_map<int, VariableTrackingVisitor::VariableUsage>& registry) {
     VariableKind* kinds = new VariableKind[registry.size()];
@@ -58,7 +59,7 @@ int main()
     properties.variable_names = new std::unordered_map<int, std::string>(*parser->get_clock_names());    // this can create mem leaks.
     properties.node_network = new std::unordered_map<int, int>(*parser->get_subsystems());
     properties.node_names = new std::unordered_map<int, std::string>(*parser->get_nodes_with_name());
-
+    auto vars_map = parser->get_variables_names_to_ids_map();
 
     std::unordered_map<std::string, int> template_name_int_map;
     for (auto itr = properties.template_names->cbegin(); itr != properties.template_names->cend(); itr++) {
@@ -110,23 +111,31 @@ int main()
 
     // Simulation count
     // size_t simulations = config.total_simulations();
-    int simulations = 10000;
+    int simulations = 1;
+
+
+    // Variable queries:
+    int variable_id = -1; //Val : -1 implies not variable checking query
+    // IF Query : refs : variable {
+    //      x <- Find variable id from name
+    //      variable_id = x
+    //  }
+
+
+
 
 
     // Query analysis loop (Sidenote: Fuck unordered sets)
     for (auto itr = query_set->cbegin(); itr != query_set->cend(); itr++){
-        // Query string
+        Statistics stats(simulations);
+
+        // Query string from set
         string query = *(*query_set).find(*itr);
 
         if constexpr (VERBOSE){
             cout << "Recorded query is: " + query << endl;
         }
-        // Variable queries:
-        int variable_id = -1; //Val : -1 implies not variable checking query
-        // IF Query : refs : variable {
-        //      x <- Find variable id from name
-        //      variable_id = x
-        //  }
+
 
         // String split
         std::vector<char> component;
@@ -165,55 +174,22 @@ int main()
             num_vars);
 
 
-        cudaError_t error;
 
-        bool* goal_flags_host_ptr = (bool*)malloc(simulations*sizeof(bool));
-        if (!goal_flags_host_ptr) {
-            cout << "Error: Host memory allocation failed" << endl;
-            return 0;
-        }
-
-        memset(goal_flags_host_ptr, 0, simulations * sizeof(bool));
-
-
-
-        bool* goal_flags_device_ptr;
-        error = cudaMalloc(&goal_flags_device_ptr, simulations*sizeof(bool));
-        if (error != cudaSuccess) {
-            cout << "Error: Device memory allocation failed: " << cudaGetErrorString(error) << endl;
-            free(goal_flags_host_ptr);
-            return 0;
-        }
-
-        error = cudaMemcpy(goal_flags_device_ptr, goal_flags_host_ptr, simulations*sizeof(bool), cudaMemcpyHostToDevice);
 
         // Run the SMC simulations
-        sim.run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars, goal_flags_device_ptr, variable_id, simulations);
+        sim.run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars, stats.get_device_ptr(), variable_id, simulations);
 
-        error = cudaMemcpy(goal_flags_host_ptr, goal_flags_device_ptr, simulations*sizeof(bool), cudaMemcpyDeviceToHost);
-        if (error != cudaSuccess) {
-            cout << "Error: Memory copy from device failed: " << cudaGetErrorString(error) << endl;
-            free(goal_flags_host_ptr);
-            cudaFree(goal_flags_device_ptr);
-            return 0;
+        try {
+            auto results = stats.collect_results();
+            stats.print_results(query, results);
+
+        }
+        catch (const std::runtime_error& e) {
+            cout << "Error while collcting the results from the simulations: " << e.what() << endl;
+            continue; // Decide whether to continue to the next query or to exit main
         }
 
-        int hits = 0;
-        for (int i = 0; i < simulations; i++) {
-            printf("Flag in host is %d\n", goal_flags_host_ptr[i]);
-            if (goal_flags_host_ptr[i]) {hits += 1;}
-        }
 
-        free(goal_flags_host_ptr);
-        cudaFree(goal_flags_device_ptr);
-
-        float res = static_cast<float>(hits) / static_cast<float>(simulations);
-
-        cout << "Number of simulations: " << simulations << endl;
-        cout << "Number of hits: " << hits << endl;
-        string output = "The answer to " + query + " is " + std::to_string(res);
-
-        cout << output << endl;
     }
 
 

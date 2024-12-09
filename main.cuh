@@ -5,7 +5,7 @@
 #ifndef MAIN_CUH
 #define MAIN_CUH
 
-#define VERBOSE 0
+#define VERBOSE 100
 #define MINIMAL_PRINTS 0
 
 class main {
