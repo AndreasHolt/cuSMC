@@ -218,9 +218,6 @@ SharedModelState* init_shared_model_state(
     const abstract_parser* parser, const int num_vars);
 
 
-__global__ void test_kernel(SharedModelState* model);
-__global__ void validate_edge_indices(SharedModelState* model);
-__global__ void verify_expressions_kernel(SharedModelState* model);
 
 
 

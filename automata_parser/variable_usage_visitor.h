@@ -322,6 +322,9 @@ public:
 
     // Public interface to get results
     const std::unordered_map<int, VariableUsage>& get_variable_registry() const {
+        if constexpr (VERBOSE) {
+            print_variable_usage();
+        }
         return variable_registry_;
     }
 
