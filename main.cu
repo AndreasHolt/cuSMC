@@ -30,11 +30,8 @@ int main() {
 
     abstract_parser *parser = new uppaal_xml_parser();
 
-    if constexpr (VERBOSE) { std::cout << "Test after instantiate_parser" << std::endl; }
 
     network model = parser->parse(filename);
-
-    if constexpr (VERBOSE) { std::cout << "Parsing successful. Network details:" << std::endl; }
 
     if constexpr (VERBOSE) { cout << "Performing optimizations..." << endl; }
 

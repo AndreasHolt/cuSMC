@@ -12,7 +12,7 @@ constexpr int MAX_CHANNELS = 5;
 constexpr int MAX_VARIABLES = 20;
 constexpr int MAX_EDGES_PER_NODE = 8;
 
-struct alignas(8) ComponentState {
+struct alignas(4) ComponentState {
     // We force 4-byte alignment instead of 8
     // Pack these 4 bytes
     uint16_t component_id;
