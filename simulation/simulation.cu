@@ -1,237 +1,14 @@
 // Created by andwh on 24/10/2024.
 
 #include "simulation.cuh"
+#include "expressions.cuh"
 
 
 #define NUM_RUNS 6
 #define TIME_BOUND 10.0
 #define MAX_VARIABLES 20
-
-
+#define CHECK_ERROR(loc) check_cuda_error(loc)
 constexpr bool USE_GLOBAL_MEMORY_CURAND = true;
-
-__device__ double evaluate_pn_expr_coalesced(const expr* pn, SharedBlockMemory* shared)
-{
-    int stack_top = 0;
-    double value_stack[10];
-
-    for (int i = 1; i < pn->length; ++i)
-    {
-        const expr* current = &pn[i];
-        if(current->operand == expr::pn_skips_ee)
-        {
-            if(abs(value_stack[--stack_top]) > DBL_EPSILON)
-            {
-                i += current->length;
-            }
-            continue;
-        }
-
-        const double value = evaluate_expression_node_coalesced(current, shared, value_stack, stack_top);
-        value_stack[stack_top++] = value;
-    }
-
-    return value_stack[--stack_top];
-}
-
-__device__ double evaluate_expression_node_coalesced(const expr* expr, SharedBlockMemory* shared, double* value_stack, int stack_top)
-{
-    double v1, v2;
-    switch (expr->operand) {
-    case expr::literal_ee:
-        return fetch_expr_value(expr);
-    case expr::clock_variable_ee:
-        return shared->variables[expr->variable_id].value;
-    case expr::random_ee:
-        printf("Error: Unsupported Random operater.\n");
-        return 1.0;
-        //v1 = value_stack[--stack_top];
-        //return (1.0 - curand_uniform_double(state->random)) * v1;
-    case expr::plus_ee:
-        v2 = value_stack[--stack_top];
-        v1 = value_stack[--stack_top];
-        return v1 + v2;
-    case expr::minus_ee:
-        v2 = value_stack[--stack_top];
-        v1 = value_stack[--stack_top];
-        return v1 - v2;
-    case expr::multiply_ee:
-        v2 = value_stack[--stack_top];
-        v1 = value_stack[--stack_top];
-        return v1 * v2;
-    case expr::division_ee:
-        v2 = value_stack[--stack_top];
-        v1 = value_stack[--stack_top];
-        return v1 / v2;
-    case expr::power_ee:
-        v2 = value_stack[--stack_top];
-        v1 = value_stack[--stack_top];
-        return pow(v1, v2);
-    case expr::negation_ee:
-        v1 = value_stack[--stack_top];
-        return -v1;
-    case expr::sqrt_ee:
-        v1 = value_stack[--stack_top];
-        return sqrt(v1);
-    case expr::modulo_ee:
-        v2 = value_stack[--stack_top];
-        v1 = value_stack[--stack_top];
-        return static_cast<double>(static_cast<int>(v1) % static_cast<int>(v2 + DBL_EPSILON));
-    case expr::and_ee:
-        v2 = value_stack[--stack_top];
-        v1 = value_stack[--stack_top];
-        return static_cast<double>(abs(v1) > DBL_EPSILON && abs(v2) > DBL_EPSILON);
-    case expr::or_ee:
-        v2 = value_stack[--stack_top];
-        v1 = value_stack[--stack_top];
-        return static_cast<double>(abs(v1) > DBL_EPSILON || abs(v2) > DBL_EPSILON);
-    case expr::less_equal_ee:
-        v2 = value_stack[--stack_top];
-        v1 = value_stack[--stack_top];
-        return v1 <= v2;
-    case expr::greater_equal_ee:
-        v2 = value_stack[--stack_top];
-        v1 = value_stack[--stack_top];
-        return v1 >= v2;
-    case expr::less_ee:
-        v2 = value_stack[--stack_top];
-        v1 = value_stack[--stack_top];
-        return v1 < v2;
-    case expr::greater_ee:
-        v2 = value_stack[--stack_top];
-        v1 = value_stack[--stack_top];
-        return v1 > v2;
-    case expr::equal_ee:
-        v2 = value_stack[--stack_top];
-        v1 = value_stack[--stack_top];
-        return abs(v1 - v2) <= DBL_EPSILON;
-    case expr::not_equal_ee:
-        v2 = value_stack[--stack_top];
-        v1 = value_stack[--stack_top];
-        return abs(v1 - v2) > DBL_EPSILON;
-    case expr::not_ee:
-        v1 = value_stack[--stack_top];
-        return (abs(v1) < DBL_EPSILON);
-    case expr::conditional_ee:
-        v1 = value_stack[--stack_top];
-        stack_top--;
-        return v1;
-    case expr::compiled_ee:
-    case expr::pn_compiled_ee:
-    case expr::pn_skips_ee: return 0.0;
-    }
-    return 0.0;
-}
-
-__device__ double evaluate_expression(const expr *e, SharedBlockMemory *shared) {
-    if (e == nullptr) {
-        printf("Warning: Null expression in evaluate_expression\n");
-        return 0.0;
-    }
-
-    // Get operand using our helper
-    int op = fetch_expr_operand(e);
-
-    if (op == expr::pn_compiled_ee) {
-        return evaluate_pn_expr_coalesced(e, shared);
-    }
-
-    // Handle non-PN expressions
-    if constexpr (VERBOSE) {
-        printf("DEBUG: Evaluating non-pn expression with operator %d\n", op);
-    }
-
-    switch (op) {
-        case expr::literal_ee:
-            return fetch_expr_value(e);
-
-        case expr::clock_variable_ee: {
-            int var_id = e->variable_id; // Union access, single read
-            if (var_id < MAX_VARIABLES) {
-                return shared->variables[var_id].value;
-            }
-            printf("Warning: Invalid variable ID %d in expression\n", var_id);
-            return 0.0;
-        }
-
-        case expr::plus_ee: {
-            const expr *left = fetch_expr(e->left);
-            const expr *right = fetch_expr(e->right);
-            if (left && right) {
-                double left_val = evaluate_expression(left, shared);
-                double right_val = evaluate_expression(right, shared);
-                printf("Left and right values: %f, %f\n", left_val, right_val);
-                if constexpr (VERBOSE) {
-                    printf("DEBUG: Plus operation: %f + %f = %f\n",
-                           left_val, right_val, left_val + right_val);
-                }
-                return left_val + right_val;
-            }
-            break;
-        }
-
-        case expr::minus_ee: {
-            const expr *left = fetch_expr(e->left);
-            const expr *right = fetch_expr(e->right);
-            if (left && right) {
-                double left_val = evaluate_expression(left, shared);
-                double right_val = evaluate_expression(right, shared);
-                return left_val - right_val;
-            }
-            break;
-        }
-
-        case expr::multiply_ee: {
-            const expr *left = fetch_expr(e->left);
-            const expr *right = fetch_expr(e->right);
-            if (left && right) {
-                double left_val = evaluate_expression(left, shared);
-                double right_val = evaluate_expression(right, shared);
-                return left_val * right_val;
-            }
-            break;
-        }
-
-        case expr::division_ee: {
-            const expr *left = fetch_expr(e->left);
-            const expr *right = fetch_expr(e->right);
-            if (left && right) {
-                double left_val = evaluate_expression(left, shared);
-                double right_val = evaluate_expression(right, shared);
-
-                printf("Left and right values: %f, %f\n", left_val, right_val);
-
-                if (right_val == 0.0) {
-                    printf("Warning: Division by zero\n");
-                    return 0.0;
-                }
-                double result = left_val / right_val;
-
-                if (result == 0.0) {
-                    // TODO: Check that this is used for a rate
-                    printf("Warning: Expression evaluates to zero, cannot be used as exponential rate\n");
-                    return DBL_MIN; // Minimum valid rate
-                }
-
-                return left_val / right_val;
-            }
-            break;
-        }
-
-        case expr::pn_skips_ee:
-            if (e->left) {
-                return evaluate_expression(fetch_expr(e->left), shared);
-            }
-            break;
-
-        default:
-            printf("Warning: Unhandled operator %d in expression\n", op);
-            break;
-    }
-
-    return 0.0;
-}
-
 
 // Calculate sum of edges from enabled set
 __device__ int get_sum_edge_weight(const ComponentState *my_state,
@@ -287,7 +64,6 @@ __device__ void take_transition(ComponentState *my_state,
             temp -= weight_of_edge;
         }
 
-        //selected_idx = my_state->enabled_edges[(int)(rand * my_state->num_enabled_edges)];
         if constexpr (VERBOSE) {
             printf("Thread %d: Randomly selected edge %d from %d enabled edges (rand=%d)\n",
                                threadIdx.x, selected_idx, my_state->num_enabled_edges, rand);
@@ -309,7 +85,6 @@ __device__ void take_transition(ComponentState *my_state,
         shared->channel_active[channel_abs] = true;
         shared->channel_sender[channel_abs] = my_state->component_id;
 
-        // __syncthreads(); // Wait for all threads to see broadcast. We don't need this
     }
 
 
@@ -351,33 +126,9 @@ __device__ void take_transition(ComponentState *my_state,
     }
 
     const NodeInfo *dest_node = nullptr;
-    // Search through all level slots
-    //for(int level = 0; level < model->max_nodes_per_component; level++) {
-    //    int level_start = level * model->num_components;
-    //   if constexpr (VERBOSE) {
-    //        printf("Thread %d: Checking level %d starting at index %d\n",
-    //               threadIdx.x, level, level_start);
-    //    }
-    //
-    //    for(int i = 0; i < model->num_components; i++) {
-    //        const NodeInfo& node = model->nodes[level_start + i];
-    //        if constexpr (VERBOSE) {
-    //            printf("Thread %d:   Checking node id=%d\n", threadIdx.x, node.id);
-    //        }
-    //        if(node.id == edge.dest_node_id) {
-    //            dest_node = &node;
-    //            if constexpr (VERBOSE) {
-    //                printf("Thread %d: Found destination node at level %d, index %d\n",
-    //                       threadIdx.x, level, i);
-    //            }
-    //            break;
-    //        }
-    //    }
-    //    if(dest_node != nullptr) break;
-    //}
-    // new method optimized for finding dest node
-    // If multiple runs in 1 block, then we can still find relevant index by using the modulo component
-    // Example: 4 runs, thread 1, 26, 51, 76 all access index 1. Aka modulo num_components
+
+    // If there are multiple runs in 1 block, then we can still find relevant index by using the modulo component
+    // Example: 4 runs, thread 1, 26, 51, 76 all access index 1. Aka. modulo num_components
     for (int level = 0; level < model->max_nodes_per_component; level++) {
         // We know relevant nodes are stored at each level offset by the index of the component idx
         // The component idx is equivalent to threadIdx
@@ -398,7 +149,6 @@ __device__ void take_transition(ComponentState *my_state,
             break;
         }
     }
-
 
     if (dest_node == nullptr) {
         printf("Thread %d: ERROR - Could not find destination node %d!\n",
@@ -534,8 +284,6 @@ __device__ void check_cuda_error(const char *location) {
     }
 }
 
-#define CHECK_ERROR(loc) check_cuda_error(loc)
-
 
 
 __device__ void compute_possible_delay(
@@ -544,7 +292,6 @@ __device__ void compute_possible_delay(
     SharedModelState *model,
     BlockSimulationState *block_state, int num_vars, int query_variable_id) {
     // First check for active broadcasts
-    // if(shared->channel_sender[my_state->component_id]) { We don't need this
     for (int ch = 0; ch < MAX_CHANNELS; ch++) {
         if (shared->channel_active[ch] &&
             shared->channel_sender[ch] != my_state->component_id) {
@@ -574,8 +321,6 @@ __device__ void compute_possible_delay(
         }
     }
 
-    // }
-
     __syncthreads();
 
     // Only a single thread needs to reset synchronisation flags in shared memory
@@ -587,7 +332,6 @@ __device__ void compute_possible_delay(
     }
 
     __syncthreads();
-
 
     const NodeInfo &node = *my_state->current_node;
     if constexpr (VERBOSE) {
@@ -603,11 +347,11 @@ __device__ void compute_possible_delay(
 
     __syncthreads();
 
-
     if constexpr (VERBOSE) {
         printf("Node idx %d has type: %d \n", node.id, node.type);
     }
-    // Node types with 3 (Urgent) or 4 (Commited) need to return 0 as their delay
+
+    // Node types with 3 (Urgent) or 4 (Commited) need to return 0 as their delay (they are immediate)
     if (node.type > 2) {
         if constexpr (VERBOSE) {
             printf("Node idx %d has type: %d, therefore it is urgent or commited and selecting delay 0 \n", node.id,
@@ -617,7 +361,6 @@ __device__ void compute_possible_delay(
         my_state->has_delay = true;
         return;
     }
-
 
     // Debug current variable values
     if constexpr (VERBOSE) {
@@ -669,6 +412,7 @@ __device__ void compute_possible_delay(
                     if (inv.operand == constraint::less_c) {
                         time_to_bound -= 1e-6;
                     }
+
                     if constexpr (VERBOSE) {
                         printf("Thread %d: Computed time_to_bound=%f\n",
                                threadIdx.x, time_to_bound);
@@ -705,8 +449,8 @@ __device__ void compute_possible_delay(
 
         // Sample from the exponential distribution
         double rand = curand_uniform_double(block_state->random);
-        my_state->next_delay = -__log2f(rand) / rate;
-        // Fastest log, but not as accurate. We consider it fine because we are doing statistical sampling
+        my_state->next_delay = -__log2f(rand) / rate; // Fastest log, but not as accurate. We consider it fine because we are doing statistical sampling
+
         my_state->has_delay = true;
         if constexpr (VERBOSE) {
             printf("Thread %d: No delay bounds, sampled %f using exponential distribution with rate %f\n", threadIdx.x,
@@ -716,8 +460,7 @@ __device__ void compute_possible_delay(
     }
 }
 
-
-// Finds the minimum delay and winning component takes a transition
+// Finds the minimum delay and the winning component takes a transition
 __device__ double find_minimum_delay(
     ComponentState *my_state,
     SharedBlockMemory *shared,
@@ -750,6 +493,7 @@ __device__ double find_minimum_delay(
         }
         __syncthreads();
     }
+
     // Find minimum - only compare actual components
     for (int stride = (num_components + 1) / 2; stride > 0; stride >>= 1) {
         if (threadIdx.x < stride && threadIdx.x < num_components) {
@@ -776,8 +520,6 @@ __device__ double find_minimum_delay(
         __syncthreads();
     }
 
-
-    // Rest of the function same as before, but only thread 0 processes result
     double min_delay = delays[0];
     if (threadIdx.x == 0) {
         if (min_delay < DBL_MAX) {
@@ -807,14 +549,6 @@ __device__ double find_minimum_delay(
     // Remember who won and check edges only for winner
     bool is_race_winner = false;
     if (threadIdx.x < num_components) {
-        // Only check for actual components
-        // is_race_winner = (min_delay < DBL_MAX &&
-        //                  component_indices[0] == my_state->component_id);
-        // if(is_race_winner) {
-        //     printf("\nThread %d (component %d) won race with delay %f\n",
-        //            threadIdx.x, my_state->component_id, min_delay);
-        // }
-
         bool is_race_winner = (min_delay < DBL_MAX &&
                                component_indices[0] == my_state->component_id);
 
@@ -824,10 +558,6 @@ __device__ double find_minimum_delay(
         }
     }
 
-    // Check enabled edges for winning component
-    // if(threadIdx.x < num_components) {  // Only process for actual components
-    //     check_enabled_edges(my_state, shared, model, block_state, is_race_winner);
-    // }
     __syncthreads();
 
     return min_delay;
@@ -836,21 +566,11 @@ __device__ double find_minimum_delay(
 __global__ void simulation_kernel(SharedModelState *model, bool *results,
                                   int runs_per_block, float time_bound, VariableKind *kinds, int num_vars, bool* flags, double* variable_flags, int variable_id, bool isMax,
                                   curandState *rng_states_global) {
-    // #if __CUDA_ARCH__ >= 860
-    //     // Request maximum L1/shared memory configuration on Ampere
-    //     __cuda_maxDynamicSharedMemorySize = 100 * 1024; // 100KB for A10
-    // #endif
-
-
+    CHECK_ERROR("Kernel start");
     if constexpr (VERBOSE) {
         if (threadIdx.x == 0) {
             printf("Starting kernel: block=%d, thread=%d\n",
                    blockIdx.x, threadIdx.x);
-        }
-    }
-    CHECK_ERROR("kernel start");
-    if constexpr (VERBOSE) {
-        if (threadIdx.x == 0) {
             printf("Number of variables: %d\n", num_vars);
         }
 
@@ -861,11 +581,11 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         }
     }
 
-
     __shared__ SharedBlockMemory shared_mem;
     __shared__ ComponentState components[MAX_COMPONENTS];
     curandState *rng_states;
 
+    // Store curandStates in either global memory or shared memory. Requires ~90kb of shared memory w/ curandStates
     if constexpr (USE_GLOBAL_MEMORY_CURAND) {
         // extern __shared__ curandState *rng_states_global;
         rng_states = rng_states_global;
@@ -888,36 +608,6 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         }
     }
 
-
-    if (threadIdx.x == 0) {
-        // TODO: remove. Double with the init function.
-        // Initialize variables with default values
-
-
-        // For debug: print all variables and their initial values. TODO: remove later
-        if constexpr (VERBOSE) {
-            if (threadIdx.x == 0) {
-                printf("\nInitializing variables from model invariants:\n");
-                for (int comp = 0; comp < model->num_components; comp++) {
-                    const NodeInfo &node = model->nodes[comp];
-                    printf("Component %d has %d invariants starting at index %d\n",
-                           comp, node.num_invariants, node.first_invariant_index);
-
-                    for (int i = 0; i < node.num_invariants; i++) {
-                        const GuardInfo &inv = model->invariants[node.first_invariant_index + i];
-                        printf("  Invariant %d:\n"
-                               "    Uses variable: %d\n"
-                               "    Variable ID: %d\n"
-                               "    Initial value: %f\n",
-                               i, inv.uses_variable,
-                               inv.uses_variable ? inv.var_info.variable_id : -1,
-                               inv.var_info.initial_value != 0.0 ? inv.var_info.initial_value : 0.0);
-                    }
-                }
-            }
-        }
-    }
-
     __syncthreads();
 
     CHECK_ERROR("after shared memory declaration");
@@ -935,14 +625,14 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 
     // Setup block state
     BlockSimulationState block_state;
-    //block_state.model = model;
-    //block_state.shared = &shared_mem;
+
     block_state.my_component = &components[threadIdx.x];
     if constexpr (VERBOSE) {
         if (threadIdx.x == 0) {
             printf("Thread %d: Block state setup complete\n", threadIdx.x);
         }
     }
+
     CHECK_ERROR("after block state setup");
 
     // Initialize RNG
@@ -979,7 +669,6 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
     __syncthreads();
     CHECK_ERROR("after shared memory init");
 
-
     // Initialize component state
     // TODO: Move this to the top of the function?
     if (threadIdx.x >= model->num_components) {
@@ -989,7 +678,6 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         }
         return;
     }
-
 
     ComponentState *my_state = block_state.my_component;
     my_state->component_id = comp_id;
@@ -1018,9 +706,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
             printf("Thread %d: Time=%f\n", threadIdx.x, shared_mem.global_time);
         }
         compute_possible_delay(my_state, &shared_mem, model, &block_state, num_vars, variable_id);
-        // if constexpr (VERBOSE) {
-        //     printf("After compute delay\n");
-        // }
+
         CHECK_ERROR("after compute delay");
         __syncthreads();
 
@@ -1043,10 +729,6 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
                        blockIdx.x, shared_mem.global_time);
             }
         }
-
-
-
-
 
         __syncthreads(); // Sync to make sure all threads see the break condition
     }
@@ -1083,7 +765,6 @@ void run_statistical_model_checking(SharedModelState *model, float confidence, f
         cout << "Error getting device properties: " << cudaGetErrorString(error) << endl;
         return;
     }
-
 
     // Adjust threads to be multiple of warp size
     int warp_size = deviceProp.warpSize;
@@ -1124,11 +805,6 @@ void run_statistical_model_checking(SharedModelState *model, float confidence, f
                 << ") exceeds device capability (" << deviceProp.sharedMemPerBlock << ")" << endl;
         return;
     }
-    if constexpr (VERBOSE) {
-        cout << "Shared memory details:" << endl
-                << "  Required: " << sizeof(SharedBlockMemory) << " bytes" << endl
-                << "  Aligned: " << shared_mem_per_block << " bytes" << endl;
-    }
 
     // Allocate and validate device results array
     bool *device_results;
@@ -1137,6 +813,7 @@ void run_statistical_model_checking(SharedModelState *model, float confidence, f
         cout << "CUDA malloc error: " << cudaGetErrorString(error) << endl;
         return;
     }
+
     if constexpr (VERBOSE) {
         cout << "Launch configuration validated:" << endl;
         cout << "  Blocks: " << num_blocks << endl;
@@ -1288,23 +965,8 @@ void run_statistical_model_checking(SharedModelState *model, float confidence, f
 
     cudaGetDeviceProperties(&deviceProp, 0); // Assuming device 0, change if necessary
 
-    // if (deviceProp.major >= 8 && deviceProp.minor >= 6) {
-    //     // Set attribute for Ampere and newer architectures
-    //     cudaFuncSetAttribute(simulation_kernel, cudaFuncAttributeMaxDynamicSharedMemorySize, 65536);
-    //
-    //     // Launch with dynamic shared memory size for architectures >= 8.6
-    //     simulation_kernel<<<num_blocks, threads_per_block, 65536>>>(
-    //         model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, rng_states_global);
-    // } else {
-    // Launch with no dynamic shared memory for other architectures
     simulation_kernel<<<num_blocks, threads_per_block>>>(
         model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, flags, variable_flags, variable_id, isMax, rng_states_global);
-    // }
-
-
-    // if (USE_GLOBAL_MEMORY_CURAND) {
-    //     cudaFree(rng_states_global);
-    // }
 
     // Check for launch error
     error = cudaGetLastError();

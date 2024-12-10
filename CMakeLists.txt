@@ -54,6 +54,8 @@ add_executable(CudaIntro main.cu
         automata_parser/network/visitor.h
         simulation/state/model_verification.cu
         simulation/state/model_verification.cuh
+        simulation/expressions.cu
+        simulation/expressions.cuh
 )
 
 

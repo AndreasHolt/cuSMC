@@ -16,7 +16,7 @@
 #include "simulation/statistics.cuh"
 
 int main() {
-    std::string filename = "../automata_parser/xml_files/UppaalBehaviorTest3.xml";
+    std::string filename = "../xml_files/UppaalBehaviorTest3.xml";
 
     // Regular queries
     // string query1 = "c1.f2";
