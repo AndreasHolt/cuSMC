@@ -103,11 +103,17 @@ __device__ void take_transition(ComponentState *my_state,
 
         if (var_id == query_variable_id) {
             if (new_value > shared->query_variable_max) {
-                printf("Changing max to %f\n", new_value);
+                if constexpr (VERBOSE) {
+                    printf("Changing max to %f\n", new_value);
+                }
+
                 shared->query_variable_max = new_value;
             }
             if (new_value < shared->query_variable_min) {
-                printf("Changing min to %f\n", new_value);
+                if constexpr (VERBOSE) {
+                    printf("Changing min to %f\n", new_value);
+                }
+
                 shared->query_variable_min = new_value;
             }
         }
@@ -698,9 +704,10 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
             }
             break;
         }
-        printf("Flag is %d\n", shared_mem.has_hit_goal);
+
 
         if constexpr (VERBOSE) {
+            printf("Flag is %d\n", shared_mem.has_hit_goal);
             printf("Thread %d: Time=%f\n", threadIdx.x, shared_mem.global_time);
         }
         compute_possible_delay(my_state, &shared_mem, model, &block_state, num_vars, variable_id);
