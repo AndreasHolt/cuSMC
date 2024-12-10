@@ -638,7 +638,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
     // Initialize RNG
     int sim_id = blockIdx.x * runs_per_block;
     int comp_id = threadIdx.x;
-    curand_init(12345678 + sim_id * blockDim.x + comp_id, 0, 0,
+    curand_init(currand_seed + sim_id * blockDim.x + comp_id, 0, 0,
                 &rng_states[threadIdx.x]);
     block_state.random = &rng_states[threadIdx.x];
 

@@ -15,8 +15,59 @@
 #include "automata_parser/variable_usage_visitor.h"
 #include "simulation/statistics.cuh"
 
-int main() {
+int main(int argc, char *argv[]) {
     std::string filename = "../xml_files/UppaalBehaviorTest3.xml";
+    verbose = false;
+    debug = false;
+    currand_seed = 0;
+    for (int i = 0; i < argc; i++) {
+        std::string arg = argv[i];
+
+        if (arg == "-v" || arg == "--verbose") {
+            verbose = true;
+        } else if (arg == "-m" || arg == "--model") {
+            if (i + 1 < argc) {
+                filename = argv[i + 1];
+                i++; // Skip the next argument
+            } else {
+                std::cerr << "Error: -i option requires a value" << std::endl;
+                return 1;
+            }
+        } else if (arg == "-s" || arg == "--seed") {
+            if (i + 1 < argc) {
+                std::string str = argv[i + 1];
+                i++; // Skip the next argument
+                try {
+                    int num = std::stoi(str);
+                    currand_seed = num;
+                } catch (const std::invalid_argument& e) {
+                    std::cerr << "Error: invalid argument: " << e.what() << std::endl;
+                    return 1;
+                } catch (const std::out_of_range& e) {
+                    std::cerr << "Error: number too big: " << e.what() << std::endl;
+                    return 1;
+                }
+
+            } else {
+                std::cerr << "Error: -s option requires a value" << std::endl;
+                return 1;
+            }
+        } else if (arg == "-h" || arg == "--help") {
+            cout << "Use -m or --model, followed by a path, for inputting a path the the model xml file." << endl;
+            cout << "Use -v or --verbose, to enable verbose." << endl;
+
+        }
+        else {
+            std::cerr << "Error: unknown option " << arg << std::endl;
+            return 1;
+        }
+    }
+    std::string filename = "../xml_files/UppaalBehaviorTest3.xml";
+    verbose = false;
+    debug = false;
+    currand_seed = 0;
+    const struct conf configuration = {filename, verbose, debug, currand_seed};
+
 
     // Regular queries
     // string query1 = "c1.f2";
