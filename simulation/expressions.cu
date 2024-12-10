@@ -2,6 +2,7 @@
 // Created by andwh on 10/12/2024.
 //
 
+#include <c++/13/cfloat>
 
 #include "state/shared_model_state.cuh"
 #include "state/shared_run_state.cuh"
