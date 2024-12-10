@@ -4,11 +4,9 @@
 #include "expressions.cuh"
 
 
-#define NUM_RUNS 6
-#define TIME_BOUND 10.0
-#define MAX_VARIABLES 20
+
 #define CHECK_ERROR(loc) check_cuda_error(loc)
-constexpr bool USE_GLOBAL_MEMORY_CURAND = true;
+
 
 // Calculate sum of edges from enabled set
 __device__ int get_sum_edge_weight(const ComponentState *my_state,
@@ -565,7 +563,7 @@ __device__ double find_minimum_delay(
 
 __global__ void simulation_kernel(SharedModelState *model, bool *results,
                                   int runs_per_block, float time_bound, VariableKind *kinds, int num_vars, bool* flags, double* variable_flags, int variable_id, bool isMax,
-                                  curandState *rng_states_global) {
+                                  curandState *rng_states_global, int currand_seed) {
     CHECK_ERROR("Kernel start");
     if constexpr (VERBOSE) {
         if (threadIdx.x == 0) {
@@ -747,7 +745,8 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 }
 
 void run_statistical_model_checking(SharedModelState *model, float confidence, float precision,
-                                                VariableKind *kinds, int num_vars, bool* flags, double* variable_flags, int variable_id, bool isMax, int num_simulations) {
+                                                VariableKind *kinds, int num_vars, bool* flags,
+                                                double* variable_flags, int variable_id, configuration conf, model_info m_info) {
     int total_runs = 1;
     if constexpr (VERBOSE) {
         cout << "total_runs = " << total_runs << endl;
@@ -771,8 +770,8 @@ void run_statistical_model_checking(SharedModelState *model, float confidence, f
     //int threads_per_block = 512; // 100 components
     // int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
     int threads_per_block = 32; // 100 components
-    int runs_per_block = 1;
-    int num_blocks = num_simulations;
+    int runs_per_block = m_info.runs_per_block;
+    int num_blocks = conf.simulations;
 
     // Print detailed device information
     if constexpr (VERBOSE) {
@@ -966,7 +965,7 @@ void run_statistical_model_checking(SharedModelState *model, float confidence, f
     cudaGetDeviceProperties(&deviceProp, 0); // Assuming device 0, change if necessary
 
     simulation_kernel<<<num_blocks, threads_per_block>>>(
-        model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, flags, variable_flags, variable_id, isMax, rng_states_global);
+        model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, flags, variable_flags, variable_id, conf.isMax, rng_states_global, conf.currand_seed);
 
     // Check for launch error
     error = cudaGetLastError();

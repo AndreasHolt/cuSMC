@@ -17,15 +17,14 @@
 
 int main(int argc, char *argv[]) {
     std::string filename = "../xml_files/UppaalBehaviorTest3.xml";
-    verbose = false;
-    debug = false;
-    currand_seed = 0;
-    for (int i = 0; i < argc; i++) {
+    int currand_seed = 0;
+    // Statistics
+    int simulations = 1000;
+    bool isMax = true; // Gather info on either the max value of the variable or the min
+    for (int i = 1; i < argc; i++) {    // Skip first argument, which is the executable path.
         std::string arg = argv[i];
 
-        if (arg == "-v" || arg == "--verbose") {
-            verbose = true;
-        } else if (arg == "-m" || arg == "--model") {
+        if (arg == "-m" || arg == "--model") {
             if (i + 1 < argc) {
                 filename = argv[i + 1];
                 i++; // Skip the next argument
@@ -52,21 +51,48 @@ int main(int argc, char *argv[]) {
                 std::cerr << "Error: -s option requires a value" << std::endl;
                 return 1;
             }
+        } else if (arg == "-r" || arg == "--runs") {
+            if (i + 1 < argc) {
+                std::string str = argv[i + 1];
+                i++; // Skip the next argument
+                try {
+                    int num = std::stoi(str);
+                    simulations = num;
+                } catch (const std::invalid_argument& e) {
+                    std::cerr << "Error: invalid argument: " << e.what() << std::endl;
+                    return 1;
+                } catch (const std::out_of_range& e) {
+                    std::cerr << "Error: number too big: " << e.what() << std::endl;
+                    return 1;
+                }
+
+            } else {
+                std::cerr << "Error: -r option requires a value" << std::endl;
+                return 1;
+            }
+        } else if (arg == "--min") {
+            isMax = false;
+        } else if (arg == "--max") {
+            if (isMax == false) {
+                std::cerr << "Can not use --max and --min at the same time." << std::endl;
+                return 1;
+            }
+            isMax = true;
         } else if (arg == "-h" || arg == "--help") {
             cout << "Use -m or --model, followed by a path, for inputting a path the the model xml file." << endl;
-            cout << "Use -v or --verbose, to enable verbose." << endl;
-
+            cout << "Use -s or --seed, followed by a number, to initialize currand with a constant seed. (0 = random seed)" << endl;
+            cout << "Use -r or --runs, to specify the number of simulations." << endl;
+            cout << "Use --max or --min, to specify whether we want to query for the max value a variable reaches or the lowest." << endl;
+            return 1;
         }
         else {
             std::cerr << "Error: unknown option " << arg << std::endl;
             return 1;
         }
     }
-    std::string filename = "../xml_files/UppaalBehaviorTest3.xml";
-    verbose = false;
-    debug = false;
-    currand_seed = 0;
-    const struct conf configuration = {filename, verbose, debug, currand_seed};
+
+    const struct configuration conf = {filename, currand_seed, simulations, isMax};
+    const struct model_info m_info = {64, 1};
 
 
     // Regular queries
@@ -110,9 +136,9 @@ int main(int argc, char *argv[]) {
     VariableKind *kinds = var_tracker.createKindArray(registry);
     int num_vars = registry.size();
 
-    // Statistics
-    int simulations = 1000;
-    bool isMax = true; // Gather info on either the max value of the variable or the min
+
+
+
 
     if (variable_id != -1) {
         std::unordered_map<int, node *> node_map = optimizer.get_node_map();
@@ -124,11 +150,11 @@ int main(int argc, char *argv[]) {
             var_tracker.get_variable_registry(),
             parser,
             num_vars);
-        Statistics stats(simulations, VAR_STAT);
+        Statistics stats(conf.simulations, VAR_STAT);
 
         printf("Running SMC\n");
         run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars, stats.get_comp_device_ptr(),
-                                           stats.get_var_device_ptr(), variable_id, isMax, simulations);
+                                           stats.get_var_device_ptr(), variable_id, conf, m_info);
         double *var_data = stats.collect_var_data();
         for (int i = 0; i < simulations; i++) {
             printf("Variable value for simulation %d is %f\n", i, var_data[i]);
@@ -137,7 +163,7 @@ int main(int argc, char *argv[]) {
 
     // Query analysis loop
     for (auto itr = query_set->cbegin(); itr != query_set->cend(); itr++) {
-        Statistics stats(simulations, COMP_STAT);
+        Statistics stats(conf.simulations, COMP_STAT);
 
         // Query string from set
         string query = *(*query_set).find(*itr);
@@ -186,7 +212,7 @@ int main(int argc, char *argv[]) {
 
         // Run the SMC simulations
         run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars, stats.get_comp_device_ptr(),
-                                           stats.get_var_device_ptr(), variable_id, isMax, simulations);
+                                           stats.get_var_device_ptr(), variable_id, conf, m_info);
         try {
             auto results = stats.collect_results();
             stats.print_results(query, results);
