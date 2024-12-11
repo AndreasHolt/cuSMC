@@ -7,8 +7,8 @@
 
 
 void run_statistical_model_checking(SharedModelState *model, float confidence, float precision,
-                                    VariableKind *kinds, int num_vars, bool *flags, double *variable_flags,
-                                    int variable_id, bool isMax, int num_simulations) {
+                                                VariableKind *kinds, bool* flags,
+                                                double* variable_flags, int variable_id, configuration conf, model_info m_info) {
     int total_runs = 1;
     if constexpr (VERBOSE) {
         cout << "total_runs = " << total_runs << endl;
@@ -32,8 +32,8 @@ void run_statistical_model_checking(SharedModelState *model, float confidence, f
     //int threads_per_block = 512; // 100 components
     // int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
     int threads_per_block = 32; // 100 components
-    int runs_per_block = 1;
-    int num_blocks = num_simulations;
+    int runs_per_block = m_info.runs_per_block;
+    int num_blocks = conf.simulations;
 
     // Print detailed device information
     if constexpr (VERBOSE) {
@@ -199,13 +199,13 @@ void run_statistical_model_checking(SharedModelState *model, float confidence, f
     }
 
     VariableKind *d_kinds;
-    error = cudaMalloc(&d_kinds, num_vars * sizeof(VariableKind)); // Assuming MAX_VARIABLES is defined
+    error = cudaMalloc(&d_kinds, m_info.num_vars * sizeof(VariableKind)); // Assuming MAX_VARIABLES is defined
     if (error != cudaSuccess) {
         cout << "CUDA malloc error for kinds array: " << cudaGetErrorString(error) << endl;
         return;
     }
 
-    error = cudaMemcpy(d_kinds, kinds, num_vars * sizeof(VariableKind), cudaMemcpyHostToDevice);
+    error = cudaMemcpy(d_kinds, kinds, m_info.num_vars * sizeof(VariableKind), cudaMemcpyHostToDevice);
     if (error != cudaSuccess) {
         cout << "Error copying kinds array: " << cudaGetErrorString(error) << endl;
         cudaFree(d_kinds);
@@ -220,15 +220,45 @@ void run_statistical_model_checking(SharedModelState *model, float confidence, f
     curandState *rng_states_global;
 
     if constexpr (USE_GLOBAL_MEMORY_CURAND) {
-        cudaMalloc(&rng_states_global, MAX_COMPONENTS * sizeof(curandState));
+        cudaMalloc(&rng_states_global, m_info.MAX_COMPONENTS * sizeof(curandState));
     }
 
 
     cudaGetDeviceProperties(&deviceProp, 0); // Assuming device 0, change if necessary
 
-    simulation_kernel<<<num_blocks, threads_per_block>>>(
-        model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, flags, variable_flags, variable_id, isMax,
-        rng_states_global);
+
+
+    // What share memory we need:
+    /*
+    __shared__ double delays[MAX_COMPONENTS]; // Only need MAX_COMPONENTS slots, not full warp size
+    __shared__ int component_indices[MAX_COMPONENTS];
+    __shared__ SharedBlockMemory shared_mem;
+    __shared__ ComponentState components[MAX_COMPONENTS];
+    curandState *rng_states;
+
+    // Store curandStates in either global memory or shared memory. Requires ~90kb of shared memory w/ curandStates
+    if constexpr (USE_GLOBAL_MEMORY_CURAND) {
+        // extern __shared__ curandState *rng_states_global;
+        rng_states = rng_states_global;
+    } else {
+        __shared__ curandState rng_states_shared[MAX_COMPONENTS];
+        rng_states = rng_states_shared;
+    }
+
+
+
+    */
+
+    // Dynamic Shared memory: https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/
+    int MC = m_info.MAX_COMPONENTS;
+    if constexpr (USE_GLOBAL_MEMORY_CURAND) {
+        simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState)>>>(
+        model, device_results, runs_per_block, TIME_BOUND, d_kinds, m_info.num_vars, flags, variable_flags, variable_id, conf.isMax, rng_states_global, conf.curand_seed, MC);
+    } else {
+        simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState) + MC*sizeof(curandState)>>>(
+        model, device_results, runs_per_block, TIME_BOUND, d_kinds, m_info.num_vars, flags, variable_flags, variable_id, conf.isMax, rng_states_global, conf.curand_seed, MC);
+    }
+
 
     // Check for launch error
     error = cudaGetLastError();
@@ -254,8 +284,7 @@ void run_statistical_model_checking(SharedModelState *model, float confidence, f
     cudaFree(device_results);
 }
 
-void smc(string filename, string query, bool isMax, bool isEstimate, int variable_threshhold, int variable_id,
-         int simulations) {
+void smc(string filename, string query, bool isMax, bool isEstimate, int variable_threshhold, int variable_id, configuration conf) {
     // Read and parse XML file
     abstract_parser *parser = new uppaal_xml_parser();
     network model = parser->parse(filename);
@@ -283,7 +312,12 @@ void smc(string filename, string query, bool isMax, bool isEstimate, int variabl
     auto registry = var_tracker.get_variable_registry();
 
     VariableKind *kinds = var_tracker.createKindArray(registry);
-    int num_vars = registry.size();
+    uint num_vars = registry.size();
+
+    // TODO: Calculate these values...
+    const struct model_info m_info = {3, 64, 1, num_vars};
+
+
 
     double result = 0;
     // Handling variable queries
@@ -296,14 +330,15 @@ void smc(string filename, string query, bool isMax, bool isEstimate, int variabl
             node_map,
             var_tracker.get_variable_registry(),
             parser,
-            num_vars);
-        Statistics stats(simulations, VAR_STAT);
+            m_info.num_vars);
+        Statistics stats(conf.simulations, VAR_STAT);
 
         printf("Running SMC\n");
-        run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars, stats.get_comp_device_ptr(),
-                                       stats.get_var_device_ptr(), variable_id, isMax, simulations);
 
-        int len_of_array = simulations;
+        run_statistical_model_checking(state, 0.05, 0.01, kinds, stats.get_comp_device_ptr(),
+                                           stats.get_var_device_ptr(), variable_id, conf, m_info);
+
+        int len_of_array = conf.simulations;
         double *var_data = stats.collect_var_data();
         // Estimate query
         if (isEstimate) {
@@ -315,12 +350,10 @@ void smc(string filename, string query, bool isMax, bool isEstimate, int variabl
         // Probability query
         else if (!isEstimate) {
             for (int i = 0; i < len_of_array; i++) {
-                if (isMax && var_data[i] > variable_threshhold) {
-                    // Increment if value is larger than specified max
+                if (isMax && var_data[i] > variable_threshhold) { // Increment if value is larger than specified max
                     result += 1;
                 }
-                if (!isMax && var_data[i] < variable_threshhold) {
-                    // Increment if value is smaller than specified min
+                if (!isMax && var_data[i] < variable_threshhold) { // Increment if value is smaller than specified min
                     result += 1;
                 }
             }
@@ -328,8 +361,9 @@ void smc(string filename, string query, bool isMax, bool isEstimate, int variabl
         }
         printf("Result: %lf", result);
     }
+
     if (variable_id == -1) {
-        Statistics stats(simulations, COMP_STAT);
+        Statistics stats(conf.simulations, COMP_STAT);
         if constexpr (VERBOSE) {
             cout << "Recorded query is: " + query << endl;
         }
@@ -373,14 +407,15 @@ void smc(string filename, string query, bool isMax, bool isEstimate, int variabl
             num_vars);
 
         // Run the SMC simulations
-        run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars, stats.get_comp_device_ptr(),
-                                       stats.get_var_device_ptr(), variable_id, isMax, simulations);
+        run_statistical_model_checking(state, 0.05, 0.01, kinds, stats.get_comp_device_ptr(),
+                                           stats.get_var_device_ptr(), variable_id, conf, m_info);
         try {
             auto results = stats.collect_results();
             stats.print_results(query, results);
         } catch (const std::runtime_error &e) {
             cout << "Error while collecting the results from the simulations: " << e.what() << endl;
-        }
+            }
+
     }
     // Kernels for debugging purposes
     if constexpr (VERBOSE) {
