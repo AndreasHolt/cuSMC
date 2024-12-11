@@ -18,8 +18,7 @@
 #include "simulation/statistics.cuh"
 #include "simulation/simulation.cuh"
 
-void smc(string filename, string query, bool isMax, bool isEstimate, int variable_threshhold, int variable_id, int simulations);
-
+void smc(string filename, string query, bool isMax, bool isEstimate, int variable_threshhold, int variable_id, configuration conf);
 
 
 

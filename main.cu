@@ -5,6 +5,7 @@
 #include "main.cuh"
 #include "smc.cuh"
 #include "automata_parser/uppaal_xml_parser.h"
+
 int main(int argc, char *argv[]) {
     std::string filename = "../xml_files/UppaalBehaviorTest3.xml";
     int currand_seed = 0;
@@ -17,6 +18,8 @@ int main(int argc, char *argv[]) {
     if (!succeded) {return 1;}
 
     const struct configuration conf = {filename, currand_seed, simulations, isMax};
+
+
 
     //int simulation_arr[] = {1, 10};
 
