@@ -3,19 +3,8 @@
 //
 
 #include "main.cuh"
-#include <chrono>
-#include "include/engine/domain.h"
-#include "automata_parser/uppaal_xml_parser.h"
-#include <iostream>
-#include "automata_parser/network/network_props.h"
-#include "automata_parser/network/domain_optimization_visitor.h"
-#include "automata_parser/network/pn_compile_visitor.h"
-#include "simulation/simulation.cuh"
-#include "simulation/state/shared_model_state.cuh"
-#include "automata_parser/variable_usage_visitor.h"
-#include "simulation/statistics.cuh"
 #include "smc.cuh"
-
+#include "automata_parser/uppaal_xml_parser.h"
 int main(int argc, char *argv[]) {
     std::string filename = "../xml_files/UppaalBehaviorTest3.xml";
     int currand_seed = 0;

@@ -3,6 +3,8 @@
 #include "simulation.cuh"
 #include "expressions.cuh"
 
+#define NUM_RUNS 6
+#define MAX_VARIABLES 20
 #define CHECK_ERROR(loc) check_cuda_error(loc)
 
 // Calculate sum of edges from enabled set
@@ -103,14 +105,12 @@ __device__ void take_transition(ComponentState *my_state,
                 if constexpr (VERBOSE) {
                     printf("Changing max to %f\n", new_value);
                 }
-
                 shared->query_variable_max = new_value;
             }
             if (new_value < shared->query_variable_min) {
                 if constexpr (VERBOSE) {
                     printf("Changing min to %f\n", new_value);
                 }
-
                 shared->query_variable_min = new_value;
             }
         }
