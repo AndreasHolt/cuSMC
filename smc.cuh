@@ -1,8 +1,10 @@
 //
-// Created by andwh on 04/11/2024.
+// Created by andreas on 12/11/24.
 //
 
-#include "main.cuh"
+#ifndef SMC_CUH
+#define SMC_CUH
+
 #include <chrono>
 #include "include/engine/domain.h"
 #include "automata_parser/uppaal_xml_parser.h"
@@ -14,19 +16,12 @@
 #include "simulation/state/shared_model_state.cuh"
 #include "automata_parser/variable_usage_visitor.h"
 #include "simulation/statistics.cuh"
-#include "smc.cuh"
+#include "simulation/simulation.cuh"
+
+void smc(string filename, string query, bool isMax, bool isEstimate, int variable_threshhold, int variable_id, int simulations);
 
 
 
-int main() {
-    std::string filename = "../xml_files/UppaalBehaviorTest3.xml";
-
-    int simulation_arr[] = {1000};
-
-    for (int i : simulation_arr) {
-        smc(filename, "", true, false, 0, 5, i);
-    }
 
 
-    return 1;
-}
+#endif //SMC_CUH

@@ -50,6 +50,8 @@ add_executable(cuSMC main.cu
         simulation/state/shared_run_state.cuh
         simulation/state/model_verification.cu
         simulation/state/model_verification.cuh
+        smc.cu
+        smc.cuh
 )
 
 set_target_properties(cuSMC PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

@@ -10,6 +10,10 @@
 #include "state/shared_model_state.cuh"
 #include "state/shared_run_state.cuh"
 
-void run_statistical_model_checking(SharedModelState* model, float confidence, float precision, VariableKind* kinds, int num_vars, bool* flags, double* variable_flags, int variable_id, bool isMax, int num_simulations);
+constexpr bool USE_GLOBAL_MEMORY_CURAND = true;
+
+__global__ void simulation_kernel(SharedModelState *model, bool *results,
+                                  int runs_per_block, float time_bound, VariableKind *kinds, int num_vars, bool* flags, double* variable_flags, int variable_id, bool isMax,
+                                  curandState *rng_states_global);
 
 #endif //SIMULATION_CUH
