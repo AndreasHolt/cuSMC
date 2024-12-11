@@ -6,11 +6,7 @@
 #define SHAREDRUNSTATE_CUH
 #include "shared_model_state.cuh"
 
-constexpr int MAX_COMPONENTS = 3;
-constexpr int MAX_VALUE_STACK_SIZE = 64;
-constexpr int MAX_CHANNELS = 5;
-constexpr int MAX_VARIABLES = 20;
-constexpr int MAX_EDGES_PER_NODE = 8;
+
 
 struct alignas(4) ComponentState {
     // We force 4-byte alignment instead of 8
