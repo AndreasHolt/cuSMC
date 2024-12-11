@@ -569,7 +569,7 @@ __device__ double find_minimum_delay(
 }
 
 __global__ void simulation_kernel(SharedModelState *model, bool *results,
-                                  int runs_per_block, float time_bound, VariableKind *kinds, int num_vars, bool* flags, double* variable_flags, int variable_id, bool isMax,
+                                  int runs_per_block, float time_bound, VariableKind *kinds, uint num_vars, bool* flags, double* variable_flags, int variable_id, bool isMax,
                                   curandState *rng_states_global, int curand_seed, int max_components) {
 
     // Prepare Shared memory
@@ -771,7 +771,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 }
 
 void run_statistical_model_checking(SharedModelState *model, float confidence, float precision,
-                                                VariableKind *kinds, int num_vars, bool* flags,
+                                                VariableKind *kinds, bool* flags,
                                                 double* variable_flags, int variable_id, configuration conf, model_info m_info) {
     int total_runs = 1;
     if constexpr (VERBOSE) {
@@ -963,13 +963,13 @@ void run_statistical_model_checking(SharedModelState *model, float confidence, f
     }
 
     VariableKind *d_kinds;
-    error = cudaMalloc(&d_kinds, num_vars * sizeof(VariableKind)); // Assuming MAX_VARIABLES is defined
+    error = cudaMalloc(&d_kinds, m_info.num_vars * sizeof(VariableKind)); // Assuming MAX_VARIABLES is defined
     if (error != cudaSuccess) {
         cout << "CUDA malloc error for kinds array: " << cudaGetErrorString(error) << endl;
         return;
     }
 
-    error = cudaMemcpy(d_kinds, kinds, num_vars * sizeof(VariableKind), cudaMemcpyHostToDevice);
+    error = cudaMemcpy(d_kinds, kinds, m_info.num_vars * sizeof(VariableKind), cudaMemcpyHostToDevice);
     if (error != cudaSuccess) {
         cout << "Error copying kinds array: " << cudaGetErrorString(error) << endl;
         cudaFree(d_kinds);
@@ -1017,10 +1017,10 @@ void run_statistical_model_checking(SharedModelState *model, float confidence, f
     int MC = m_info.MAX_COMPONENTS;
     if constexpr (USE_GLOBAL_MEMORY_CURAND) {
         simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState)>>>(
-        model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, flags, variable_flags, variable_id, conf.isMax, rng_states_global, conf.curand_seed, MC);
+        model, device_results, runs_per_block, TIME_BOUND, d_kinds, m_info.num_vars, flags, variable_flags, variable_id, conf.isMax, rng_states_global, conf.curand_seed, MC);
     } else {
         simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState) + MC*sizeof(curandState)>>>(
-        model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, flags, variable_flags, variable_id, conf.isMax, rng_states_global, conf.curand_seed, MC);
+        model, device_results, runs_per_block, TIME_BOUND, d_kinds, m_info.num_vars, flags, variable_flags, variable_id, conf.isMax, rng_states_global, conf.curand_seed, MC);
     }
 
 

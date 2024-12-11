@@ -32,6 +32,7 @@ struct model_info {
     //int MAX_CHANNELS = 5;
     //int MAX_EDGES_PER_NODE = 8;
     int runs_per_block = 1;
+    uint num_vars;
 };
 extern const model_info m_info;
 

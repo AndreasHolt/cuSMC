@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
     if (!succeded) {return 1;}
 
     const struct configuration conf = {filename, currand_seed, simulations, isMax};
-    const struct model_info m_info = {MAX_COMPONENTS, 64, 1};
+
 
 
     // Regular queries
@@ -69,8 +69,9 @@ int main(int argc, char *argv[]) {
     auto registry = var_tracker.get_variable_registry();
 
     VariableKind *kinds = var_tracker.createKindArray(registry);
-    int num_vars = registry.size();
+    uint num_vars = registry.size();
 
+    const struct model_info m_info = {MAX_COMPONENTS, 64, 1, num_vars};
 
 
 
@@ -84,11 +85,11 @@ int main(int argc, char *argv[]) {
             node_map,
             var_tracker.get_variable_registry(),
             parser,
-            num_vars);
+            m_info.num_vars);
         Statistics stats(conf.simulations, VAR_STAT);
 
         printf("Running SMC\n");
-        run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars, stats.get_comp_device_ptr(),
+        run_statistical_model_checking(state, 0.05, 0.01, kinds, stats.get_comp_device_ptr(),
                                            stats.get_var_device_ptr(), variable_id, conf, m_info);
         double *var_data = stats.collect_var_data();
         for (int i = 0; i < simulations; i++) {
@@ -146,7 +147,7 @@ int main(int argc, char *argv[]) {
             num_vars);
 
         // Run the SMC simulations
-        run_statistical_model_checking(state, 0.05, 0.01, kinds, num_vars, stats.get_comp_device_ptr(),
+        run_statistical_model_checking(state, 0.05, 0.01, kinds, stats.get_comp_device_ptr(),
                                            stats.get_var_device_ptr(), variable_id, conf, m_info);
         try {
             auto results = stats.collect_results();
