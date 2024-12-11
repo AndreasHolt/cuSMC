@@ -167,3 +167,75 @@ int main(int argc, char *argv[]) {
 
     return 1;
 }
+
+bool HandleCommandLineArguments(int argc, char **argv, string *filename, int *seed, int * runs, bool *isMax) {
+    for (int i = 1; i < argc; i++) {    // Skip first argument, which is the executable path.
+        std::string arg = argv[i];
+        if (arg == "-m" || arg == "--model") {
+            if (i + 1 < argc) {
+                *filename = argv[i + 1];
+                i++; // Skip the next argument
+            } else {
+                std::cerr << "Error: -i option requires a value" << std::endl;
+                return false;
+            }
+        } else if (arg == "-s" || arg == "--seed") {
+            if (i + 1 < argc) {
+                std::string str = argv[i + 1];
+                i++; // Skip the next argument
+                try {
+                    const int num = std::stoi(str);
+                    *seed = num;
+                } catch (const std::invalid_argument& e) {
+                    std::cerr << "Error: invalid argument: " << e.what() << std::endl;
+                    return false;
+                } catch (const std::out_of_range& e) {
+                    std::cerr << "Error: number too big: " << e.what() << std::endl;
+                    return false;
+                }
+
+            } else {
+                std::cerr << "Error: -s option requires a value" << std::endl;
+                return false;
+            }
+        } else if (arg == "-r" || arg == "--runs") {
+            if (i + 1 < argc) {
+                std::string str = argv[i + 1];
+                i++; // Skip the next argument
+                try {
+                    int num = std::stoi(str);
+                    *runs = num;
+                } catch (const std::invalid_argument& e) {
+                    std::cerr << "Error: invalid argument: " << e.what() << std::endl;
+                    return false;
+                } catch (const std::out_of_range& e) {
+                    std::cerr << "Error: number too big: " << e.what() << std::endl;
+                    return false;
+                }
+
+            } else {
+                std::cerr << "Error: -r option requires a value" << std::endl;
+                return false;
+            }
+        } else if (arg == "--min") {
+            *isMax = false;
+        } else if (arg == "--max") {
+            if (*isMax == false) {
+                std::cerr << "Can not use --max and --min at the same time." << std::endl;
+                return false;
+            }
+            *isMax = true;
+        } else if (arg == "-h" || arg == "--help") {
+            cout << "Use -m or --model, followed by a path, for inputting a path the the model xml file." << endl;
+            cout << "Use -s or --seed, followed by a number, to initialize currand with a constant seed. (0 = random seed)" << endl;
+            cout << "Use -r or --runs, to specify the number of simulations." << endl;
+            cout << "Use --max or --min, to specify whether we want to query for the max value a variable reaches or the lowest." << endl;
+            return false;
+        }
+        else {
+            std::cerr << "Error: unknown option " << arg << std::endl;
+            return false;
+        }
+    }
+    return true;
+}
