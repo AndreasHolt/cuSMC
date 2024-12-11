@@ -14,11 +14,10 @@
 
 void run_statistical_model_checking(SharedModelState* model, float confidence, float precision, VariableKind* kinds, bool* flags, double* variable_flags, int variable_id, configuration conf, model_info m_info);
 
-constexpr bool USE_GLOBAL_MEMORY_CURAND = true;
 
 __global__ void simulation_kernel(SharedModelState *model, bool *results,
-                                  int runs_per_block, float time_bound, VariableKind *kinds, int num_vars, bool* flags, double* variable_flags, int variable_id, bool isMax,
-                                  curandState *rng_states_global);
+                                  int runs_per_block, float time_bound, VariableKind *kinds, uint num_vars, bool* flags, double* variable_flags, int variable_id, bool isMax,
+                                  curandState *rng_states_global, int curand_seed, int max_components) {
 
 
 #endif //SIMULATION_CUH
