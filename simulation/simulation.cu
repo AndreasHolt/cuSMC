@@ -3,8 +3,6 @@
 #include "simulation.cuh"
 #include "expressions.cuh"
 
-#define NUM_RUNS 6
-#define MAX_VARIABLES 20
 #define CHECK_ERROR(loc) check_cuda_error(loc)
 
 // Calculate sum of edges from enabled set
@@ -134,7 +132,6 @@ __device__ void take_transition(ComponentState *my_state,
         // We know relevant nodes are stored at each level offset by the index of the component idx
         // The component idx is equivalent to threadIdx
         const NodeInfo &node = model->nodes[level * model->num_components + threadIdx.x];
-        printf("Dest node with id %d is type %d\n", node.id, node.type);
         if (node.id == edge.dest_node_id) {
             dest_node = &node;
 

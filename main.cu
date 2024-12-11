@@ -8,25 +8,18 @@
 
 int main(int argc, char *argv[]) {
     std::string filename = "../xml_files/UppaalBehaviorTest3.xml";
-    int currand_seed = 0;
-    //int MAX_COMPONENTS = 3;
+    int curand_seed = 1234;
+
     // Statistics
     int simulations = 1000;
     bool isMax = true; // Gather info on either the max value of the variable or the min
 
-    bool succeded = HandleCommandLineArguments(argc, argv, &filename, &currand_seed, &simulations, &isMax);
-    if (!succeded) {return 1;}
+    bool cliSucceeded = HandleCommandLineArguments(argc, argv, &filename, &curand_seed, &simulations, &isMax);
+    if (!cliSucceeded) {return 0;}
 
-    const struct configuration conf = {filename, currand_seed, simulations, isMax};
+    const struct configuration conf = {filename, curand_seed, simulations, isMax};
 
-
-
-    //int simulation_arr[] = {1, 10};
-
-    //for (int i : simulation_arr) {
     smc(filename, "", true, false, 0, 5, conf);
-    //}
-
 
     return 1;
 }
@@ -90,14 +83,14 @@ bool HandleCommandLineArguments(int argc, char **argv, string *filename, int *se
             }
             *isMax = true;
         } else if (arg == "-h" || arg == "--help") {
-            cout << "Use -m or --model, followed by a path, for inputting a path the the model xml file." << endl;
-            cout << "Use -s or --seed, followed by a number, to initialize currand with a constant seed. (0 = random seed)" << endl;
-            cout << "Use -r or --runs, to specify the number of simulations." << endl;
-            cout << "Use --max or --min, to specify whether we want to query for the max value a variable reaches or the lowest." << endl;
+            cout << "Use -m or --model, followed by a path, for inputting a path the the model XML file." << endl;
+            cout << "Use -s or --seed, followed by a number, to initialize curand with a constant seed. (0 = random seed)" << endl;
+            cout << "Use -r or --runs, to specify the number of runs/simulations." << endl;
+            cout << "Use --max or --min, to specify whether we want to query for the max or min value a variable reaches." << endl;
             return false;
         }
         else {
-            std::cerr << "Error: unknown option " << arg << std::endl;
+            std::cerr << "Error: unknown option: " << arg << std::endl;
             return false;
         }
     }

@@ -333,7 +333,21 @@ void smc(string filename, string query, bool isMax, bool isEstimate, int variabl
             m_info.num_vars);
         Statistics stats(conf.simulations, VAR_STAT);
 
-        printf("Running SMC\n");
+        cout << "=================\n";
+        cout << "Running SMC with the following settings:" << std::endl;
+        cout << "- Number of simulations: " << conf.simulations << std::endl;
+        cout << "- Model: " << conf.filename << std::endl;
+        cout << "- Random seed: " << conf.curand_seed << std::endl;
+
+        if (!query.empty()) {
+            cout << "- Logging type: \"comp.node\" query" << std::endl;
+        } else if (variable_id != -1) {
+            string min_or_max = (isMax) ? "max" : "min";
+            cout << "- Logging type: variable query. Finding " << min_or_max
+                 << " of variable with ID " << variable_id << std::endl;
+        }
+
+        cout << "=================\n\n";
 
         run_statistical_model_checking(state, 0.05, 0.01, kinds, stats.get_comp_device_ptr(),
                                            stats.get_var_device_ptr(), variable_id, conf, m_info);
