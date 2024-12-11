@@ -470,9 +470,10 @@ __device__ double find_minimum_delay(
     SharedBlockMemory *shared,
     SharedModelState *model,
     BlockSimulationState *block_state,
-    int num_components, int query_variable_id) {
-    __shared__ double delays[MAX_COMPONENTS]; // Only need MAX_COMPONENTS slots, not full warp size
-    __shared__ int component_indices[MAX_COMPONENTS];
+    int num_components, int query_variable_id,
+    double* delays, int * component_indices) {
+    //__shared__ double delays[MAX_COMPONENTS]; // Only need MAX_COMPONENTS slots, not full warp size
+    //__shared__ int component_indices[MAX_COMPONENTS];
 
     // Initialize only for active threads (components)
     if (threadIdx.x < num_components) {
@@ -569,7 +570,33 @@ __device__ double find_minimum_delay(
 
 __global__ void simulation_kernel(SharedModelState *model, bool *results,
                                   int runs_per_block, float time_bound, VariableKind *kinds, int num_vars, bool* flags, double* variable_flags, int variable_id, bool isMax,
-                                  curandState *rng_states_global, int currand_seed) {
+                                  curandState *rng_states_global, int curand_seed, int max_components) {
+
+    // Prepare Shared memory
+    //extern __shared__ int s[];
+    //int *integerData = s;                        // nI ints
+    //float *floatData = (float*)&integerData[nI]; // nF floats
+    //char *charData = (char*)&floatData[nF];      // nC chars
+    extern __shared__ int s[];
+
+    SharedBlockMemory *shared_mem = (SharedBlockMemory *) &s;
+    // Using (char*) because it is 1 byte large.
+    ComponentState *components = (ComponentState *)((char*)shared_mem + sizeof(SharedBlockMemory));
+
+    double *delays = (double *)&components[max_components]; // Only need MAX_COMPONENTS slots, not full warp size
+    int *component_indices = (int *)&delays[max_components];
+
+    curandState *rng_states;
+
+    // Store curandStates in either global memory or shared memory. Requires ~90kb of shared memory w/ curandStates
+    if constexpr (USE_GLOBAL_MEMORY_CURAND) {
+        // extern __shared__ curandState *rng_states_global;
+        rng_states = rng_states_global;
+    } else {
+        curandState *rng_states_shared = (curandState *)component_indices[max_components];
+        rng_states = rng_states_shared;
+    }
+
     CHECK_ERROR("Kernel start");
     if constexpr (VERBOSE) {
         if (threadIdx.x == 0) {
@@ -585,18 +612,8 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         }
     }
 
-    __shared__ SharedBlockMemory shared_mem;
-    __shared__ ComponentState components[MAX_COMPONENTS];
-    curandState *rng_states;
 
-    // Store curandStates in either global memory or shared memory. Requires ~90kb of shared memory w/ curandStates
-    if constexpr (USE_GLOBAL_MEMORY_CURAND) {
-        // extern __shared__ curandState *rng_states_global;
-        rng_states = rng_states_global;
-    } else {
-        __shared__ curandState rng_states_shared[MAX_COMPONENTS];
-        rng_states = rng_states_shared;
-    }
+
 
     if constexpr (VERBOSE) {
         if (threadIdx.x < model->num_components) {
@@ -642,7 +659,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
     // Initialize RNG
     int sim_id = blockIdx.x * runs_per_block;
     int comp_id = threadIdx.x;
-    curand_init(currand_seed + sim_id * blockDim.x + comp_id, 0, 0,
+    curand_init(curand_seed + sim_id * blockDim.x + comp_id, 0, 0,
                 &rng_states[threadIdx.x]);
     block_state.random = &rng_states[threadIdx.x];
 
@@ -654,18 +671,18 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         if constexpr (VERBOSE) {
             printf("Block %d: Initializing shared memory\n", blockIdx.x);
         }
-        SharedBlockMemory::init(&shared_mem, sim_id);
+        SharedBlockMemory::init(shared_mem, sim_id);
 
         for (int i = 0; i < num_vars; i++) {
             if constexpr (VERBOSE) {
                 printf("Setting variable %d to kind %d\n", i, kinds[i]);
             }
-            shared_mem.variables[i].value = model->initial_var_values[i];
+            shared_mem->variables[i].value = model->initial_var_values[i];
             if (kinds[i] == VariableKind::CLOCK) {
-                shared_mem.variables[i].kind = VariableKind::CLOCK;
+                shared_mem->variables[i].kind = VariableKind::CLOCK;
             } else if (kinds[i] == VariableKind::INT) {
-                shared_mem.query_variable_min = model->initial_var_values[i];
-                shared_mem.query_variable_max = model->initial_var_values[i];
+                shared_mem->query_variable_min = model->initial_var_values[i];
+                shared_mem->query_variable_max = model->initial_var_values[i];
                 // Not sure whether we need this case yet
             }
         }
@@ -694,10 +711,10 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
     CHECK_ERROR("after component init");
 
     // Main simulation loop
-    while (shared_mem.global_time < time_bound) {
+    while (shared_mem->global_time < time_bound) {
         __syncthreads(); // Synchronize before continuing to make sure all threads have the latest value of shared_mem.has_hit_goal etc.
 
-        if (shared_mem.has_hit_goal && flags != nullptr) { // All threads should check whether the goal has been reached
+        if (shared_mem->has_hit_goal && flags != nullptr) { // All threads should check whether the goal has been reached
             if(threadIdx.x == 0) {
                 printf("Flag was true for block %d\n", blockIdx.x);
                 flags[blockIdx.x] = true; // ... but only a single thread should write to the flag to avoid race conditions
@@ -707,31 +724,33 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 
 
         if constexpr (VERBOSE) {
-            printf("Flag is %d\n", shared_mem.has_hit_goal);
-            printf("Thread %d: Time=%f\n", threadIdx.x, shared_mem.global_time);
+            printf("Flag is %d\n", shared_mem->has_hit_goal);
+            printf("Thread %d: Time=%f\n", threadIdx.x, shared_mem->global_time);
         }
-        compute_possible_delay(my_state, &shared_mem, model, &block_state, num_vars, variable_id);
+        compute_possible_delay(my_state, shared_mem, model, &block_state, num_vars, variable_id);
 
         CHECK_ERROR("after compute delay");
         __syncthreads();
 
         double min_delay = find_minimum_delay(
             block_state.my_component, // ComponentState*
-            &shared_mem, // SharedBlockMemory*
+            shared_mem, // SharedBlockMemory*
             model, // SharedModelState*
             &block_state, // BlockSimulationState*
             model->num_components, // int num_components
-            variable_id
+            variable_id,
+            delays, //Delays in shared memory
+            component_indices   //Component indices in shared memory.
         );
         CHECK_ERROR("after find minimum");
         if constexpr (VERBOSE) {
             printf("Thread %d: Minimum delay = %f\n", threadIdx.x, min_delay);
         }
         if (threadIdx.x == 0) {
-            shared_mem.global_time += min_delay;
+            shared_mem->global_time += min_delay;
             if constexpr (VERBOSE) {
                 printf("Block %d: Advanced time to %f\n",
-                       blockIdx.x, shared_mem.global_time);
+                       blockIdx.x, shared_mem->global_time);
             }
         }
 
@@ -740,9 +759,9 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 
     if (variable_flags != nullptr) {
         if (isMax) {
-            variable_flags[blockIdx.x] = shared_mem.query_variable_max;
+            variable_flags[blockIdx.x] = shared_mem->query_variable_max;
         } else {
-            variable_flags[blockIdx.x] = shared_mem.query_variable_min;
+            variable_flags[blockIdx.x] = shared_mem->query_variable_min;
         }
     }
 
@@ -965,14 +984,45 @@ void run_statistical_model_checking(SharedModelState *model, float confidence, f
     curandState *rng_states_global;
 
     if constexpr (USE_GLOBAL_MEMORY_CURAND) {
-        cudaMalloc(&rng_states_global, MAX_COMPONENTS * sizeof(curandState));
+        cudaMalloc(&rng_states_global, m_info.MAX_COMPONENTS * sizeof(curandState));
     }
 
 
     cudaGetDeviceProperties(&deviceProp, 0); // Assuming device 0, change if necessary
 
-    simulation_kernel<<<num_blocks, threads_per_block>>>(
-        model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, flags, variable_flags, variable_id, conf.isMax, rng_states_global, conf.currand_seed);
+
+
+    // What share memory we need:
+    /*
+    __shared__ double delays[MAX_COMPONENTS]; // Only need MAX_COMPONENTS slots, not full warp size
+    __shared__ int component_indices[MAX_COMPONENTS];
+    __shared__ SharedBlockMemory shared_mem;
+    __shared__ ComponentState components[MAX_COMPONENTS];
+    curandState *rng_states;
+
+    // Store curandStates in either global memory or shared memory. Requires ~90kb of shared memory w/ curandStates
+    if constexpr (USE_GLOBAL_MEMORY_CURAND) {
+        // extern __shared__ curandState *rng_states_global;
+        rng_states = rng_states_global;
+    } else {
+        __shared__ curandState rng_states_shared[MAX_COMPONENTS];
+        rng_states = rng_states_shared;
+    }
+
+
+
+    */
+
+    // Dynamic Shared memory: https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/
+    int MC = m_info.MAX_COMPONENTS;
+    if constexpr (USE_GLOBAL_MEMORY_CURAND) {
+        simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState)>>>(
+        model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, flags, variable_flags, variable_id, conf.isMax, rng_states_global, conf.curand_seed, MC);
+    } else {
+        simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState) + MC*sizeof(curandState)>>>(
+        model, device_results, runs_per_block, TIME_BOUND, d_kinds, num_vars, flags, variable_flags, variable_id, conf.isMax, rng_states_global, conf.curand_seed, MC);
+    }
+
 
     // Check for launch error
     error = cudaGetLastError();

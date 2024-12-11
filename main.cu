@@ -18,6 +18,7 @@
 int main(int argc, char *argv[]) {
     std::string filename = "../xml_files/UppaalBehaviorTest3.xml";
     int currand_seed = 0;
+    int MAX_COMPONENTS = 3;
     // Statistics
     int simulations = 1000;
     bool isMax = true; // Gather info on either the max value of the variable or the min
@@ -26,7 +27,7 @@ int main(int argc, char *argv[]) {
     if (!succeded) {return 1;}
 
     const struct configuration conf = {filename, currand_seed, simulations, isMax};
-    const struct model_info m_info = {64, 1};
+    const struct model_info m_info = {MAX_COMPONENTS, 64, 1};
 
 
     // Regular queries
