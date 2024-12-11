@@ -3,10 +3,7 @@
 #include "simulation.cuh"
 #include "expressions.cuh"
 
-
-
 #define CHECK_ERROR(loc) check_cuda_error(loc)
-
 
 // Calculate sum of edges from enabled set
 __device__ int get_sum_edge_weight(const ComponentState *my_state,
