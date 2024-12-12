@@ -28,36 +28,6 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
         return;
     }
 
-
-    cudaGetDeviceProperties(&deviceProp, 0);
-    int available_shared_mem = deviceProp.sharedMemPerBlock;  // Usually 48KB or 96KB depending on GPU
-    int host_num_components;
-    cudaMemcpy(&host_num_components, &(model->num_components), sizeof(int), cudaMemcpyDeviceToHost);
-
-    size_t per_run_size =
-    sizeof(SharedBlockMemory) +                         // Shared block memory (392 bytes)
-    (host_num_components * sizeof(ComponentState)) +         // Component states
-    (host_num_components * sizeof(double)) +                 // Delays array
-    (host_num_components * sizeof(int));                     // Component indices array
-
-    int max_runs_by_memory = available_shared_mem / per_run_size;
-    int max_threads = deviceProp.maxThreadsPerBlock;
-    int max_runs_by_threads = max_threads / host_num_components;
-    int runs_per_block_new = min(max_runs_by_memory, max_runs_by_threads);
-
-
-
-
-
-
-    printf("=====SIMULATION STATS=====\n");
-    printf("Available shared memory: %d\n", available_shared_mem);
-    printf("Per run size: %d\n", per_run_size);
-    printf("Components per run: %d", host_num_components);
-    printf("Max runs by memory per block: %d\n", max_runs_by_memory);
-    printf("Max runs by threads per block: %d\n", max_runs_by_threads);
-    printf("Runs per block (min of max runs per block and max runs per thread): %d\n", runs_per_block_new);
-    printf("===========================\n\n");
     // Adjust threads to be multiple of warp size
     int warp_size = deviceProp.warpSize;
     //int threads_per_block = 512; // 100 components
