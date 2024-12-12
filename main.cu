@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
 
     const struct configuration conf = {filename, curand_seed, simulations, isMax};
 
-    smc(filename, "", true, false, 0, 5, conf);
+    smc(filename, "c1.f4", true, false, 0, -1, conf);
 
     return 1;
 }

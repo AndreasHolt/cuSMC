@@ -10,6 +10,7 @@
 
 
 #define VERBOSE 0
+#define QUERYSTATS 0
 #define MINIMAL_PRINTS 0
 #define TIME_BOUND 10.0
 #define MAX_VARIABLES 20
