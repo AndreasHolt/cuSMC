@@ -12,10 +12,9 @@ __device__ int get_sum_edge_weight(const ComponentState *my_state,
     double sum = 0;
     const NodeInfo *node = my_state->current_node;
     for (int i = 0; i < node->num_edges; i++) {
-        if (my_state->enabled_edges[i]+node->first_edge_index == node->first_edge_index+i) {
+        if (my_state->enabled_edges[i] + node->first_edge_index == node->first_edge_index + i) {
             sum += evaluate_expression(model->edges[node->first_edge_index + i].weight, shared);
         }
-
     }
     return static_cast<int>(sum);
 }
@@ -25,7 +24,6 @@ __device__ void take_transition(ComponentState *my_state,
                                 SharedBlockMemory *shared,
                                 SharedModelState *model,
                                 BlockSimulationState *block_state, int query_variable_id) {
-
     if (my_state->num_enabled_edges == 0) {
         if constexpr (MINIMAL_PRINTS) {
             printf("Thread %d: No enabled edges to take\n", threadIdx.x);
@@ -61,7 +59,7 @@ __device__ void take_transition(ComponentState *my_state,
 
         if constexpr (VERBOSE) {
             printf("Thread %d: Randomly selected edge %d from %d enabled edges (rand=%d)\n",
-                               threadIdx.x, selected_idx, my_state->num_enabled_edges, rand);
+                   threadIdx.x, selected_idx, my_state->num_enabled_edges, rand);
         }
     }
 
@@ -79,7 +77,6 @@ __device__ void take_transition(ComponentState *my_state,
         // This component needs to signal the broadcast, as its channel is '!-labelled'
         shared->channel_active[channel_abs] = true;
         shared->channel_sender[channel_abs] = my_state->component_id;
-
     }
 
 
@@ -135,9 +132,12 @@ __device__ void take_transition(ComponentState *my_state,
         if (node.id == edge.dest_node_id) {
             dest_node = &node;
 
-            if (dest_node->type == 1){
+            if (dest_node->type == 1) {
                 shared->has_hit_goal = true;
-                printf("Block %d thread %d has reached the goal state at node %d\n", blockIdx.x, threadIdx.x, edge.dest_node_id);
+                if constexpr (QUERYSTATS) {
+                    printf("Block %d thread %d has reached the goal state at node %d\n", blockIdx.x, threadIdx.x,
+                           edge.dest_node_id);
+                }
             }
 
             if constexpr (VERBOSE) {
@@ -281,7 +281,6 @@ __device__ void check_cuda_error(const char *location) {
         printf("CUDA error at %s: %s\n", location, cudaGetErrorString(error));
     }
 }
-
 
 
 __device__ void compute_possible_delay(
@@ -447,7 +446,8 @@ __device__ void compute_possible_delay(
 
         // Sample from the exponential distribution
         double rand = curand_uniform_double(block_state->random);
-        my_state->next_delay = -__log2f(rand) / rate; // Fastest log, but not as accurate. We consider it fine because we are doing statistical sampling
+        my_state->next_delay = -__log2f(rand) / rate;
+        // Fastest log, but not as accurate. We consider it fine because we are doing statistical sampling
 
         my_state->has_delay = true;
         if constexpr (VERBOSE) {
@@ -465,7 +465,7 @@ __device__ double find_minimum_delay(
     SharedModelState *model,
     BlockSimulationState *block_state,
     int num_components, int query_variable_id,
-    double* delays, int * component_indices) {
+    double *delays, int *component_indices) {
     //__shared__ double delays[MAX_COMPONENTS]; // Only need MAX_COMPONENTS slots, not full warp size
     //__shared__ int component_indices[MAX_COMPONENTS];
 
@@ -563,9 +563,9 @@ __device__ double find_minimum_delay(
 }
 
 __global__ void simulation_kernel(SharedModelState *model, bool *results,
-                                  int runs_per_block, float time_bound, VariableKind *kinds, uint num_vars, bool* flags, double* variable_flags, int variable_id, bool isMax,
+                                  int runs_per_block, float time_bound, VariableKind *kinds, uint num_vars, bool *flags,
+                                  double *variable_flags, int variable_id, bool isMax,
                                   curandState *rng_states_global, int curand_seed, int max_components) {
-
     // Prepare Shared memory
     //extern __shared__ int s[];
     //int *integerData = s;                        // nI ints
@@ -575,10 +575,10 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 
     SharedBlockMemory *shared_mem = (SharedBlockMemory *) &s;
     // Using (char*) because it is 1 byte large.
-    ComponentState *components = (ComponentState *)((char*)shared_mem + sizeof(SharedBlockMemory));
+    ComponentState *components = (ComponentState *) ((char *) shared_mem + sizeof(SharedBlockMemory));
 
-    double *delays = (double *)&components[max_components]; // Only need MAX_COMPONENTS slots, not full warp size
-    int *component_indices = (int *)&delays[max_components];
+    double *delays = (double *) &components[max_components]; // Only need MAX_COMPONENTS slots, not full warp size
+    int *component_indices = (int *) &delays[max_components];
 
     curandState *rng_states;
 
@@ -587,7 +587,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         // extern __shared__ curandState *rng_states_global;
         rng_states = rng_states_global;
     } else {
-        curandState *rng_states_shared = (curandState *)component_indices[max_components];
+        curandState *rng_states_shared = (curandState *) component_indices[max_components];
         rng_states = rng_states_shared;
     }
 
@@ -605,8 +605,6 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
             return;
         }
     }
-
-
 
 
     if constexpr (VERBOSE) {
@@ -628,8 +626,8 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
     CHECK_ERROR("after shared memory declaration");
 
     // Debug model access
-    if constexpr (VERBOSE) {
-        if (threadIdx.x == 0) {
+    if (threadIdx.x == 0) {
+        if constexpr (VERBOSE) {
             printf("Thread %d: Attempting to access model, num_components=%d\n",
                    threadIdx.x, model->num_components);
         }
@@ -706,12 +704,17 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 
     // Main simulation loop
     while (shared_mem->global_time < time_bound) {
-        __syncthreads(); // Synchronize before continuing to make sure all threads have the latest value of shared_mem.has_hit_goal etc.
+        __syncthreads();
+        // Synchronize before continuing to make sure all threads have the latest value of shared_mem.has_hit_goal etc.
 
-        if (shared_mem->has_hit_goal && flags != nullptr) { // All threads should check whether the goal has been reached
-            if(threadIdx.x == 0) {
-                printf("Flag was true for block %d\n", blockIdx.x);
-                flags[blockIdx.x] = true; // ... but only a single thread should write to the flag to avoid race conditions
+        if (shared_mem->has_hit_goal && flags != nullptr) {
+            // All threads should check whether the goal has been reached
+            if (threadIdx.x == 0) {
+                if constexpr (QUERYSTATS) {
+                    printf("Flag was true for block %d\n", blockIdx.x);
+                }
+                flags[blockIdx.x] = true;
+                // ... but only a single thread should write to the flag to avoid race conditions
             }
             break;
         }
@@ -734,7 +737,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
             model->num_components, // int num_components
             variable_id,
             delays, //Delays in shared memory
-            component_indices   //Component indices in shared memory.
+            component_indices //Component indices in shared memory.
         );
         CHECK_ERROR("after find minimum");
         if constexpr (VERBOSE) {
@@ -763,5 +766,3 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         printf("Thread %d: Simulation complete\n", threadIdx.x);
     }
 }
-
-
