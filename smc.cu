@@ -343,7 +343,7 @@ void smc(configuration conf, statistics_Configuration stat_conf) {
     auto registry = var_tracker.get_variable_registry();
 
     VariableKind *kinds = var_tracker.createKindArray(registry);
-    uint num_vars = registry.size();
+    uint32_t num_vars = registry.size();
 
     // TODO: Calculate these values...
     const struct model_info m_info = {3, 64, 1, num_vars};

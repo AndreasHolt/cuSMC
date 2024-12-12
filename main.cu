@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
     if (CONST_QUERY) {
         stats = new statistics_Configuration[NumberOfQueries];
         stats[0] = statistics_Configuration(1000, 100, 15, 4, true, true, "");
-        stats[1] = {100, 100, 12, -1, false, false, "g2.c5"};
+        stats[1] = {100, 100, 12, -1, false, false, "c1.f4"};
     } else {
         stats = (statistics_Configuration*)malloc(sizeof(statistics_Configuration));
         stats[0] = {simulations, timeBound, variable_threshhold, variable_id, isMax, isEstimate, loc_query};

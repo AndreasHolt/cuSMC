@@ -563,7 +563,7 @@ __device__ double find_minimum_delay(
 }
 
 __global__ void simulation_kernel(SharedModelState *model, bool *results,
-                                  int runs_per_block, float time_bound, VariableKind *kinds, uint num_vars, bool *flags,
+                                  int runs_per_block, float time_bound, VariableKind *kinds, uint32_t  num_vars, bool *flags,
                                   double *variable_flags, int variable_id, bool isMax,
                                   curandState *rng_states_global, int curand_seed, int max_components) {
     // Prepare Shared memory
