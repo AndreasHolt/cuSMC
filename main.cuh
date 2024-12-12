@@ -21,10 +21,7 @@ constexpr bool USE_GLOBAL_MEMORY_CURAND = true;
 struct configuration {
     std::string filename;
     int curand_seed;
-    int simulations;
-    bool isMax;
 };
-extern const configuration conf;
 
 struct model_info {
     int MAX_COMPONENTS = 3;
@@ -34,9 +31,21 @@ struct model_info {
     int runs_per_block = 1;
     uint num_vars;
 };
-extern const model_info m_info;
 
+struct statistics_Configuration {
+    // Statistics
+    int simulations;
+    int timeBound;
+    int variable_threshhold;
+    int variable_id;
+    bool isMax; // Gather info on either the max value of the variable or the min
+    bool isEstimate;
+    std::string loc_query;
+    statistics_Configuration() : simulations(0), timeBound(0), variable_threshhold(0), variable_id(0), isMax(false), isEstimate(false), loc_query("") {}
+    statistics_Configuration(int sims, int tBound, int vThresh, int vId, bool max, bool estimate, const std::string& locQuery)
+        : simulations(sims), timeBound(tBound), variable_threshhold(vThresh), variable_id(vId), isMax(max), isEstimate(estimate), loc_query(locQuery) {}
+};
 
-bool HandleCommandLineArguments(int argc, char **argv, std::string *filename, int *seed, int * runs, bool *isMax);
+bool HandleCommandLineArguments(int argc, char **argv, std::string *filename, int *seed, statistics_Configuration* stats, bool CONST_QUERY);
 
 #endif //MAIN_CUH

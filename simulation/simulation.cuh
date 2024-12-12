@@ -12,7 +12,7 @@
 #include "../main.cuh"
 
 
-void run_statistical_model_checking(SharedModelState* model, float confidence, float precision, VariableKind* kinds, bool* flags, double* variable_flags, int variable_id, configuration conf, model_info m_info);
+void run_statistical_model_checking(SharedModelState* model, float confidence, float precision, VariableKind* kinds, bool* flags, double* variable_flags, int variable_id);
 
 
 __global__ void simulation_kernel(SharedModelState *model, bool *results,

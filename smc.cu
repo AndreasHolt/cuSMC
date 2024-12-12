@@ -3,12 +3,13 @@
 //
 
 #include "smc.cuh"
+#include "main.cuh"
 #define TIME_BOUND 10.0
 
 
 void run_statistical_model_checking(SharedModelState *model, float confidence, float precision,
                                                 VariableKind *kinds, bool* flags,
-                                                double* variable_flags, int variable_id, configuration conf, model_info m_info) {
+                                                double* variable_flags, model_info m_info, configuration conf, statistics_Configuration stat_conf) {
     int total_runs = 1;
     if constexpr (VERBOSE) {
         cout << "total_runs = " << total_runs << endl;
@@ -33,7 +34,7 @@ void run_statistical_model_checking(SharedModelState *model, float confidence, f
     // int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
     int threads_per_block = 32; // 100 components
     int runs_per_block = m_info.runs_per_block;
-    int num_blocks = conf.simulations;
+    int num_blocks = stat_conf.simulations;
 
     // Print detailed device information
     if constexpr (VERBOSE) {
@@ -253,10 +254,10 @@ void run_statistical_model_checking(SharedModelState *model, float confidence, f
     int MC = m_info.MAX_COMPONENTS;
     if constexpr (USE_GLOBAL_MEMORY_CURAND) {
         simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState)>>>(
-        model, device_results, runs_per_block, TIME_BOUND, d_kinds, m_info.num_vars, flags, variable_flags, variable_id, conf.isMax, rng_states_global, conf.curand_seed, MC);
+        model, device_results, runs_per_block, TIME_BOUND, d_kinds, m_info.num_vars, flags, variable_flags, stat_conf.variable_id, stat_conf.isMax, rng_states_global, conf.curand_seed, MC);
     } else {
         simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState) + MC*sizeof(curandState)>>>(
-        model, device_results, runs_per_block, TIME_BOUND, d_kinds, m_info.num_vars, flags, variable_flags, variable_id, conf.isMax, rng_states_global, conf.curand_seed, MC);
+        model, device_results, runs_per_block, TIME_BOUND, d_kinds, m_info.num_vars, flags, variable_flags, stat_conf.variable_id, stat_conf.isMax, rng_states_global, conf.curand_seed, MC);
     }
 
 
@@ -284,15 +285,15 @@ void run_statistical_model_checking(SharedModelState *model, float confidence, f
     cudaFree(device_results);
 }
 
-void smc(string filename, string query, bool isMax, bool isEstimate, int variable_threshhold, int variable_id, configuration conf) {
+void smc(configuration conf, statistics_Configuration stat_conf) {
     // Read and parse XML file
     abstract_parser *parser = new uppaal_xml_parser();
-    network model = parser->parse(filename);
+    network model = parser->parse(conf.filename);
     network_props properties = {};
     populate_properties(properties, parser);
 
     std::unordered_set<std::string> *query_set = new std::unordered_set<std::string>();
-    query_set->insert(query);
+    query_set->insert(stat_conf.loc_query);
     // Optimize the model
     domain_optimization_visitor optimizer = domain_optimization_visitor(
         query_set,
@@ -321,7 +322,7 @@ void smc(string filename, string query, bool isMax, bool isEstimate, int variabl
 
     double result = 0;
     // Handling variable queries
-    if (variable_id != -1) {
+    if (stat_conf.variable_id != -1) {
         std::unordered_map<int, node *> node_map = optimizer.get_node_map();
         SharedModelState *state = init_shared_model_state(
             &model, // cpu_network
@@ -331,72 +332,72 @@ void smc(string filename, string query, bool isMax, bool isEstimate, int variabl
             var_tracker.get_variable_registry(),
             parser,
             m_info.num_vars);
-        Statistics stats(conf.simulations, VAR_STAT);
+        Statistics stats(stat_conf.simulations, VAR_STAT);
 
         cout << "=================\n";
         cout << "Running SMC with the following settings:" << std::endl;
-        cout << "- Number of simulations: " << conf.simulations << std::endl;
+        cout << "- Number of simulations: " << stat_conf.simulations << std::endl;
         cout << "- Model: " << conf.filename << std::endl;
         cout << "- Random seed: " << conf.curand_seed << std::endl;
 
-        if (!query.empty()) {
+        if (!stat_conf.loc_query.empty()) {
             cout << "- Logging type: \"comp.node\" query" << std::endl;
-        } else if (variable_id != -1) {
-            string min_or_max = (isMax) ? "max" : "min";
+        } else if (stat_conf.variable_id != -1) {
+            string min_or_max = (stat_conf.isMax) ? "max" : "min";
             cout << "- Logging type: variable query. Finding " << min_or_max
-                 << " of variable with ID " << variable_id << std::endl;
+                 << " of variable with ID " << stat_conf.variable_id << std::endl;
         }
 
         cout << "=================\n\n";
 
         run_statistical_model_checking(state, 0.05, 0.01, kinds, stats.get_comp_device_ptr(),
-                                           stats.get_var_device_ptr(), variable_id, conf, m_info);
+                                           stats.get_var_device_ptr(), m_info, conf, stat_conf);
 
-        int len_of_array = conf.simulations;
+        int len_of_array = stat_conf.simulations;
         double *var_data = stats.collect_var_data();
         // Estimate query
-        if (isEstimate) {
+        if (stat_conf.isEstimate) {
             for (int i = 0; i < len_of_array; i++) {
                 result += var_data[i];
             }
             result = result / len_of_array;
         }
         // Probability query
-        else if (!isEstimate) {
+        else if (!stat_conf.isEstimate) {
             for (int i = 0; i < len_of_array; i++) {
-                if (isMax && var_data[i] > variable_threshhold) { // Increment if value is larger than specified max
+                if (stat_conf.isMax && var_data[i] > stat_conf.variable_threshhold) { // Increment if value is larger than specified max
                     result += 1;
                 }
-                if (!isMax && var_data[i] < variable_threshhold) { // Increment if value is smaller than specified min
+                if (!stat_conf.isMax && var_data[i] < stat_conf.variable_threshhold) { // Increment if value is smaller than specified min
                     result += 1;
                 }
             }
             result = result / len_of_array;
         }
-        printf("Result: %lf", result);
+        std::cout << "Result: " << result << endl;
     }
 
-    if (variable_id == -1) {
-        Statistics stats(conf.simulations, COMP_STAT);
+    if (stat_conf.variable_id == -1) {
+        Statistics stats(stat_conf.simulations, COMP_STAT);
         if constexpr (VERBOSE) {
-            cout << "Recorded query is: " + query << endl;
+            cout << "Recorded query is: " + stat_conf.loc_query << endl;
         }
 
         // String split
         std::vector<char> component;
         std::vector<char> goal_node;
         bool period_reached = false;
-        for (int i = 0; i < query.length(); i++) {
+        for (int i = 0; i < stat_conf.loc_query.length(); i++) {
             // Guard
-            if (query[i] == '.') {
+            if (stat_conf.loc_query[i] == '.') {
                 period_reached = true;
                 continue;
             }
             if (!period_reached) {
-                component.push_back(query[i]);
+                component.push_back(stat_conf.loc_query[i]);
             }
             if (period_reached) {
-                goal_node.push_back(query[i]);
+                goal_node.push_back(stat_conf.loc_query[i]);
             }
         }
 
@@ -422,10 +423,10 @@ void smc(string filename, string query, bool isMax, bool isEstimate, int variabl
 
         // Run the SMC simulations
         run_statistical_model_checking(state, 0.05, 0.01, kinds, stats.get_comp_device_ptr(),
-                                           stats.get_var_device_ptr(), variable_id, conf, m_info);
+                                           stats.get_var_device_ptr(), m_info, conf, stat_conf);
         try {
             auto results = stats.collect_results();
-            stats.print_results(query, results);
+            stats.print_results(stat_conf.loc_query, results);
         } catch (const std::runtime_error &e) {
             cout << "Error while collecting the results from the simulations: " << e.what() << endl;
             }
