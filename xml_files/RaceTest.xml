@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
+<nta>
+    <declaration>// Place global declarations here.
+        broadcast chan test;
+        int var = 0;</declaration>
+    <template>
+        <name>Template7</name>
+        <location id="id0" x="0" y="0">
+        </location>
+        <location id="id1" x="136" y="0">
+        </location>
+        <init ref="id0"/>
+        <transition id="id2">
+            <source ref="id0"/>
+            <target ref="id1"/>
+            <label kind="synchronisation" x="18" y="-17">test?</label>
+            <label kind="assignment" x="18" y="0">var=7</label>
+        </transition>
+    </template>
+    <template>
+        <name>Template6</name>
+        <location id="id3" x="0" y="0">
+        </location>
+        <location id="id4" x="136" y="0">
+        </location>
+        <init ref="id3"/>
+        <transition id="id5">
+            <source ref="id3"/>
+            <target ref="id4"/>
+            <label kind="synchronisation" x="18" y="-17">test?</label>
+            <label kind="assignment" x="18" y="0">var=6</label>
+        </transition>
+    </template>
+    <template>
+        <name>Template5</name>
+        <location id="id6" x="0" y="0">
+        </location>
+        <location id="id7" x="136" y="0">
+        </location>
+        <init ref="id6"/>
+        <transition id="id8">
+            <source ref="id6"/>
+            <target ref="id7"/>
+            <label kind="synchronisation" x="18" y="-17">test?</label>
+            <label kind="assignment" x="18" y="0">var=5</label>
+        </transition>
+    </template>
+    <template>
+        <name>Template4</name>
+        <location id="id9" x="0" y="0">
+        </location>
+        <location id="id10" x="136" y="0">
+        </location>
+        <init ref="id9"/>
+        <transition id="id11">
+            <source ref="id9"/>
+            <target ref="id10"/>
+            <label kind="synchronisation" x="18" y="-17">test!</label>
+            <label kind="assignment" x="18" y="0">var=4</label>
+        </transition>
+    </template>
+    <template>
+        <name>Template3</name>
+        <location id="id12" x="0" y="0">
+        </location>
+        <location id="id13" x="136" y="0">
+        </location>
+        <init ref="id12"/>
+        <transition id="id14">
+            <source ref="id12"/>
+            <target ref="id13"/>
+            <label kind="synchronisation" x="18" y="-17">test?</label>
+            <label kind="assignment" x="18" y="0">var=3</label>
+        </transition>
+    </template>
+    <template>
+        <name>Template2</name>
+        <location id="id15" x="0" y="0">
+        </location>
+        <location id="id16" x="136" y="0">
+        </location>
+        <init ref="id15"/>
+        <transition id="id17">
+            <source ref="id15"/>
+            <target ref="id16"/>
+            <label kind="synchronisation" x="18" y="-17">test?</label>
+            <label kind="assignment" x="18" y="0">var=2</label>
+        </transition>
+    </template>
+    <template>
+        <name>Template1</name>
+        <location id="id18" x="0" y="0">
+        </location>
+        <location id="id19" x="136" y="0">
+        </location>
+        <init ref="id18"/>
+        <transition id="id20">
+            <source ref="id18"/>
+            <target ref="id19"/>
+            <label kind="synchronisation" x="18" y="-17">test?</label>
+            <label kind="assignment" x="18" y="0">var=1</label>
+        </transition>
+    </template>
+    <template>
+        <name>Template0</name>
+        <location id="id21" x="24" y="0">
+        </location>
+        <location id="id22" x="160" y="0">
+        </location>
+        <init ref="id21"/>
+        <transition id="id23">
+            <source ref="id21"/>
+            <target ref="id22"/>
+            <label kind="synchronisation" x="42" y="-17">test?</label>
+            <label kind="assignment" x="42" y="0">var=0</label>
+        </transition>
+    </template>
+    <template>
+        <name x="5" y="5">Template8</name>
+        <declaration>// Place local declarations here.
+        </declaration>
+        <location id="id24" x="0" y="0">
+        </location>
+        <location id="id25" x="136" y="0">
+        </location>
+        <init ref="id24"/>
+        <transition id="id26">
+            <source ref="id24"/>
+            <target ref="id25"/>
+            <label kind="synchronisation" x="18" y="-17">test?</label>
+            <label kind="assignment" x="18" y="0">var=8</label>
+        </transition>
+    </template>
+    <system>// Place template instantiations here.
+
+
+        Process0 = Template0();
+        Process1 = Template1();
+        Process2 = Template2();
+        Process3 = Template3();
+        Process4 = Template4();
+        Process5 = Template5();
+        Process6 = Template6();
+        Process7 = Template7();
+        Process8 = Template8();
+
+        // List one or more processes to be composed into a system.
+        system Process0,Process1,Process2,Process3,Process4,Process5,Process6,Process7,Process8;
+    </system>
+    <queries>
+        <query>
+            <formula/>
+            <comment/>
+        </query>
+    </queries>
+</nta>
