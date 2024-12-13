@@ -52,6 +52,10 @@ add_executable(cuSMC main.cu
         simulation/state/model_verification.cuh
         smc.cu
         smc.cuh
+
+        # Write timings to CSV
+        simulation/write_csv.cu
+        simulation/write_csv.cuh
 )
 
 set_target_properties(cuSMC PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

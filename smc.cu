@@ -4,6 +4,7 @@
 
 #include "smc.cuh"
 #include "main.cuh"
+#include "simulation/write_csv.cuh"
 #define TIME_BOUND 10.0
 
 
@@ -14,9 +15,8 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
     int MC;
     cudaMemcpy(&MC, &(model->num_components), sizeof(int), cudaMemcpyDeviceToHost);
 
-    int total_runs = 1;
     if constexpr (VERBOSE) {
-        cout << "total_runs = " << total_runs << endl;
+        cout << "total_runs = " << stat_conf.simulations << endl;
     }
     // Validate parameters
     if (model == nullptr) {
@@ -74,7 +74,7 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
 
     // Allocate and validate device results array
     bool *device_results;
-    error = cudaMalloc(&device_results, total_runs * sizeof(bool));
+    error = cudaMalloc(&device_results, stat_conf.simulations * sizeof(bool));
     if (error != cudaSuccess) {
         cout << "CUDA malloc error: " << cudaGetErrorString(error) << endl;
         return;
@@ -85,7 +85,7 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
         cout << "  Blocks: " << num_blocks << endl;
         cout << "  Threads per block: " << threads_per_block << endl;
         cout << "  Shared memory per block: " << shared_mem_per_block << endl;
-        cout << "  Time bound: " << TIME_BOUND << endl;
+        cout << "  Time bound: " << stat_conf.timeBound << endl;
     }
 
     // Verify model is accessible
@@ -254,15 +254,32 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
 
     */
 
+    const chrono::steady_clock::time_point global_start = chrono::steady_clock::now();
     // Dynamic Shared memory: https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/
     // int MC = m_info.MAX_COMPONENTS;
     if constexpr (USE_GLOBAL_MEMORY_CURAND) {
         simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState)>>>(
-        model, device_results, runs_per_block, TIME_BOUND, d_kinds, m_info.num_vars, flags, variable_flags, stat_conf.variable_id, stat_conf.isMax, rng_states_global, conf.curand_seed, MC);
+        model, device_results, runs_per_block, stat_conf.timeBound, d_kinds, m_info.num_vars, flags, variable_flags, stat_conf.variable_id, stat_conf.isMax, rng_states_global, conf.curand_seed, MC);
     } else {
         simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState) + MC*sizeof(curandState)>>>(
-        model, device_results, runs_per_block, TIME_BOUND, d_kinds, m_info.num_vars, flags, variable_flags, stat_conf.variable_id, stat_conf.isMax, rng_states_global, conf.curand_seed, MC);
+        model, device_results, runs_per_block, stat_conf.timeBound, d_kinds, m_info.num_vars, flags, variable_flags, stat_conf.variable_id, stat_conf.isMax, rng_states_global, conf.curand_seed, MC);
     }
+
+    cudaDeviceSynchronize();
+
+
+
+
+    auto duration_nano = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - global_start);
+    long long nanoseconds = duration_nano.count();
+    double ms = duration_nano.count() / 1000000.0;
+    cout << "Time taken: " << ms << " ms on file " << conf.filename << endl;
+    cout << "Time taken: " << nanoseconds << " on file " << conf.filename << endl;
+    std::cout << "Time taken: " << duration_nano.count() << " ns ("
+          << (duration_nano.count() / 1000000.0) << " ms)" << std::endl;
+
+    writeTimingToCSV(conf.filename, MC, stat_conf.simulations, stat_conf.timeBound, ms);
+
 
 
     // Check for launch error
@@ -328,6 +345,7 @@ void smc(configuration conf, statistics_Configuration stat_conf) {
     cout << "- Number of simulations: " << stat_conf.simulations << std::endl;
     cout << "- Model: " << conf.filename << std::endl;
     cout << "- Random seed: " << conf.curand_seed << std::endl;
+    cout << "- Time bound: " << stat_conf.timeBound << std::endl;
 
     if (!stat_conf.loc_query.empty()) {
         cout << "- Logging type: \"comp.node\" query" << std::endl;
@@ -353,12 +371,6 @@ void smc(configuration conf, statistics_Configuration stat_conf) {
             m_info.num_vars);
         Statistics stats(stat_conf.simulations, VAR_STAT);
 
-        cout << "=================\n";
-        cout << "Running SMC with the following settings:" << std::endl;
-        cout << "- Number of simulations: " << stat_conf.simulations << std::endl;
-        cout << "- Model: " << conf.filename << std::endl;
-        cout << "- Random seed: " << conf.curand_seed << std::endl;
-
 
         run_statistical_model_checking(state, 0.05, 0.01, kinds, stats.get_comp_device_ptr(),
                                            stats.get_var_device_ptr(), m_info, conf, stat_conf);
@@ -368,6 +380,7 @@ void smc(configuration conf, statistics_Configuration stat_conf) {
         // Estimate query
         if (stat_conf.isEstimate) {
             for (int i = 0; i < len_of_array; i++) {
+                cout << "Adding " << var_data[i] << " to sum " << result << endl;
                 result += var_data[i];
             }
             result = result / len_of_array;

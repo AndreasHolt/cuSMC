@@ -10,14 +10,14 @@
 int main(int argc, char *argv[]) {
 
     bool CONST_QUERY = true;
-    std::string filename = "../xml_files/RaceTest.xml";
-    int curand_seed = 12345;
+    std::string filename = "../xml_files/LargeModels/fischer_10_29.xml";
+    int curand_seed = 1234;
 
     // Statistics
-    int simulations = 2;
-    int timeBound = 100;
-    int variable_threshhold = 10;
-    int variable_id = 5;
+    int simulations = 1000;
+    int timeBound = 300;
+    int variable_threshhold = -1;
+    int variable_id = 1;
     bool isMax = true; // Gather info on either the max value of the variable or the min
     bool isEstimate = true;
     string loc_query = "";
@@ -32,8 +32,8 @@ int main(int argc, char *argv[]) {
     struct statistics_Configuration* stats = nullptr;
     if (CONST_QUERY) {
         stats = new statistics_Configuration[NumberOfQueries];
-        stats[0] = statistics_Configuration(1, 100, 15, 0, true, true, "");
-        //stats[1] = {100, 100, 12, -1, false, false, "c1.f4"};
+        stats[0] = statistics_Configuration(simulations, timeBound, variable_threshhold, variable_id, isMax, isEstimate, "");
+        // stats[1] = {100, 100, 12, -1, false, false, "c1.f4"};
     } else {
         stats = (statistics_Configuration*)malloc(sizeof(statistics_Configuration));
         stats[0] = {simulations, timeBound, variable_threshhold, variable_id, isMax, isEstimate, loc_query};

@@ -219,6 +219,9 @@ __device__ bool check_edge_enabled(const EdgeInfo &edge,
                 case constraint::greater_equal_c:
                     satisfied = var_value >= bound;
                     break;
+                case constraint::equal_c:
+                    satisfied = var_value = bound;
+                    break;
                 default:
                     printf("  Warning: Unknown operator %d\n", guard.operand);
                     return false;
@@ -738,8 +741,11 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
             if (kinds[i] == VariableKind::CLOCK) {
                 shared_mem->variables[i].kind = VariableKind::CLOCK;
             } else if (kinds[i] == VariableKind::INT) {
-                shared_mem->query_variable_min = model->initial_var_values[i];
-                shared_mem->query_variable_max = model->initial_var_values[i];
+                if (i == variable_id) {
+                    shared_mem->query_variable_min = model->initial_var_values[i];
+                    shared_mem->query_variable_max = model->initial_var_values[i];
+
+                }
                 // Not sure whether we need this case yet
             }
         }
