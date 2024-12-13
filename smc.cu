@@ -10,6 +10,10 @@
 __host__ void run_statistical_model_checking(SharedModelState *model, float confidence, float precision,
                                                 VariableKind *kinds, bool* flags,
                                                 double* variable_flags, model_info m_info, configuration conf, statistics_Configuration stat_conf) {
+    // Get max components from SharedModelState
+    int MC;
+    cudaMemcpy(&MC, &(model->num_components), sizeof(int), cudaMemcpyDeviceToHost);
+
     int total_runs = 1;
     if constexpr (VERBOSE) {
         cout << "total_runs = " << total_runs << endl;
@@ -221,7 +225,7 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
     curandState *rng_states_global;
 
     if constexpr (USE_GLOBAL_MEMORY_CURAND) {
-        cudaMalloc(&rng_states_global, m_info.MAX_COMPONENTS * sizeof(curandState));
+        cudaMalloc(&rng_states_global, MC * sizeof(curandState));
     }
 
 
@@ -251,7 +255,7 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
     */
 
     // Dynamic Shared memory: https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/
-    int MC = m_info.MAX_COMPONENTS;
+    // int MC = m_info.MAX_COMPONENTS;
     if constexpr (USE_GLOBAL_MEMORY_CURAND) {
         simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState)>>>(
         model, device_results, runs_per_block, TIME_BOUND, d_kinds, m_info.num_vars, flags, variable_flags, stat_conf.variable_id, stat_conf.isMax, rng_states_global, conf.curand_seed, MC);
@@ -315,8 +319,8 @@ void smc(configuration conf, statistics_Configuration stat_conf) {
     VariableKind *kinds = var_tracker.createKindArray(registry);
     uint32_t num_vars = registry.size();
 
-    // TODO: Calculate these values...
-    const struct model_info m_info = {3, 64, 1, num_vars};
+    // TODO: Calculate these values... (MAX VALUE STACK = FANOUT?
+    const struct model_info m_info = { 64, 1, num_vars};
 
 
     cout << "=================\n\n";

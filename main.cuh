@@ -25,7 +25,6 @@ struct configuration {
 };
 
 struct model_info {
-    int MAX_COMPONENTS = 3;
     int MAX_VALUE_STACK_SIZE = 64;
     //int MAX_CHANNELS = 5;
     //int MAX_EDGES_PER_NODE = 8;
