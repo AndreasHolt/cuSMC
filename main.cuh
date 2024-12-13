@@ -16,7 +16,7 @@
 #define MAX_VARIABLES 20
 
 constexpr int MAX_EDGES_PER_NODE = 8;
-constexpr int MAX_CHANNELS = 5;
+constexpr int MAX_CHANNELS = 10;
 constexpr bool USE_GLOBAL_MEMORY_CURAND = true;
 
 struct configuration {

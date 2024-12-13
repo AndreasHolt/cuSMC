@@ -10,11 +10,11 @@
 int main(int argc, char *argv[]) {
 
     bool CONST_QUERY = true;
-    std::string filename = "../xml_files/UppaalBehaviorTest3.xml";
-    int curand_seed = 1234;
+    std::string filename = "../xml_files/RaceTest.xml";
+    int curand_seed = 12345;
 
     // Statistics
-    int simulations = 1000;
+    int simulations = 2;
     int timeBound = 100;
     int variable_threshhold = 10;
     int variable_id = 5;
@@ -28,12 +28,12 @@ int main(int argc, char *argv[]) {
     if (!cliSucceeded) {return 0;}
 
     const struct configuration conf = {filename, curand_seed};
-    int NumberOfQueries = 2;
+    int NumberOfQueries = 1;
     struct statistics_Configuration* stats = nullptr;
     if (CONST_QUERY) {
         stats = new statistics_Configuration[NumberOfQueries];
-        stats[0] = statistics_Configuration(1000, 100, 15, 4, true, true, "");
-        stats[1] = {100, 100, 12, -1, false, false, "c1.f4"};
+        stats[0] = statistics_Configuration(1, 100, 15, 0, true, true, "");
+        //stats[1] = {100, 100, 12, -1, false, false, "c1.f4"};
     } else {
         stats = (statistics_Configuration*)malloc(sizeof(statistics_Configuration));
         stats[0] = {simulations, timeBound, variable_threshhold, variable_id, isMax, isEstimate, loc_query};
