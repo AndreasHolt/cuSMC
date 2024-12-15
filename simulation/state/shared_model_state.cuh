@@ -176,6 +176,7 @@ struct SharedModelState {
     const int num_components;
     const int max_nodes_per_component;
     const int* const __restrict__ component_sizes;
+    const int* const __restrict__ initial_nodes;
     const NodeInfo* const __restrict__ nodes;
     const EdgeInfo* const __restrict__ edges;
     const GuardInfo* const __restrict__ guards;
@@ -190,6 +191,7 @@ struct SharedModelState {
         num_components(0),
         max_nodes_per_component(0),
         component_sizes(nullptr),
+        initial_nodes(nullptr),
         nodes(nullptr),
         edges(nullptr),
         guards(nullptr),
@@ -198,13 +200,14 @@ struct SharedModelState {
         initial_var_values(nullptr) {}
 
     CPU GPU SharedModelState(const bool side,
-        const int nc, const int mnpc, const int* cs,
+        const int nc, const int mnpc, const int* cs, const int* in,
         const NodeInfo* n, const EdgeInfo* e,
         const GuardInfo* g, const UpdateInfo* u, const GuardInfo* i, const int* iv) :
             channel_with_side_effects(side),
             num_components(nc),
             max_nodes_per_component(mnpc),
             component_sizes(cs),
+            initial_nodes(in),
             nodes(n),
             edges(e),
             guards(g),

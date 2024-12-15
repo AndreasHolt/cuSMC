@@ -255,6 +255,30 @@ SharedModelState *init_shared_model_state(
         cout << "Error copying component sizes to device: " << cudaGetErrorString(error) << endl;
     }
 
+    // Prepare initial nodes
+    int* Initial_nodes = static_cast<int *>(malloc(cpu_network->automatas.size * sizeof(int)));
+    for (int i = 0; i < cpu_network->automatas.size; i++) {
+        node* node = cpu_network->automatas[i];
+        Initial_nodes[i] = node->id;
+        if constexpr (VERBOSE) {
+            printf("Initial nodes: %d\n",node->id);
+        }
+    }
+
+    // Allocate device memory for initial nodes.
+    int* device_initial_nodes;
+    error = cudaMalloc(&device_initial_nodes,cpu_network->automatas.size * sizeof(int));
+    if (error != cudaSuccess) {
+        cout << "Error cudamalloc for initial nodes: " << cudaGetErrorString(error) << endl;
+    }
+    error = cudaMemcpy(device_initial_nodes, Initial_nodes,
+                       cpu_network->automatas.size * sizeof(int),
+                       cudaMemcpyHostToDevice);
+    if (error != cudaSuccess) {
+        cout << "Error copying component sizes to device: " << cudaGetErrorString(error) << endl;
+    }
+
+
     std::vector<int> initial_values(num_vars);
     for (const auto &[var_id, var_usage]: variable_registry) {
         // Get initial value from network if available
@@ -637,10 +661,11 @@ SharedModelState *init_shared_model_state(
 
     // Create and copy SharedModelState
     SharedModelState host_model{
-        true,  //TODO: Find the actual value or get from user.
+        SYNC_SIDE_EFFECT,
         static_cast<int>(components_nodes.size()),
         max_nodes_per_component,
         device_component_sizes,
+        device_initial_nodes,
         device_nodes,
         device_edges,
         device_guards,

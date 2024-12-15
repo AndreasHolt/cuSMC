@@ -333,6 +333,21 @@ void smc(configuration conf, statistics_Configuration stat_conf) {
 
     auto registry = var_tracker.get_variable_registry();
 
+    if (PRINT_VARIABLES) {
+        auto node_name = parser->get_nodes_with_name();
+        auto variable_name = parser->get_variables_names_to_ids_map();
+        for (auto iter = node_name->begin(); iter != node_name->end(); ++iter) {
+            auto relation = *iter;
+            cout << "Node id: " << relation.first << " name: " << relation.second << endl;
+        }
+        for (auto iter = variable_name.begin(); iter != variable_name.end(); ++iter) {
+            auto relation = *iter;
+            cout << "Variable id: " << relation.first << " name: " << relation.second << endl;
+        }
+
+
+    }
+
     VariableKind *kinds = var_tracker.createKindArray(registry);
     uint32_t num_vars = registry.size();
 

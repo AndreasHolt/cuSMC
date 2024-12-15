@@ -24,10 +24,14 @@ __device__ void take_transition(ComponentState *my_state,
                                 SharedBlockMemory *shared,
                                 SharedModelState *model,
                                 BlockSimulationState *block_state, int query_variable_id, int alt_thread_idx) {
-
+    if constexpr (PRINT_TRANSITIONS) {
+        printf("Taking transition, enabled edges: %d.\n", my_state->num_enabled_edges);
+    }
     if (my_state->num_enabled_edges == 0) {
         if constexpr (MINIMAL_PRINTS) {
-            printf("Alt_Thread %d: No enabled edges to take\n", alt_thread_idx);
+            if (LISTEN_TO == -1 || LISTEN_TO == threadIdx.x){
+                printf("Alt_Thread %d: No enabled edges to take\n", alt_thread_idx);
+            }
         }
         return;
     }
@@ -36,9 +40,12 @@ __device__ void take_transition(ComponentState *my_state,
     int selected_idx;
     if (my_state->num_enabled_edges == 1) {
         selected_idx = my_state->enabled_edges[0];
-        if constexpr (VERBOSE) {
-            printf("Alt_Thread %d: Only one enabled edge (%d), selecting it\n",
-                   alt_thread_idx, selected_idx);
+        if constexpr (VERBOSE || PRINT_TRANSITIONS) {
+            if (LISTEN_TO == -1 || LISTEN_TO == threadIdx.x) {
+                const EdgeInfo &edge = model->edges[my_state->current_node->first_edge_index + selected_idx];
+                printf("Alt_Thread %d: Only one enabled edge (%d), selecting it, going from location %d to %d.\n",
+                       alt_thread_idx, selected_idx, edge.source_node_id, edge.dest_node_id);
+            }
         }
     } else {
         // Random selection between enabled edges
@@ -58,9 +65,12 @@ __device__ void take_transition(ComponentState *my_state,
             temp -= weight_of_edge;
         }
 
-        if constexpr (VERBOSE) {
-            printf("Alt_Thread %d: Randomly selected edge %d from %d enabled edges (rand=%d)\n",
-                   alt_thread_idx, selected_idx, my_state->num_enabled_edges, rand);
+        if constexpr (VERBOSE || PRINT_TRANSITIONS ) {
+            if (LISTEN_TO == -1 || LISTEN_TO == threadIdx.x) {
+                printf("Alt_Thread %d: Randomly selected edge %d from %d enabled edges (rand=%d)\n",
+                                   alt_thread_idx, selected_idx, my_state->num_enabled_edges, rand);
+
+            }
         }
     }
 
@@ -88,23 +98,25 @@ __device__ void take_transition(ComponentState *my_state,
 
         // Evaluate update expression
         double new_value = evaluate_expression(update.expression, shared);
-        if constexpr (VERBOSE || true) {
-            printf("Alt_Thread %d: Update %d - Setting var_%d (%s) from %f to %f\n",
-                   alt_thread_idx, i, var_id,
-                   update.kind == VariableKind::CLOCK ? "clock" : "int",
-                   shared->variables[var_id].value,
-                   new_value);
+        if constexpr (VERBOSE || PRINT_UPDATES) {
+            if (LISTEN_TO == -1 || LISTEN_TO == threadIdx.x) {
+                printf("Alt_Thread %d: Update %d - Setting var_%d (%s) from %f to %f\n",
+                       alt_thread_idx, i, var_id,
+                       update.kind == VariableKind::CLOCK ? "clock" : "int",
+                       shared->variables[var_id].value,
+                       new_value);
+            }
         }
 
         if (var_id == query_variable_id) {
             if (new_value > shared->query_variable_max) {
-                if constexpr (VERBOSE||true) {
+                if constexpr (VERBOSE) {
                     printf("Changing max to %f\n", new_value);
                 }
                 shared->query_variable_max = new_value;
             }
             if (new_value < shared->query_variable_min) {
-                if constexpr (VERBOSE||true) {
+                if constexpr (VERBOSE) {
                     printf("Changing min to %f\n", new_value);
                 }
                 shared->query_variable_min = new_value;
@@ -167,14 +179,14 @@ __device__ bool check_edge_enabled(const EdgeInfo &edge,
                                    SharedBlockMemory *shared,
                                    SharedModelState *model,
                                    BlockSimulationState *block_state, bool is_broadcast_sync, int alt_thread_idx) {
-    if constexpr (VERBOSE) {
+    if constexpr (PRINT_TRANSITIONS) {
         printf("\nAlt_Thread %d: Checking edge %d->%d with %d guards\n",
                alt_thread_idx, edge.source_node_id, edge.dest_node_id, edge.num_guards);
     }
 
     // Only reject negative channels if not part of broadcast sync
     if (edge.channel < 0 && !is_broadcast_sync) {
-        if constexpr (VERBOSE) {
+        if constexpr (PRINT_TRANSITIONS) {
             printf("Alt_Thread %d: Is a !-labelled channel, disabled until synchronisation\n", alt_thread_idx);
         }
         return false;
@@ -188,7 +200,7 @@ __device__ bool check_edge_enabled(const EdgeInfo &edge,
             int var_id = guard.var_info.variable_id;
             double var_value = shared->variables[var_id].value;
             double bound = evaluate_expression(guard.expression, shared);
-            if constexpr (VERBOSE) {
+            if constexpr (PRINT_TRANSITIONS) {
                 printf("  Guard %d: var_%d (%s) = %f %s %f\n",
                        i, var_id,
                        guard.var_info.type == VariableKind::CLOCK ? "clock" : "int",
@@ -201,7 +213,9 @@ __device__ bool check_edge_enabled(const EdgeInfo &edge,
                                        ? ">="
                                        : guard.operand == constraint::greater_c
                                              ? ">"
-                                             : "?",
+                                             : guard.operand == constraint::equal_c
+                                                ? "=="
+                                                : "?",
                        bound);
             }
 
@@ -228,14 +242,14 @@ __device__ bool check_edge_enabled(const EdgeInfo &edge,
             }
 
             if (!satisfied) {
-                if constexpr (VERBOSE) {
+                if constexpr (PRINT_TRANSITIONS) {
                     printf("  Guard not satisfied - edge disabled\n");
                 }
                 return false;
             }
         }
     }
-    if constexpr (VERBOSE) {
+    if constexpr (PRINT_TRANSITIONS) {
         printf("  All guards satisfied - edge enabled!\n");
     }
     return true;
@@ -765,11 +779,34 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 
     ComponentState *my_state = block_state.my_component;
     my_state->component_id = comp_id;
-    my_state->current_node = &model->nodes[comp_id];
+    bool found_initial_node = false;
+    if constexpr (VERBOSE) {
+        if (threadIdx.x == 0) {
+            for (int i = 0; i < model->num_components; i++) {
+                printf("Initial nodes: %d.\n", model->initial_nodes[i]);
+            }
+        }
+    }
+    for (int i = 0; i < model->max_nodes_per_component; i++) {
+        if constexpr (VERBOSE) {
+            if (threadIdx.x == 0) {
+                printf("Comparing id1: %d, with id2: %d.\n",model->initial_nodes[comp_id],model->nodes[i * model->num_components+comp_id].id);
+            }
+        }
+        if (model->initial_nodes[comp_id] == model->nodes[i * model->num_components+comp_id].id) {
+            my_state->current_node = &model->nodes[i * model->num_components+comp_id];
+            found_initial_node = true;
+        }
+    }
+
+    if (found_initial_node == false) {
+        printf("Error: thread: %d could not find its initial node.\n", threadIdx.x);
+    }
+
     my_state->has_delay = false;
     if constexpr (VERBOSE) {
-        printf("Thread %d: Component initialized, node_id=%d\n",
-               threadIdx.x, my_state->current_node->id);
+        printf("Thread %d: Component initialized, node_id=%d, comp_id=%d\n",
+               threadIdx.x, my_state->current_node->id, comp_id);
     }
     CHECK_ERROR("after component init");
 

@@ -10,7 +10,12 @@
 
 
 #define VERBOSE 0
+#define PRINT_TRANSITIONS 0
+#define PRINT_VARIABLES 0
+#define PRINT_UPDATES 0
+#define LISTEN_TO -1 //-1 = all
 #define QUERYSTATS 0
+#define SYNC_SIDE_EFFECT true
 #define MINIMAL_PRINTS 0
 #define TIME_BOUND 10.0
 #define MAX_VARIABLES 20
