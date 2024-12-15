@@ -142,7 +142,7 @@ __device__ double evaluate_expression(const expr *e, SharedBlockMemory *shared) 
 
         case expr::clock_variable_ee: {
             int var_id = e->variable_id; // Union access, single read
-            if (var_id < MAX_VARIABLES) {
+            if (var_id < shared->num_variables) {
                 return shared->variables[var_id].value;
             }
             printf("Warning: Invalid variable ID %d in expression\n", var_id);

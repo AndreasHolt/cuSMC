@@ -611,7 +611,7 @@ __device__ double find_minimum_delay(
                 printf("\nUpdating clocks:\n");
             }
 
-            for (int i = 0; i < MAX_VARIABLES; i++) {
+            for (int i = 0; i < shared->num_variables; i++) {
                 if (shared->variables[i].kind == VariableKind::CLOCK) {
                     double old_value = shared->variables[i].value;
                     shared->variables[i].rate = 1;
@@ -661,6 +661,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 
     double *delays = (double *) &components[max_components]; // Only need MAX_COMPONENTS slots, not full warp size
     int *component_indices = (int *) &delays[max_components];
+    Variable* vars = (Variable *) &component_indices[max_components];
 
     curandState *rng_states;
 
@@ -669,7 +670,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         // extern __shared__ curandState *rng_states_global;
         rng_states = rng_states_global;
     } else {
-        curandState *rng_states_shared = (curandState *) component_indices[max_components];
+        curandState *rng_states_shared = (curandState *) &vars[num_vars];
         rng_states = rng_states_shared;
     }
 
@@ -745,7 +746,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         if constexpr (VERBOSE) {
             printf("Block %d: Initializing shared memory\n", blockIdx.x);
         }
-        SharedBlockMemory::init(shared_mem, sim_id);
+        SharedBlockMemory::init(shared_mem, sim_id, vars, num_vars);
 
         for (int i = 0; i < num_vars; i++) {
             if constexpr (VERBOSE) {

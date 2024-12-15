@@ -11,6 +11,7 @@
 __host__ void run_statistical_model_checking(SharedModelState *model, float confidence, float precision,
                                                 VariableKind *kinds, bool* flags,
                                                 double* variable_flags, model_info m_info, configuration conf, statistics_Configuration stat_conf) {
+    cout << "Number of variables: " << m_info.num_vars << endl;
     // Get max components from SharedModelState
     int MC;
     cudaMemcpy(&MC, &(model->num_components), sizeof(int), cudaMemcpyDeviceToHost);
@@ -36,7 +37,7 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
     int warp_size = deviceProp.warpSize;
     //int threads_per_block = 512; // 100 components
     // int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
-    int threads_per_block = 32; // 100 components
+    int threads_per_block = 1024; // 100 components
     int runs_per_block = m_info.runs_per_block;
     int num_blocks = stat_conf.simulations;
 
@@ -258,10 +259,10 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
     // Dynamic Shared memory: https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/
     // int MC = m_info.MAX_COMPONENTS;
     if constexpr (USE_GLOBAL_MEMORY_CURAND) {
-        simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState)>>>(
+        simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + m_info.num_vars*sizeof(Variable) + MC*sizeof(ComponentState)>>>(
         model, device_results, runs_per_block, stat_conf.timeBound, d_kinds, m_info.num_vars, flags, variable_flags, stat_conf.variable_id, stat_conf.isMax, rng_states_global, conf.curand_seed, MC);
     } else {
-        simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState) + MC*sizeof(curandState)>>>(
+        simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + m_info.num_vars*sizeof(Variable) + MC*sizeof(ComponentState) + MC*sizeof(curandState)>>>(
         model, device_results, runs_per_block, stat_conf.timeBound, d_kinds, m_info.num_vars, flags, variable_flags, stat_conf.variable_id, stat_conf.isMax, rng_states_global, conf.curand_seed, MC);
     }
 
