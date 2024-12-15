@@ -234,7 +234,7 @@ __device__ bool check_edge_enabled(const EdgeInfo &edge,
                     satisfied = var_value >= bound;
                     break;
                 case constraint::equal_c:
-                    satisfied = var_value = bound;
+                    satisfied = var_value == bound;
                     break;
                 default:
                     printf("  Warning: Unknown operator %d\n", guard.operand);
