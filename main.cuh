@@ -18,7 +18,6 @@
 #define SYNC_SIDE_EFFECT true
 #define MINIMAL_PRINTS 0
 #define TIME_BOUND 10.0
-#define MAX_VARIABLES 20
 
 constexpr int MAX_EDGES_PER_NODE = 8;
 constexpr int MAX_CHANNELS = 10;
@@ -34,7 +33,7 @@ struct model_info {
     //int MAX_CHANNELS = 5;
     //int MAX_EDGES_PER_NODE = 8;
     int runs_per_block = 1;
-    uint32_t num_vars;
+    u_int num_vars;
 };
 
 struct statistics_Configuration {

@@ -36,7 +36,7 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
     int warp_size = deviceProp.warpSize;
     //int threads_per_block = 512; // 100 components
     // int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
-    int threads_per_block = 32; // 100 components
+    int threads_per_block = MC; // 100 components
     int runs_per_block = m_info.runs_per_block;
     int num_blocks = stat_conf.simulations;
 
@@ -258,10 +258,10 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
     // Dynamic Shared memory: https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/
     // int MC = m_info.MAX_COMPONENTS;
     if constexpr (USE_GLOBAL_MEMORY_CURAND) {
-        simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState)>>>(
+        simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState)+m_info.num_vars*sizeof(Variable)>>>(
         model, device_results, runs_per_block, stat_conf.timeBound, d_kinds, m_info.num_vars, flags, variable_flags, stat_conf.variable_id, stat_conf.isMax, rng_states_global, conf.curand_seed, MC);
     } else {
-        simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState) + MC*sizeof(curandState)>>>(
+        simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState)+m_info.num_vars*sizeof(Variable) + MC*sizeof(curandState)>>>(
         model, device_results, runs_per_block, stat_conf.timeBound, d_kinds, m_info.num_vars, flags, variable_flags, stat_conf.variable_id, stat_conf.isMax, rng_states_global, conf.curand_seed, MC);
     }
 
@@ -349,10 +349,9 @@ void smc(configuration conf, statistics_Configuration stat_conf) {
     }
 
     VariableKind *kinds = var_tracker.createKindArray(registry);
-    uint32_t num_vars = registry.size();
 
     // TODO: Calculate these values... (MAX VALUE STACK = FANOUT?
-    const struct model_info m_info = { 64, 1, num_vars};
+    const model_info m_info = { 64, 1, static_cast<u_int>(model.variables.size)};
 
 
     cout << "=================\n\n";
@@ -457,7 +456,7 @@ void smc(configuration conf, statistics_Configuration stat_conf) {
             node_map,
             var_tracker.get_variable_registry(),
             parser,
-            num_vars);
+            m_info.num_vars);
 
         // Run the SMC simulations
         run_statistical_model_checking(state, 0.05, 0.01, kinds, stats.get_comp_device_ptr(),

@@ -22,6 +22,12 @@ struct alignas(8) ComponentState {
 
     const NodeInfo *current_node; // 8 bytes, put pointer last
 };
+struct Variable {
+    float value;
+    int rate;
+    VariableKind kind;
+    int last_writer;
+};
 
 struct SharedBlockMemory {
     float global_time;
@@ -31,14 +37,9 @@ struct SharedBlockMemory {
     double query_variable_max;
 
     // Variables (fixed size array in shared memory)
-    struct Variable {
-        float value;
-        int rate;
-        VariableKind kind;
-        int last_writer;
-    } variables[MAX_VARIABLES];
+    Variable *variables;
 
-    int num_variables;
+    u_int num_variables;
 
     // Synchronization
     int ready_count;
@@ -50,9 +51,11 @@ struct SharedBlockMemory {
     int channel_sender[MAX_CHANNELS];
 
     // Static initialization method
-    __device__ static void init(SharedBlockMemory *shared, int sim_id) {
+    __device__ static void init(SharedBlockMemory *shared, int sim_id, u_int num_vars, Variable *vars) {
         shared->global_time = 0.0;
         shared->simulation_id = sim_id;
+        shared->num_variables = num_vars;
+        shared->variables = vars;
         shared->ready_count = 0;
         shared->has_urgent = false;
         shared->has_committed = false;
@@ -61,7 +64,8 @@ struct SharedBlockMemory {
         shared->query_variable_max = 0.0;
 
         // Initialize variables explicitly
-        for (int i = 0; i < MAX_VARIABLES; i++) {
+        for (int i = 0; i < num_vars; i++) {
+            shared->variables[i] = Variable();
             shared->variables[i].value = 0.0;
             shared->variables[i].rate = 1;
             shared->variables[i].kind = VariableKind::INT;

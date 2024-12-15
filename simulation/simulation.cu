@@ -199,6 +199,7 @@ __device__ bool check_edge_enabled(const EdgeInfo &edge,
         if (guard.uses_variable) {
             int var_id = guard.var_info.variable_id;
             double var_value = shared->variables[var_id].value;
+            printf("In checking guard: Variable %d is  %lf. (Var_ID)\n", var_id, shared->variables[var_id].value);
             double bound = evaluate_expression(guard.expression, shared);
             if constexpr (PRINT_TRANSITIONS) {
                 printf("  Guard %d: var_%d (%s) = %f %s %f\n",
@@ -351,6 +352,7 @@ __device__ void SyncInSerial (ComponentState *my_state,
 
     // Only a single thread needs to reset synchronisation flags in shared memory
     if (threadIdx.x == 0) {
+
         for (int comp_idx = 0; comp_idx < model->num_components; comp_idx++) {
             //printf("Thread id: %d, comp_idx: %d, before: %p\n", threadIdx.x, comp_idx, my_state);
 
@@ -370,11 +372,16 @@ __device__ void SyncInSerial (ComponentState *my_state,
 
                     for (int e = 0; e < current_node->num_edges; e++) {
                         const EdgeInfo &edge = model->edges[current_node->first_edge_index + e];
+                        for (int i = 0; i < 10; i++) {
+                            if constexpr (VERBOSE || true) {
+                                printf("syncserialSetting variable %d to kind %lf\n", i, shared->variables[i].value);
+                            }
+                        }
                         if (edge.channel == -ch &&
                             check_edge_enabled(edge, shared, model, new_block_state, true, comp_idx)) {
                             // Edges is enabled, therefore we add it to the enabled edges list, to be used inside take_transition
                             my_new_state->enabled_edges[my_new_state->num_enabled_edges++] = e;
-                            }
+                        }
                     }
 
                     // If we found any enabled receiving edges, we just randomly select one inside take_transition
@@ -404,7 +411,7 @@ __device__ void compute_possible_delay(
     ComponentState *my_state,
     SharedBlockMemory *shared,
     SharedModelState *model,
-    BlockSimulationState *block_state, int num_vars, int query_variable_id) {
+    BlockSimulationState *block_state, u_int num_vars, int query_variable_id) {
 
     if (model->channel_with_side_effects) {
         SyncInSerial(my_state, shared, model, block_state, query_variable_id);
@@ -611,7 +618,7 @@ __device__ double find_minimum_delay(
                 printf("\nUpdating clocks:\n");
             }
 
-            for (int i = 0; i < MAX_VARIABLES; i++) {
+            for (int i = 0; i < model->max_variables; i++) {
                 if (shared->variables[i].kind == VariableKind::CLOCK) {
                     double old_value = shared->variables[i].value;
                     shared->variables[i].rate = 1;
@@ -634,6 +641,11 @@ __device__ double find_minimum_delay(
                                component_indices[0] == my_state->component_id);
 
         if (is_race_winner) {
+            for (int i = 0; i < 5; i++) {
+                if constexpr (VERBOSE || true) {
+                    //printf("Find min variable %d to kind %lf\n", i, shared->variables[i].value);
+                }
+            }
             check_enabled_edges(my_state, shared, model, block_state, is_race_winner);
             take_transition(my_state, shared, model, block_state, query_variable_id, threadIdx.x);
         }
@@ -645,9 +657,10 @@ __device__ double find_minimum_delay(
 }
 
 __global__ void simulation_kernel(SharedModelState *model, bool *results,
-                                  int runs_per_block, float time_bound, VariableKind *kinds, uint32_t  num_vars, bool *flags,
+                                  int runs_per_block, float time_bound, VariableKind *kinds, u_int  num_vars, bool *flags,
                                   double *variable_flags, int variable_id, bool isMax,
                                   curandState *rng_states_global, int curand_seed, int max_components) {
+
     // Prepare Shared memory
     //extern __shared__ int s[];
     //int *integerData = s;                        // nI ints
@@ -657,10 +670,12 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 
     SharedBlockMemory *shared_mem = (SharedBlockMemory *) &s;
     // Using (char*) because it is 1 byte large.
-    ComponentState *components = (ComponentState *) ((char *) shared_mem + sizeof(SharedBlockMemory));
+    ComponentState *components = (ComponentState *) ((char *) shared_mem + sizeof(SharedBlockMemory)); // Could be (shared_mem + 1) instead of ((char *) shared_mem + sizeof(SharedBlockMemory))
 
-    double *delays = (double *) &components[max_components]; // Only need MAX_COMPONENTS slots, not full warp size
-    int *component_indices = (int *) &delays[max_components];
+    double *delays = reinterpret_cast<double *>(&components[max_components]); // Only need MAX_COMPONENTS slots, not full warp size
+    int *component_indices = reinterpret_cast<int *>(&delays[max_components]);
+
+    Variable* vars = reinterpret_cast<Variable *>(&components[max_components]);
 
     curandState *rng_states;
 
@@ -669,8 +684,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         // extern __shared__ curandState *rng_states_global;
         rng_states = rng_states_global;
     } else {
-        curandState *rng_states_shared = (curandState *) component_indices[max_components];
-        rng_states = rng_states_shared;
+        rng_states = reinterpret_cast<curandState *>(&vars[num_vars]);
     }
 
     CHECK_ERROR("Kernel start");
@@ -745,10 +759,11 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         if constexpr (VERBOSE) {
             printf("Block %d: Initializing shared memory\n", blockIdx.x);
         }
-        SharedBlockMemory::init(shared_mem, sim_id);
+        printf("%d.\n", model->max_variables);
+        SharedBlockMemory::init(shared_mem, sim_id, model->max_variables, vars);
 
         for (int i = 0; i < num_vars; i++) {
-            if constexpr (VERBOSE) {
+            if constexpr (VERBOSE || true) {
                 printf("Setting variable %d to kind %d\n", i, kinds[i]);
             }
             shared_mem->variables[i].value = model->initial_var_values[i];
@@ -761,6 +776,11 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 
                 }
                 // Not sure whether we need this case yet
+            }
+        }
+        for (int i = 0; i < num_vars; i++) {
+            if constexpr (VERBOSE || true) {
+                printf("Initial value of variable: %d is %lf\n", i, shared_mem->variables[i].value);
             }
         }
     }
@@ -812,6 +832,9 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 
     // Main simulation loop
     while (shared_mem->global_time < time_bound) {
+        if (threadIdx.x == 0) {
+            printf("In start of simulation loop: var %d is %lf.\n", 0, shared_mem->variables[0].value);
+        }
         __syncthreads();
         // Synchronize before continuing to make sure all threads have the latest value of shared_mem.has_hit_goal etc.
 

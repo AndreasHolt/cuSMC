@@ -167,7 +167,7 @@ SharedModelState *init_shared_model_state(
     const std::unordered_map<int, std::list<edge> > &node_edge_map,
     const std::unordered_map<int, node *> &node_map,
     const std::unordered_map<int, VariableTrackingVisitor::VariableUsage> &variable_registry,
-    const abstract_parser *parser, const int num_vars) {
+    const abstract_parser *parser, const u_int num_vars) {
     if constexpr (VERBOSE) {
         cout << "\nInitializing SharedModelState:" << endl;
         cout << "Component mapping:" << endl;
@@ -175,6 +175,8 @@ SharedModelState *init_shared_model_state(
             cout << "  Node " << pair.first << " -> Component " << pair.second << endl;
         }
     }
+
+    cout << num_vars << endl;
 
     // First organize nodes by component. Vectors of Components as vectors containing nodes
     std::vector<std::vector<std::pair<int, const std::list<edge> *> > > components_nodes;
@@ -663,6 +665,7 @@ SharedModelState *init_shared_model_state(
     SharedModelState host_model{
         SYNC_SIDE_EFFECT,
         static_cast<int>(components_nodes.size()),
+        num_vars,
         max_nodes_per_component,
         device_component_sizes,
         device_initial_nodes,

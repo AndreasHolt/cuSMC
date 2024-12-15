@@ -174,6 +174,7 @@ __device__ __forceinline__ int fetch_expr_operand(const expr* ptr) {
 struct SharedModelState {
     const bool channel_with_side_effects;  //TODO: For better packing of struct use sign bit of num_components instead of this flag.
     const int num_components;
+    const u_int max_variables;
     const int max_nodes_per_component;
     const int* const __restrict__ component_sizes;
     const int* const __restrict__ initial_nodes;
@@ -189,6 +190,7 @@ struct SharedModelState {
     CPU GPU SharedModelState() :
         channel_with_side_effects(false),
         num_components(0),
+        max_variables(0),
         max_nodes_per_component(0),
         component_sizes(nullptr),
         initial_nodes(nullptr),
@@ -200,11 +202,12 @@ struct SharedModelState {
         initial_var_values(nullptr) {}
 
     CPU GPU SharedModelState(const bool side,
-        const int nc, const int mnpc, const int* cs, const int* in,
+        const int nc, const u_int nv, const int mnpc, const int* cs, const int* in,
         const NodeInfo* n, const EdgeInfo* e,
         const GuardInfo* g, const UpdateInfo* u, const GuardInfo* i, const int* iv) :
             channel_with_side_effects(side),
             num_components(nc),
+            max_variables(nv),
             max_nodes_per_component(mnpc),
             component_sizes(cs),
             initial_nodes(in),
@@ -222,7 +225,7 @@ SharedModelState* init_shared_model_state(
     const std::unordered_map<int, std::list<edge>>& node_edge_map,
     const std::unordered_map<int, node*>& node_map,
     const std::unordered_map<int, VariableTrackingVisitor::VariableUsage>& variable_registry,
-    const abstract_parser* parser, const int num_vars);
+    const abstract_parser* parser, u_int num_vars);
 
 
 
