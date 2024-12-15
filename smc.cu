@@ -36,7 +36,7 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
     int warp_size = deviceProp.warpSize;
     //int threads_per_block = 512; // 100 components
     // int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
-    int threads_per_block = 32; // 100 components
+    int threads_per_block = MC; // 100 components
     int runs_per_block = m_info.runs_per_block;
     int num_blocks = stat_conf.simulations;
 
@@ -355,22 +355,7 @@ void smc(configuration conf, statistics_Configuration stat_conf) {
     const struct model_info m_info = { 64, 1, num_vars};
 
 
-    cout << "=================\n\n";
-    cout << "Running SMC with the following settings:" << std::endl;
-    cout << "- Number of simulations: " << stat_conf.simulations << std::endl;
-    cout << "- Model: " << conf.filename << std::endl;
-    cout << "- Random seed: " << conf.curand_seed << std::endl;
-    cout << "- Time bound: " << stat_conf.timeBound << std::endl;
 
-    if (!stat_conf.loc_query.empty()) {
-        cout << "- Logging type: \"comp.node\" query" << std::endl;
-    } else if (stat_conf.variable_id != -1) {
-        string min_or_max = (stat_conf.isMax) ? "max" : "min";
-        cout << "- Logging type: variable query. Finding " << min_or_max
-             << " of variable with ID " << stat_conf.variable_id << std::endl;
-    }
-
-    cout << "=================\n\n";
 
     double result = 0;
     // Handling variable queries
@@ -386,6 +371,23 @@ void smc(configuration conf, statistics_Configuration stat_conf) {
             m_info.num_vars);
         Statistics stats(stat_conf.simulations, VAR_STAT);
 
+
+        cout << "=================\n\n";
+        cout << "Running SMC with the following settings:" << std::endl;
+        cout << "- Number of simulations: " << stat_conf.simulations << std::endl;
+        cout << "- Model: " << conf.filename << std::endl;
+        cout << "- Random seed: " << conf.curand_seed << std::endl;
+        cout << "- Time bound: " << stat_conf.timeBound << std::endl;
+
+        int MC;
+        cudaMemcpy(&MC, &(state->num_components), sizeof(int), cudaMemcpyDeviceToHost);
+        std::cout << "- Num components: " << MC << std::endl;
+
+        string min_or_max = (stat_conf.isMax) ? "max" : "min";
+        cout << "- Logging type: variable query. Finding " << min_or_max
+             << " of variable with ID " << stat_conf.variable_id << std::endl;
+
+        cout << "=================\n\n";
 
         run_statistical_model_checking(state, 0.05, 0.01, kinds, stats.get_comp_device_ptr(),
                                            stats.get_var_device_ptr(), m_info, conf, stat_conf);
@@ -416,10 +418,8 @@ void smc(configuration conf, statistics_Configuration stat_conf) {
     }
 
     if (stat_conf.variable_id == -1) {
-        Statistics stats(stat_conf.simulations, COMP_STAT);
-        if constexpr (VERBOSE) {
-            cout << "Recorded query is: " + stat_conf.loc_query << endl;
-        }
+
+
 
         // String split
         std::vector<char> component;
@@ -458,6 +458,24 @@ void smc(configuration conf, statistics_Configuration stat_conf) {
             var_tracker.get_variable_registry(),
             parser,
             num_vars);
+
+
+        cout << "=================\n\n";
+        cout << "Running SMC with the following settings:" << std::endl;
+        cout << "- Number of simulations: " << stat_conf.simulations << std::endl;
+        cout << "- Model: " << conf.filename << std::endl;
+        cout << "- Random seed: " << conf.curand_seed << std::endl;
+        cout << "- Time bound: " << stat_conf.timeBound << std::endl;
+
+        int MC;
+        cudaMemcpy(&MC, &(state->num_components), sizeof(int), cudaMemcpyDeviceToHost);
+        std::cout << "- Num components: " << MC << std::endl;
+
+        string min_or_max = (stat_conf.isMax) ? "max" : "min";
+        cout << "- Logging type: location query on query: " << stat_conf.loc_query << std::endl;
+
+        cout << "=================\n\n";
+        Statistics stats(stat_conf.simulations, COMP_STAT);
 
         // Run the SMC simulations
         run_statistical_model_checking(state, 0.05, 0.01, kinds, stats.get_comp_device_ptr(),
