@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
     int curand_seed = 1234;
 
     // Statistics
-    int simulations = 1;
+    int simulations = 500;
     int timeBound = 300;
     int variable_threshhold = -1;
     int variable_id = 1;
