@@ -36,11 +36,7 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
     int warp_size = deviceProp.warpSize;
     //int threads_per_block = 512; // 100 components
     // int threads_per_block = ((2 + warp_size - 1) / warp_size) * warp_size; // Round up to nearest warp
-<<<<<<< HEAD
-    int threads_per_block = 1024; // 100 components
-=======
     int threads_per_block = MC; // 100 components
->>>>>>> main
     int runs_per_block = m_info.runs_per_block;
     int num_blocks = stat_conf.simulations;
 
