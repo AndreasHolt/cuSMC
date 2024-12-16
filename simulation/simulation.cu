@@ -82,7 +82,7 @@ __device__ void take_transition(ComponentState *my_state,
 
     // If this edge has a positive channel (broadcast sender)
     if (edge.channel > 0) {
-        int channel_abs = abs(edge.channel);
+        const int channel_abs = abs(edge.channel);
 
         // This component needs to signal the broadcast, as its channel is '!-labelled'
         shared->channel_active = channel_abs;
@@ -108,17 +108,16 @@ __device__ void take_transition(ComponentState *my_state,
         }
 
         if (var_id == query_variable_id) {
-            if (new_value > shared->query_variable_max) {
-                if constexpr (VERBOSE) {
+            shared->query_variable_max = (new_value > shared->query_variable_max) ? new_value : shared->query_variable_max;
+            shared->query_variable_min = (new_value < shared->query_variable_min) ? new_value : shared->query_variable_min;
+            if constexpr (VERBOSE) {
+                if (new_value > shared->query_variable_max) {
+
                     printf("Changing max to %f\n", new_value);
                 }
-                shared->query_variable_max = new_value;
-            }
-            if (new_value < shared->query_variable_min) {
-                if constexpr (VERBOSE) {
+                if (new_value < shared->query_variable_min) {
                     printf("Changing min to %f\n", new_value);
                 }
-                shared->query_variable_min = new_value;
             }
         }
 
