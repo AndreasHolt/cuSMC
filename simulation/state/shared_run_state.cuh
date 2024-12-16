@@ -26,14 +26,13 @@ struct alignas(8) ComponentState {
 struct SharedBlockMemory {
     float global_time;
     unsigned simulation_id;
-    bool has_hit_goal;
+
     double query_variable_min;
     double query_variable_max;
 
     // Variables (fixed size array in shared memory)
     struct Variable {
         float value;
-        u_int rate;
         VariableKind kind;
     } variables[MAX_VARIABLES];
 
@@ -41,12 +40,18 @@ struct SharedBlockMemory {
 
     // Synchronization
     int ready_count;
-    bool has_urgent;
-    bool has_committed;
+
 
     // Broadcast channels
     int channel_active;
     int channel_sender;
+
+    // Synchronization
+    bool has_urgent;
+    bool has_committed;
+
+    //Query
+    bool has_hit_goal;
 
     // Static initialization method
     __device__ static void init(SharedBlockMemory *shared, int sim_id) {
@@ -62,7 +67,6 @@ struct SharedBlockMemory {
         // Initialize variables explicitly
         for (int i = 0; i < MAX_VARIABLES; i++) {
             shared->variables[i].value = 0.0;
-            shared->variables[i].rate = 1;
             shared->variables[i].kind = VariableKind::INT;
         }
 
