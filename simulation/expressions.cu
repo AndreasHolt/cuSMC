@@ -156,7 +156,7 @@ __device__ double evaluate_expression(const expr *e, SharedBlockMemory *shared) 
                 double left_val = evaluate_expression(left, shared);
                 double right_val = evaluate_expression(right, shared);
                 printf("Left and right values: %f, %f\n", left_val, right_val);
-                if constexpr (VERBOSE) {
+                if constexpr (EXPR_VERBOSE) {
                     printf("DEBUG: Plus operation: %f + %f = %f\n",
                            left_val, right_val, left_val + right_val);
                 }

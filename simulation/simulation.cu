@@ -25,7 +25,7 @@ __device__ void take_transition(ComponentState *my_state,
                                 SharedModelState *model,
                                 BlockSimulationState *block_state, int query_variable_id, int alt_thread_idx) {
     if constexpr (PRINT_TRANSITIONS) {
-        printf("Taking transition, enabled edges: %d.\n", my_state->num_enabled_edges);
+        printf("Alt_Thread %d Taking transition, enabled edges: %d.\n", my_state->num_enabled_edges);
     }
     if (my_state->num_enabled_edges == 0) {
         if constexpr (MINIMAL_PRINTS) {
@@ -97,8 +97,8 @@ __device__ void take_transition(ComponentState *my_state,
 
         // Evaluate update expression
         double new_value = evaluate_expression(update.expression, shared);
-        if constexpr (VERBOSE || PRINT_UPDATES) {
-            if (LISTEN_TO == -1 || LISTEN_TO == threadIdx.x) {
+        if constexpr (VERBOSE || PRINT_UPDATES || EXPR_VERBOSE) {
+            if (LISTEN_TO == -1 || LISTEN_TO == threadIdx.x || EXPR_VERBOSE) {
                 printf("Alt_Thread %d: Update %d - Setting var_%d (%s) from %f to %f\n",
                        alt_thread_idx, i, var_id,
                        update.kind == VariableKind::CLOCK ? "clock" : "int",
@@ -123,7 +123,6 @@ __device__ void take_transition(ComponentState *my_state,
         }
 
         shared->variables[var_id].value = new_value;
-        shared->variables[var_id].last_writer = my_state->component_id;
     }
 
     // Find destination node info
@@ -525,16 +524,14 @@ __device__ void compute_possible_delay(
 
         // Sample from the exponential distribution
         double rand = curand_uniform_double(block_state->random);
-        my_state->next_delay = -__log2f(rand) / rate;
+        my_state->next_delay = -logf(rand) / rate;
         // Fastest log, but not as accurate. We consider it fine because we are doing statistical sampling
 
         my_state->has_delay = true;
-        if constexpr (DELAY_VERBOSE) {
-            if (threadIdx.x == 0) {
-                printf("Thread %d: No delay bounds, sampled %f using exponential distribution with rate %f\n",
-                       threadIdx.x,
-                       my_state->next_delay, rate);
-            }
+        if constexpr (DELAY_VERBOSE | EXPR_VERBOSE) {
+            printf("Thread %d: No delay bounds, sampled %f using exponential distribution with rate %f\n",
+                   threadIdx.x,
+                   my_state->next_delay, rate);
         }
         my_state->has_delay = true;
     }
@@ -548,8 +545,6 @@ __device__ double find_minimum_delay(
     BlockSimulationState *block_state,
     int num_components, int query_variable_id,
     double *delays, int *component_indices) {
-    //__shared__ double delays[MAX_COMPONENTS]; // Only need MAX_COMPONENTS slots, not full warp size
-    //__shared__ int component_indices[MAX_COMPONENTS];
 
     // Initialize only for active threads (components)
     if (threadIdx.x < num_components) {
@@ -567,7 +562,6 @@ __device__ double find_minimum_delay(
         if (threadIdx.x == 0) {
             printf("Initial delays: ");
             for (int i = 0; i < num_components; i++) {
-                // Only print actual components
                 printf("[%d]=%f ", i, delays[i]);
             }
             printf("\n");
@@ -575,47 +569,62 @@ __device__ double find_minimum_delay(
         __syncthreads();
     }
 
-    // Find minimum - only compare actual components
-    for (int stride = (num_components + 1) / 2; stride > 0; stride >>= 1) {
-        if (threadIdx.x < stride && threadIdx.x < num_components) {
+    // Make sure num_components is rounded up to next power of 2
+    int adjusted_size = 1;
+    while (adjusted_size < num_components) {
+        adjusted_size *= 2;
+    }
+
+    // Do reduction with the adjusted size
+    for (int stride = adjusted_size / 2; stride > 0; stride >>= 1) {
+        if (threadIdx.x < stride) {
             int compare_idx = threadIdx.x + stride;
             if (compare_idx < num_components) {
-                // Only compare if within valid components
-                if constexpr (VERBOSE) {
-                    printf("Thread %d comparing with position %d: %f vs %f\n",
-                           threadIdx.x, compare_idx, delays[threadIdx.x],
-                           delays[compare_idx]);
+                if constexpr (EXPR_VERBOSE) {
+                    printf("Stride %d - Thread %d comparing [%d]=%f with [%d]=%f\n",
+                           stride, threadIdx.x, threadIdx.x, delays[threadIdx.x],
+                           compare_idx, delays[compare_idx]);
                 }
 
-                if (delays[compare_idx] < delays[threadIdx.x] && delays[compare_idx] != 0.0) {
+                if (delays[compare_idx] < delays[threadIdx.x]) {
                     delays[threadIdx.x] = delays[compare_idx];
                     component_indices[threadIdx.x] = component_indices[compare_idx];
-                    if constexpr (VERBOSE) {
-                        printf("Thread %d: Updated minimum to %f from component %d\n",
-                               threadIdx.x, delays[threadIdx.x],
+                    if constexpr (EXPR_VERBOSE) {
+                        printf("Stride %d - Thread %d updated minimum to %f from component %d\n",
+                               stride, threadIdx.x, delays[threadIdx.x],
                                component_indices[threadIdx.x]);
                     }
                 }
+            }
+        }
+        if constexpr (EXPR_VERBOSE) {
+            __syncthreads();
+            if (threadIdx.x == 0) {
+                printf("\nAfter stride %d, array state:\n", stride);
+                for (int i = 0; i < num_components; i++) {
+                    printf("[%d]=%f (comp %d) ", i, delays[i], component_indices[i]);
+                }
+                printf("\n\n");
             }
         }
         __syncthreads();
     }
 
     double min_delay = delays[0];
+    int winning_component = component_indices[0];
+
     if (threadIdx.x == 0) {
         if (min_delay < DBL_MAX) {
-            if constexpr (DELAY_VERBOSE) {
-                printf("\nFinal result:\n");
-                printf("  Minimum delay: %f\n", min_delay);
-                printf("  Winning component: %d\n", component_indices[0]);
-                printf("\nUpdating clocks:\n");
+            if constexpr (EXPR_VERBOSE) {
+                printf("Final minimum delay: %f from component %d\n",
+                       min_delay, winning_component);
             }
 
+            // Update clocks
             for (int i = 0; i < MAX_VARIABLES; i++) {
                 if (shared->variables[i].kind == VariableKind::CLOCK) {
                     double old_value = shared->variables[i].value;
                     shared->variables[i].rate = 1;
-                    // TODO: Don't do this. Also why do variables have a rate? Locations have rates.
                     shared->variables[i].value += min_delay;
                     if constexpr (VERBOSE) {
                         printf("  Clock %d: %f -> %f (advanced by %f)\n",
@@ -627,22 +636,25 @@ __device__ double find_minimum_delay(
     }
     __syncthreads();
 
-    // Remember who won and check edges only for winner
+    // Determine winner and take transition
     bool is_race_winner = false;
     if (threadIdx.x < num_components) {
-        bool is_race_winner = (min_delay < DBL_MAX &&
-                               component_indices[0] == my_state->component_id);
-
+        is_race_winner = (min_delay < DBL_MAX &&
+                         my_state->component_id == winning_component);
         if (is_race_winner) {
             check_enabled_edges(my_state, shared, model, block_state, is_race_winner);
             take_transition(my_state, shared, model, block_state, query_variable_id, threadIdx.x);
+            if (EXPR_VERBOSE) {
+                printf("Thread %d (component %d) won the race with delay %f\n",
+                       threadIdx.x, my_state->component_id, min_delay);
+            }
         }
     }
 
     __syncthreads();
-
     return min_delay;
 }
+
 
 __global__ void simulation_kernel(SharedModelState *model, bool *results,
                                   int runs_per_block, float time_bound, VariableKind *kinds, uint32_t num_vars,
@@ -872,7 +884,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         }
     }
 
-    if (threadIdx.x == 0) {
+    if (threadIdx.x == 0 && blockIdx.x % 100) {
         printf("Block %d: Simulation complete\n", blockIdx.x);
     }
     if constexpr (MINIMAL_PRINTS) {

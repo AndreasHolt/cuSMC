@@ -8,7 +8,7 @@
 
 
 
-struct alignas(8) ComponentState {
+struct alignas(4) ComponentState {
     // We force 4-byte alignment instead of 8
     // Pack these 4 bytes
     uint16_t component_id;
@@ -35,7 +35,6 @@ struct SharedBlockMemory {
         float value;
         int rate;
         VariableKind kind;
-        int last_writer;
     } variables[MAX_VARIABLES];
 
     int num_variables;
@@ -65,7 +64,6 @@ struct SharedBlockMemory {
             shared->variables[i].value = 0.0;
             shared->variables[i].rate = 1;
             shared->variables[i].kind = VariableKind::INT;
-            shared->variables[i].last_writer = -1;
         }
 
         // Clear channels

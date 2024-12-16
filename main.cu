@@ -10,7 +10,7 @@
 int main(int argc, char *argv[]) {
 
     bool CONST_QUERY = true;
-    std::string filename = "../xml_files/LargeModels/fischer_500_29.xml";
+    std::string filename = "../xml_files/LargeModels/abc_100_1p.xml";
     int curand_seed = 1234;
 
     // Statistics

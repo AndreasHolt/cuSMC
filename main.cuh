@@ -10,19 +10,20 @@
 
 
 #define VERBOSE 0
+#define EXPR_VERBOSE 0
 #define DELAY_VERBOSE 0
 #define PRINT_TRANSITIONS 0
 #define PRINT_VARIABLES 0
 #define PRINT_UPDATES 0
 #define LISTEN_TO -1 //-1 = all
 #define QUERYSTATS 0
-#define SYNC_SIDE_EFFECT true
+#define SYNC_SIDE_EFFECT false
 #define MINIMAL_PRINTS 0
 #define TIME_BOUND 10.0
-#define MAX_VARIABLES 1024
+#define MAX_VARIABLES 4
 
-constexpr int MAX_EDGES_PER_NODE = 8;
-constexpr int MAX_CHANNELS = 10;
+constexpr int MAX_EDGES_PER_NODE = 3;
+constexpr int MAX_CHANNELS = 1;
 constexpr bool USE_GLOBAL_MEMORY_CURAND = true;
 
 struct configuration {
