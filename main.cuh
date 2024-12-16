@@ -15,10 +15,10 @@
 #define PRINT_UPDATES 0
 #define LISTEN_TO -1 //-1 = all
 #define QUERYSTATS 0
-#define SYNC_SIDE_EFFECT true
+#define SYNC_SIDE_EFFECT false
 #define MINIMAL_PRINTS 0
 #define TIME_BOUND 10.0
-#define MAX_VARIABLES 20
+#define MAX_VARIABLES 1002
 
 constexpr int MAX_EDGES_PER_NODE = 8;
 constexpr int MAX_CHANNELS = 10;

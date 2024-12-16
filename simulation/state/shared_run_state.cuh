@@ -33,9 +33,8 @@ struct SharedBlockMemory {
     // Variables (fixed size array in shared memory)
     struct Variable {
         float value;
-        int rate;
+        u_int rate;
         VariableKind kind;
-        int last_writer;
     } variables[MAX_VARIABLES];
 
     int num_variables;
@@ -46,8 +45,8 @@ struct SharedBlockMemory {
     bool has_committed;
 
     // Broadcast channels
-    bool channel_active[MAX_CHANNELS];
-    int channel_sender[MAX_CHANNELS];
+    int channel_active;
+    int channel_sender;
 
     // Static initialization method
     __device__ static void init(SharedBlockMemory *shared, int sim_id) {
@@ -65,14 +64,11 @@ struct SharedBlockMemory {
             shared->variables[i].value = 0.0;
             shared->variables[i].rate = 1;
             shared->variables[i].kind = VariableKind::INT;
-            shared->variables[i].last_writer = -1;
         }
 
         // Clear channels
-        for (int i = 0; i < MAX_CHANNELS; i++) {
-            shared->channel_active[i] = false;
-            shared->channel_sender[i] = -1;
-        }
+        shared->channel_active = false;
+        shared->channel_sender = -1;
     }
 };
 

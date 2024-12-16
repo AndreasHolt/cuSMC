@@ -86,8 +86,8 @@ __device__ void take_transition(ComponentState *my_state,
         int channel_abs = abs(edge.channel);
 
         // This component needs to signal the broadcast, as its channel is '!-labelled'
-        shared->channel_active[channel_abs] = true;
-        shared->channel_sender[channel_abs] = my_state->component_id;
+        shared->channel_active = channel_abs;
+        shared->channel_sender = my_state->component_id;
     }
 
 
@@ -124,7 +124,6 @@ __device__ void take_transition(ComponentState *my_state,
         }
 
         shared->variables[var_id].value = new_value;
-        shared->variables[var_id].last_writer = my_state->component_id;
     }
 
     // Find destination node info
@@ -303,32 +302,30 @@ __device__ void SyncInParallel (ComponentState *my_state,
                     SharedBlockMemory *shared,SharedModelState *model,
                     BlockSimulationState *block_state, int query_variable_id) {
     // First check for active broadcasts
-    for (int ch = 0; ch < MAX_CHANNELS; ch++) {
-        if (shared->channel_active[ch] &&
-            shared->channel_sender[ch] != my_state->component_id) {
-            // This is the correct check
+    if (shared->channel_active > 0 &&
+        shared->channel_sender != my_state->component_id) {
+        // This is the correct check
 
-            // Collect all enabled receiving edges
-            my_state->num_enabled_edges = 0;
-            const NodeInfo *current_node = my_state->current_node;
+        // Collect all enabled receiving edges
+        my_state->num_enabled_edges = 0;
+        const NodeInfo *current_node = my_state->current_node;
 
-            for (int e = 0; e < current_node->num_edges; e++) {
-                const EdgeInfo &edge = model->edges[current_node->first_edge_index + e];
-                if (edge.channel == -ch &&
-                    check_edge_enabled(edge, shared, model, block_state, true, threadIdx.x)) {
-                    // Edges is enabled, therefore we add it to the enabled edges list, to be used inside take_transition
-                    my_state->enabled_edges[my_state->num_enabled_edges++] = e;
-                    }
-            }
-
-            // If we found any enabled receiving edges, we just randomly select one inside take_transition
-            if (my_state->num_enabled_edges > 0) {
-                if constexpr (VERBOSE) {
-                    printf("Found %d enabled receiving edges for channel %d.\n",
-                           my_state->num_enabled_edges, ch);
+        for (int e = 0; e < current_node->num_edges; e++) {
+            const EdgeInfo &edge = model->edges[current_node->first_edge_index + e];
+            if (edge.channel == -shared->channel_active &&
+                check_edge_enabled(edge, shared, model, block_state, true, threadIdx.x)) {
+                // Edges is enabled, therefore we add it to the enabled edges list, to be used inside take_transition
+                my_state->enabled_edges[my_state->num_enabled_edges++] = e;
                 }
-                take_transition(my_state, shared, model, block_state, query_variable_id, threadIdx.x);
+        }
+
+        // If we found any enabled receiving edges, we just randomly select one inside take_transition
+        if (my_state->num_enabled_edges > 0) {
+            if constexpr (VERBOSE) {
+                printf("Found %d enabled receiving edges for channel %d.\n",
+                       my_state->num_enabled_edges, shared->channel_active);
             }
+            take_transition(my_state, shared, model, block_state, query_variable_id, threadIdx.x);
         }
     }
 
@@ -336,10 +333,8 @@ __device__ void SyncInParallel (ComponentState *my_state,
 
     // Only a single thread needs to reset synchronisation flags in shared memory
     if (threadIdx.x == 0) {
-        for (int ch = 0; ch < MAX_CHANNELS; ch++) {
-            shared->channel_active[ch] = false;
-            shared->channel_sender[ch] = -1;
-        }
+        shared->channel_active = 0;
+        shared->channel_sender = -1;
     }
 
     __syncthreads();
@@ -349,51 +344,43 @@ __device__ void SyncInSerial (ComponentState *my_state,
                     BlockSimulationState *block_state, int query_variable_id) {
     __syncthreads();
 
-    // Only a single thread needs to reset synchronisation flags in shared memory
-    if (threadIdx.x == 0) {
-        for (int comp_idx = 0; comp_idx < model->num_components; comp_idx++) {
+    // First step can be done in parallel.
+    if (shared->channel_active > 0) {
             //printf("Thread id: %d, comp_idx: %d, before: %p\n", threadIdx.x, comp_idx, my_state);
+        if (shared->channel_sender != my_state->component_id) {
 
-            ComponentState *my_new_state = my_state+comp_idx;
-            BlockSimulationState *new_block_state = block_state+comp_idx;
-            //printf("Thread id: %d, comp_idx: %d, after: %p\n", threadIdx.x, comp_idx, my_new_state);
+            // Collect all enabled receiving edges
+            my_state->num_enabled_edges = 0;
+            const NodeInfo *current_node = my_state->current_node;
 
-            // First check for active broadcasts
-            for (int ch = 0; ch < MAX_CHANNELS; ch++) {
-                if (shared->channel_active[ch] &&
-                    shared->channel_sender[ch] != my_new_state->component_id) {
-                    // This is the correct check
-
-                    // Collect all enabled receiving edges
-                    my_new_state->num_enabled_edges = 0;
-                    const NodeInfo *current_node = my_new_state->current_node;
-
-                    for (int e = 0; e < current_node->num_edges; e++) {
-                        const EdgeInfo &edge = model->edges[current_node->first_edge_index + e];
-                        if (edge.channel == -ch &&
-                            check_edge_enabled(edge, shared, model, new_block_state, true, comp_idx)) {
-                            // Edges is enabled, therefore we add it to the enabled edges list, to be used inside take_transition
-                            my_new_state->enabled_edges[my_new_state->num_enabled_edges++] = e;
-                            }
-                    }
-
-                    // If we found any enabled receiving edges, we just randomly select one inside take_transition
-                    if (my_new_state->num_enabled_edges > 0) {
-                        if constexpr (VERBOSE) {
-                            printf("Found %d enabled receiving edges for channel %d.\n",
-                                   my_new_state->num_enabled_edges, ch);
-                        }
-                        take_transition(my_new_state, shared, model, new_block_state, query_variable_id, comp_idx);
-                    }
+            for (int e = 0; e < current_node->num_edges; e++) {
+                const EdgeInfo &edge = model->edges[current_node->first_edge_index + e];
+                if (edge.channel == -shared->channel_active &&
+                    check_edge_enabled(edge, shared, model, block_state, true, threadIdx.x)) {
+                    // Edges is enabled, therefore we add it to the enabled edges list, to be used inside take_transition
+                    my_state->enabled_edges[my_state->num_enabled_edges++] = e;
                 }
             }
-
-
-
         }
-        for (int ch = 0; ch < MAX_CHANNELS; ch++) {
-            shared->channel_active[ch] = false;
-            shared->channel_sender[ch] = -1;
+
+        if (threadIdx.x == 0) {
+            //For each in array active
+            for (int comp_idx = 0; comp_idx < model->num_components; comp_idx++) {
+                ComponentState *my_new_state = my_state+comp_idx;
+                BlockSimulationState *new_block_state = block_state+comp_idx;
+                //printf("Thread id: %d, comp_idx: %d, after: %p\n", threadIdx.x, comp_idx, my_new_state);
+                // If we found any enabled receiving edges, we just randomly select one inside take_transition
+                if (my_new_state->num_enabled_edges > 0) {
+                    if constexpr (VERBOSE) {
+                        printf("Found %d enabled receiving edges for channel %d.\n",
+                               my_new_state->num_enabled_edges, shared->channel_active);
+                    }
+                    take_transition(my_new_state, shared, model, new_block_state, query_variable_id, comp_idx);
+                }
+            }
+            // Only a single thread needs to reset synchronisation flags in shared memory
+            shared->channel_active = 0;
+            shared->channel_sender = -1;
         }
     }
 
