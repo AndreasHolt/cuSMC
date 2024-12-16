@@ -29,7 +29,7 @@ __device__ void take_transition(ComponentState *my_state,
     }
     if (my_state->num_enabled_edges == 0) {
         if constexpr (MINIMAL_PRINTS) {
-            if (LISTEN_TO == -1 || LISTEN_TO == threadIdx.x){
+            if (LISTEN_TO == -1 || LISTEN_TO == threadIdx.x) {
                 printf("Alt_Thread %d: No enabled edges to take\n", alt_thread_idx);
             }
         }
@@ -65,11 +65,10 @@ __device__ void take_transition(ComponentState *my_state,
             temp -= weight_of_edge;
         }
 
-        if constexpr (VERBOSE || PRINT_TRANSITIONS ) {
+        if constexpr (VERBOSE || PRINT_TRANSITIONS) {
             if (LISTEN_TO == -1 || LISTEN_TO == threadIdx.x) {
                 printf("Alt_Thread %d: Randomly selected edge %d from %d enabled edges (rand=%d)\n",
-                                   alt_thread_idx, selected_idx, my_state->num_enabled_edges, rand);
-
+                       alt_thread_idx, selected_idx, my_state->num_enabled_edges, rand);
             }
         }
     }
@@ -213,8 +212,8 @@ __device__ bool check_edge_enabled(const EdgeInfo &edge,
                                        : guard.operand == constraint::greater_c
                                              ? ">"
                                              : guard.operand == constraint::equal_c
-                                                ? "=="
-                                                : "?",
+                                                   ? "=="
+                                                   : "?",
                        bound);
             }
 
@@ -298,9 +297,10 @@ __device__ void check_cuda_error(const char *location) {
         printf("CUDA error at %s: %s\n", location, cudaGetErrorString(error));
     }
 }
-__device__ void SyncInParallel (ComponentState *my_state,
-                    SharedBlockMemory *shared,SharedModelState *model,
-                    BlockSimulationState *block_state, int query_variable_id) {
+
+__device__ void SyncInParallel(ComponentState *my_state,
+                               SharedBlockMemory *shared, SharedModelState *model,
+                               BlockSimulationState *block_state, int query_variable_id) {
     // First check for active broadcasts
     if (shared->channel_active > 0 &&
         shared->channel_sender != my_state->component_id) {
@@ -316,7 +316,7 @@ __device__ void SyncInParallel (ComponentState *my_state,
                 check_edge_enabled(edge, shared, model, block_state, true, threadIdx.x)) {
                 // Edges is enabled, therefore we add it to the enabled edges list, to be used inside take_transition
                 my_state->enabled_edges[my_state->num_enabled_edges++] = e;
-                }
+            }
         }
 
         // If we found any enabled receiving edges, we just randomly select one inside take_transition
@@ -339,16 +339,16 @@ __device__ void SyncInParallel (ComponentState *my_state,
 
     __syncthreads();
 }
-__device__ void SyncInSerial (ComponentState *my_state,
-                    SharedBlockMemory *shared,SharedModelState *model,
-                    BlockSimulationState *block_state, int query_variable_id) {
+
+__device__ void SyncInSerial(ComponentState *my_state,
+                             SharedBlockMemory *shared, SharedModelState *model,
+                             BlockSimulationState *block_state, int query_variable_id) {
     __syncthreads();
 
     // First step can be done in parallel.
     if (shared->channel_active > 0) {
             //printf("Thread id: %d, comp_idx: %d, before: %p\n", threadIdx.x, comp_idx, my_state);
         if (shared->channel_sender != my_state->component_id) {
-
             // Collect all enabled receiving edges
             my_state->num_enabled_edges = 0;
             const NodeInfo *current_node = my_state->current_node;
@@ -366,8 +366,8 @@ __device__ void SyncInSerial (ComponentState *my_state,
         if (threadIdx.x == 0) {
             //For each in array active
             for (int comp_idx = 0; comp_idx < model->num_components; comp_idx++) {
-                ComponentState *my_new_state = my_state+comp_idx;
-                BlockSimulationState *new_block_state = block_state+comp_idx;
+                ComponentState *my_new_state = my_state + comp_idx;
+                BlockSimulationState *new_block_state = block_state + comp_idx;
                 //printf("Thread id: %d, comp_idx: %d, after: %p\n", threadIdx.x, comp_idx, my_new_state);
                 // If we found any enabled receiving edges, we just randomly select one inside take_transition
                 if (my_new_state->num_enabled_edges > 0) {
@@ -392,7 +392,6 @@ __device__ void compute_possible_delay(
     SharedBlockMemory *shared,
     SharedModelState *model,
     BlockSimulationState *block_state, int num_vars, int query_variable_id) {
-
     if (model->channel_with_side_effects) {
         SyncInSerial(my_state, shared, model, block_state, query_variable_id);
     } else {
@@ -519,9 +518,12 @@ __device__ void compute_possible_delay(
         // Fastest log, but not as accurate. We consider it fine because we are doing statistical sampling
 
         my_state->has_delay = true;
-        if constexpr (VERBOSE) {
-            printf("Thread %d: No delay bounds, sampled %f using exponential distribution with rate %f\n", threadIdx.x,
-                   my_state->next_delay, rate);
+        if constexpr (DELAY_VERBOSE) {
+            if (threadIdx.x == 0) {
+                printf("Thread %d: No delay bounds, sampled %f using exponential distribution with rate %f\n",
+                       threadIdx.x,
+                       my_state->next_delay, rate);
+            }
         }
         my_state->has_delay = true;
     }
@@ -574,7 +576,7 @@ __device__ double find_minimum_delay(
                            delays[compare_idx]);
                 }
 
-                if (delays[compare_idx] < delays[threadIdx.x]) {
+                if (delays[compare_idx] < delays[threadIdx.x] && delays[compare_idx] != 0.0) {
                     delays[threadIdx.x] = delays[compare_idx];
                     component_indices[threadIdx.x] = component_indices[compare_idx];
                     if constexpr (VERBOSE) {
@@ -591,7 +593,7 @@ __device__ double find_minimum_delay(
     double min_delay = delays[0];
     if (threadIdx.x == 0) {
         if (min_delay < DBL_MAX) {
-            if constexpr (VERBOSE) {
+            if constexpr (DELAY_VERBOSE) {
                 printf("\nFinal result:\n");
                 printf("  Minimum delay: %f\n", min_delay);
                 printf("  Winning component: %d\n", component_indices[0]);
@@ -632,7 +634,8 @@ __device__ double find_minimum_delay(
 }
 
 __global__ void simulation_kernel(SharedModelState *model, bool *results,
-                                  int runs_per_block, float time_bound, VariableKind *kinds, uint32_t  num_vars, bool *flags,
+                                  int runs_per_block, float time_bound, VariableKind *kinds, uint32_t num_vars,
+                                  bool *flags,
                                   double *variable_flags, int variable_id, bool isMax,
                                   curandState *rng_states_global, int curand_seed, int max_components) {
     // Prepare Shared memory
@@ -745,7 +748,6 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
                 if (i == variable_id) {
                     shared_mem->query_variable_min = model->initial_var_values[i];
                     shared_mem->query_variable_max = model->initial_var_values[i];
-
                 }
                 // Not sure whether we need this case yet
             }
@@ -777,11 +779,12 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
     for (int i = 0; i < model->max_nodes_per_component; i++) {
         if constexpr (VERBOSE) {
             if (threadIdx.x == 0) {
-                printf("Comparing id1: %d, with id2: %d.\n",model->initial_nodes[comp_id],model->nodes[i * model->num_components+comp_id].id);
+                printf("Comparing id1: %d, with id2: %d.\n", model->initial_nodes[comp_id],
+                       model->nodes[i * model->num_components + comp_id].id);
             }
         }
-        if (model->initial_nodes[comp_id] == model->nodes[i * model->num_components+comp_id].id) {
-            my_state->current_node = &model->nodes[i * model->num_components+comp_id];
+        if (model->initial_nodes[comp_id] == model->nodes[i * model->num_components + comp_id].id) {
+            my_state->current_node = &model->nodes[i * model->num_components + comp_id];
             found_initial_node = true;
         }
     }
@@ -816,7 +819,6 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 
 
         if constexpr (VERBOSE) {
-            printf("Flag is %d\n", shared_mem->has_hit_goal);
             printf("Thread %d: Time=%f\n", threadIdx.x, shared_mem->global_time);
         }
         compute_possible_delay(my_state, shared_mem, model, &block_state, num_vars, variable_id);
@@ -836,7 +838,9 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         );
         CHECK_ERROR("after find minimum");
         if constexpr (VERBOSE) {
-            printf("Thread %d: Minimum delay = %f\n", threadIdx.x, min_delay);
+            if (threadIdx.x == 0) {
+                printf("Block %d: Minimum delay = %f\n", blockIdx.x, min_delay);
+            }
         }
         if (threadIdx.x == 0) {
             shared_mem->global_time += min_delay;
@@ -857,6 +861,9 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         }
     }
 
+    if (threadIdx.x == 0) {
+        printf("Block %d: Simulation complete\n", blockIdx.x);
+    }
     if constexpr (MINIMAL_PRINTS) {
         printf("Thread %d: Simulation complete\n", threadIdx.x);
     }

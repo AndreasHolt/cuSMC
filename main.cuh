@@ -10,6 +10,7 @@
 
 
 #define VERBOSE 0
+#define DELAY_VERBOSE 0
 #define PRINT_TRANSITIONS 0
 #define PRINT_VARIABLES 0
 #define PRINT_UPDATES 0
@@ -18,7 +19,7 @@
 #define SYNC_SIDE_EFFECT false
 #define MINIMAL_PRINTS 0
 #define TIME_BOUND 10.0
-#define MAX_VARIABLES 1002
+#define MAX_VARIABLES 1024
 
 constexpr int MAX_EDGES_PER_NODE = 8;
 constexpr int MAX_CHANNELS = 10;
