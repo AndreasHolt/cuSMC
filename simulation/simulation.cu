@@ -874,7 +874,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         }
     }
 
-    if (threadIdx.x == 0 && blockIdx.x % 100) {
+    if (threadIdx.x == 0 && blockIdx.x % 100 == 100) {
         printf("Block %d: Simulation complete\n", blockIdx.x);
     }
     if constexpr (MINIMAL_PRINTS) {

@@ -397,7 +397,9 @@ void smc(configuration conf, statistics_Configuration stat_conf) {
         // Estimate query
         if (stat_conf.isEstimate) {
             for (int i = 0; i < len_of_array; i++) {
-                cout << "Adding " << var_data[i] << " to sum " << result << endl;
+                if (EXPR_VERBOSE) {
+                        cout << "Adding " << var_data[i] << " to sum " << result << endl;
+                }
                 result += var_data[i];
             }
             result = result / len_of_array;
