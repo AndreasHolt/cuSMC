@@ -231,14 +231,13 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
 
     cudaGetDeviceProperties(&deviceProp, 0); // Assuming device 0, change if necessary
 
-
-
-    //Var over time
     var_at_time *device_var_over_time;
-    cudaMalloc(&device_var_over_time, stat_conf.simulations * sizeof(var_at_time) * VAR_OVER_TIME_ARRAY_SIZE);
-
     int *device_number_of_vars;
-    cudaMalloc(&device_number_of_vars, stat_conf.simulations * sizeof(int));
+    if constexpr (TRACK_VARIABLE_OVER_TIME) {
+        //Var over time
+        cudaMalloc(&device_var_over_time, stat_conf.simulations * sizeof(var_at_time) * VAR_OVER_TIME_ARRAY_SIZE);
+        cudaMalloc(&device_number_of_vars, stat_conf.simulations * sizeof(int));
+    }
     // What share memory we need:
     /*
     __shared__ double delays[MAX_COMPONENTS]; // Only need MAX_COMPONENTS slots, not full warp size
@@ -286,12 +285,13 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
 
     writeTimingToCSV(conf.filename, MC, stat_conf.simulations, stat_conf.timeBound, ms);
 
-
-    var_at_time *var_over_time = (var_at_time*) malloc(stat_conf.simulations * sizeof(var_at_time) * VAR_OVER_TIME_ARRAY_SIZE);
-    cudaMemcpy(var_over_time, device_var_over_time, stat_conf.simulations * sizeof(var_at_time) * VAR_OVER_TIME_ARRAY_SIZE, cudaMemcpyDeviceToHost);
-    int* host_number_of_vars = (int*) malloc(stat_conf.simulations * sizeof(int));
-    cudaMemcpy(host_number_of_vars, device_number_of_vars, stat_conf.simulations * sizeof(int), cudaMemcpyDeviceToHost);
-    write_var_at_time_array_to_csv(var_over_time, host_number_of_vars[0], "var_over_time.csv");
+    if constexpr (TRACK_VARIABLE_OVER_TIME) {
+        var_at_time *var_over_time = (var_at_time*) malloc(stat_conf.simulations * sizeof(var_at_time) * VAR_OVER_TIME_ARRAY_SIZE);
+        cudaMemcpy(var_over_time, device_var_over_time, stat_conf.simulations * sizeof(var_at_time) * VAR_OVER_TIME_ARRAY_SIZE, cudaMemcpyDeviceToHost);
+        int* host_number_of_vars = (int*) malloc(stat_conf.simulations * sizeof(int));
+        cudaMemcpy(host_number_of_vars, device_number_of_vars, stat_conf.simulations * sizeof(int), cudaMemcpyDeviceToHost);
+        write_var_at_time_array_to_csv(var_over_time, host_number_of_vars[0], "var_over_time.csv");
+    }
 
     // Check for launch error
     error = cudaGetLastError();
