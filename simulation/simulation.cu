@@ -13,7 +13,11 @@ __device__ int get_sum_edge_weight(const ComponentState *my_state,
     const NodeInfo *node = my_state->current_node;
     for (int i = 0; i < node->num_edges; i++) {
         if (my_state->enabled_edges[i] + node->first_edge_index == node->first_edge_index + i) {
-            sum += evaluate_expression(model->edges[node->first_edge_index + i].weight, shared);
+            double edge_weight = evaluate_expression(model->edges[node->first_edge_index + i].weight, shared);
+            if (EXPR_VERBOSE && threadIdx.x == 0) {
+                printf("Adding edge weight %f to sum %f, resulting in a total of %f\n", edge_weight, sum,                       sum + edge_weight);
+            }
+            sum += edge_weight;
         }
     }
     return static_cast<int>(sum);
@@ -52,6 +56,7 @@ __device__ void take_transition(ComponentState *my_state,
         const int weights = get_sum_edge_weight(my_state, model, shared);
         float random = curand_uniform(block_state->random);
         const int rand = static_cast<int>(static_cast<float>(weights) * random);
+
         int temp = weights;
         const NodeInfo *node = my_state->current_node;
 
@@ -410,14 +415,13 @@ __device__ void compute_possible_delay(
     double max_delay = DBL_MAX;
     bool is_bounded = false;
 
-    __syncthreads();
 
     if constexpr (VERBOSE) {
         printf("Node idx %d has type: %d \n", node.id, node.type);
     }
 
     // Node types with 3 (Urgent) or 4 (Commited) need to return 0 as their delay (they are immediate)
-    if (node.type > 2) {
+    if (node.type > 1) {
         if constexpr (VERBOSE) {
             printf("Node idx %d has type: %d, therefore it is urgent or commited and selecting delay 0 \n", node.id,
                    node.type);
@@ -514,11 +518,10 @@ __device__ void compute_possible_delay(
 
         // Sample from the exponential distribution
         double rand = curand_uniform_double(block_state->random);
-        my_state->next_delay = -logf(rand) / rate;
+        my_state->next_delay = -__log2f(rand) / rate;
         // Fastest log, but not as accurate. We consider it fine because we are doing statistical sampling
 
-        my_state->has_delay = true;
-        if constexpr (DELAY_VERBOSE | EXPR_VERBOSE) {
+        if constexpr (DELAY_VERBOSE | EXPR_VERBOSE_EXTRA | EXPR_VERBOSE) {
             printf("Thread %d: No delay bounds, sampled %f using exponential distribution with rate %f\n",
                    threadIdx.x,
                    my_state->next_delay, rate);
@@ -565,12 +568,23 @@ __device__ double find_minimum_delay(
         adjusted_size *= 2;
     }
 
+
+    if constexpr (REDUCTION_VERBOSE) {
+        __syncthreads();
+        if (threadIdx.x == 0) {
+            printf("\nBefore comparison, array state:\n");
+            for (int i = 0; i < num_components; i++) {
+                printf("[%d]=%f (comp %d) ", i, delays[i], component_indices[i]);
+            }
+            printf("\n\n");
+        }
+    }
     // Do reduction with the adjusted size
     for (int stride = adjusted_size / 2; stride > 0; stride >>= 1) {
         if (threadIdx.x < stride) {
             int compare_idx = threadIdx.x + stride;
             if (compare_idx < num_components) {
-                if constexpr (EXPR_VERBOSE) {
+                if constexpr (EXPR_VERBOSE_EXTRA) {
                     printf("Stride %d - Thread %d comparing [%d]=%f with [%d]=%f\n",
                            stride, threadIdx.x, threadIdx.x, delays[threadIdx.x],
                            compare_idx, delays[compare_idx]);
@@ -579,7 +593,7 @@ __device__ double find_minimum_delay(
                 if (delays[compare_idx] < delays[threadIdx.x]) {
                     delays[threadIdx.x] = delays[compare_idx];
                     component_indices[threadIdx.x] = component_indices[compare_idx];
-                    if constexpr (EXPR_VERBOSE) {
+                    if constexpr (EXPR_VERBOSE_EXTRA) {
                         printf("Stride %d - Thread %d updated minimum to %f from component %d\n",
                                stride, threadIdx.x, delays[threadIdx.x],
                                component_indices[threadIdx.x]);
@@ -587,7 +601,7 @@ __device__ double find_minimum_delay(
                 }
             }
         }
-        if constexpr (EXPR_VERBOSE) {
+        if constexpr (EXPR_VERBOSE_EXTRA) {
             __syncthreads();
             if (threadIdx.x == 0) {
                 printf("\nAfter stride %d, array state:\n", stride);
@@ -602,6 +616,8 @@ __device__ double find_minimum_delay(
 
     double min_delay = delays[0];
     int winning_component = component_indices[0];
+    __syncthreads();  // Make sure all threads see the same winner
+
 
     if (threadIdx.x == 0) {
         if (min_delay < DBL_MAX) {

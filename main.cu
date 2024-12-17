@@ -14,8 +14,8 @@ int main(int argc, char *argv[]) {
     int curand_seed = 1234;
 
     // Statistics
-    int simulations = 1;
-    int timeBound = 300;
+    int simulations = 1000;
+    int timeBound = 100;
     int variable_threshhold = -1;
     int variable_id = 1;
     bool isMax = true; // Gather info on either the max value of the variable or the min
