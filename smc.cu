@@ -233,6 +233,12 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
 
 
 
+    //Var over time
+    var_at_time *device_var_over_time;
+    cudaMalloc(&device_var_over_time, stat_conf.simulations * sizeof(var_at_time) * VAR_OVER_TIME_ARRAY_SIZE);
+
+    int *device_number_of_vars;
+    cudaMalloc(&device_number_of_vars, stat_conf.simulations * sizeof(int));
     // What share memory we need:
     /*
     __shared__ double delays[MAX_COMPONENTS]; // Only need MAX_COMPONENTS slots, not full warp size
@@ -259,10 +265,10 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
     // int MC = m_info.MAX_COMPONENTS;
     if constexpr (USE_GLOBAL_MEMORY_CURAND) {
         simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState)>>>(
-        model, device_results, runs_per_block, stat_conf.timeBound, d_kinds, m_info.num_vars, flags, variable_flags, stat_conf.variable_id, stat_conf.isMax, rng_states_global, conf.curand_seed, MC);
+        model, device_results, runs_per_block, stat_conf.timeBound, d_kinds, m_info.num_vars, flags, variable_flags, stat_conf.variable_id, stat_conf.isMax, rng_states_global, conf.curand_seed, MC, device_var_over_time, device_number_of_vars);
     } else {
         simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState) + MC*sizeof(curandState)>>>(
-        model, device_results, runs_per_block, stat_conf.timeBound, d_kinds, m_info.num_vars, flags, variable_flags, stat_conf.variable_id, stat_conf.isMax, rng_states_global, conf.curand_seed, MC);
+        model, device_results, runs_per_block, stat_conf.timeBound, d_kinds, m_info.num_vars, flags, variable_flags, stat_conf.variable_id, stat_conf.isMax, rng_states_global, conf.curand_seed, MC, device_var_over_time, device_number_of_vars);
     }
 
     cudaDeviceSynchronize();
@@ -281,6 +287,11 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
     writeTimingToCSV(conf.filename, MC, stat_conf.simulations, stat_conf.timeBound, ms);
 
 
+    var_at_time *var_over_time = (var_at_time*) malloc(stat_conf.simulations * sizeof(var_at_time) * VAR_OVER_TIME_ARRAY_SIZE);
+    cudaMemcpy(var_over_time, device_var_over_time, stat_conf.simulations * sizeof(var_at_time) * VAR_OVER_TIME_ARRAY_SIZE, cudaMemcpyDeviceToHost);
+    int* host_number_of_vars = (int*) malloc(stat_conf.simulations * sizeof(int));
+    cudaMemcpy(host_number_of_vars, device_number_of_vars, stat_conf.simulations * sizeof(int), cudaMemcpyDeviceToHost);
+    write_var_at_time_array_to_csv(var_over_time, host_number_of_vars[0], "var_over_time.csv");
 
     // Check for launch error
     error = cudaGetLastError();

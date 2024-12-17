@@ -14,6 +14,11 @@ enum StatType {
     VAR_STAT
 };
 
+struct var_at_time {
+    float value;
+    float time;
+};
+
 class Statistics {
 private:
     size_t simulations;

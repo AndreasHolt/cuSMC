@@ -22,6 +22,9 @@
 #define TIME_BOUND 10.0
 #define MAX_VARIABLES 4
 
+
+#define VAR_OVER_TIME_ARRAY_SIZE 100000
+
 constexpr int MAX_EDGES_PER_NODE = 3;
 constexpr int MAX_CHANNELS = 1;
 constexpr bool USE_GLOBAL_MEMORY_CURAND = true;

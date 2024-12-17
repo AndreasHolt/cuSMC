@@ -12,6 +12,30 @@
 #include <iostream>
 #include <set>
 
+#include "statistics.cuh"
+
+void write_var_at_time_array_to_csv(const var_at_time* data, int size, const std::string& filename) {
+    std::filesystem::path current_path = std::filesystem::current_path();
+    std::filesystem::path project_root = current_path.parent_path();
+    const std::string path = (project_root / filename).string();
+    std::ofstream csv_file(path);
+
+    if (!csv_file.is_open()) {
+        std::cerr << "Error: Could not open file at path: " << path << std::endl;
+        return;
+    }
+
+    // Write the header row
+    csv_file << "Value,Time\n";
+
+    // Write each data point as a new row
+    for (int i = 0; i < size; i++) {
+        csv_file << data[i].value << "," << data[i].time << "\n";
+    }
+
+    csv_file.close();
+}
+
 void writeTimingToCSV(const std::string& xml_path, int MC, int simulations, double timeBound, double timing_ms) {
     std::filesystem::path current_path = std::filesystem::current_path();
     std::filesystem::path project_root = current_path.parent_path();

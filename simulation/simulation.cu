@@ -2,6 +2,7 @@
 
 #include "simulation.cuh"
 #include "expressions.cuh"
+#include "statistics.cuh"
 
 #define CHECK_ERROR(loc) check_cuda_error(loc)
 
@@ -650,7 +651,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
                                   int runs_per_block, float time_bound, VariableKind *kinds, uint32_t num_vars,
                                   bool *flags,
                                   double *variable_flags, int variable_id, bool isMax,
-                                  curandState *rng_states_global, int curand_seed, int max_components) {
+                                  curandState *rng_states_global, int curand_seed, int max_components, var_at_time *var_over_time, int *var_over_time_entries) {
     // Prepare Shared memory
     //extern __shared__ int s[];
     //int *integerData = s;                        // nI ints
@@ -745,6 +746,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 
     // Initialize shared state
     if (threadIdx.x == 0) {
+        *var_over_time_entries = 0;
         if constexpr (VERBOSE) {
             printf("Block %d: Initializing shared memory\n", blockIdx.x);
         }
@@ -857,6 +859,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         }
         if (threadIdx.x == 0) {
             shared_mem->global_time += min_delay;
+            var_over_time[blockIdx.x*VAR_OVER_TIME_ARRAY_SIZE+(*var_over_time_entries)++] = var_at_time{shared_mem->variables[variable_id].value, shared_mem->global_time};
             if constexpr (VERBOSE) {
                 printf("Block %d: Advanced time to %f\n",
                        blockIdx.x, shared_mem->global_time);
