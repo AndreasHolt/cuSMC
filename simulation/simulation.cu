@@ -747,7 +747,8 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
     // Initialize shared state
     if (threadIdx.x == 0) {
         if constexpr (TRACK_VARIABLE_OVER_TIME) {
-            *var_over_time_entries = 0;
+            var_over_time_entries[blockIdx.x] = 0;
+
         }
         if constexpr (VERBOSE) {
             printf("Block %d: Initializing shared memory\n", blockIdx.x);
@@ -862,7 +863,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         if (threadIdx.x == 0) {
             shared_mem->global_time += min_delay;
             if constexpr (TRACK_VARIABLE_OVER_TIME) {
-                var_over_time[blockIdx.x*VAR_OVER_TIME_ARRAY_SIZE+(*var_over_time_entries)++] = var_at_time{shared_mem->variables[variable_id].value, shared_mem->global_time};
+                var_over_time[blockIdx.x*VAR_OVER_TIME_ARRAY_SIZE+(var_over_time_entries[blockIdx.x]++)] = var_at_time{shared_mem->variables[variable_id].value, shared_mem->global_time};
             }
             if constexpr (VERBOSE) {
                 printf("Block %d: Advanced time to %f\n",
@@ -881,7 +882,7 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         }
     }
 
-    if (threadIdx.x == 0 && blockIdx.x % 100) {
+    if (threadIdx.x == 0 && blockIdx.x % 100 == 0) {
         printf("Block %d: Simulation complete\n", blockIdx.x);
     }
     if constexpr (MINIMAL_PRINTS) {

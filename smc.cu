@@ -290,7 +290,8 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
         cudaMemcpy(var_over_time, device_var_over_time, stat_conf.simulations * sizeof(var_at_time) * VAR_OVER_TIME_ARRAY_SIZE, cudaMemcpyDeviceToHost);
         int* host_number_of_vars = (int*) malloc(stat_conf.simulations * sizeof(int));
         cudaMemcpy(host_number_of_vars, device_number_of_vars, stat_conf.simulations * sizeof(int), cudaMemcpyDeviceToHost);
-        write_var_at_time_array_to_csv(var_over_time, host_number_of_vars[0], "var_over_time.csv");
+
+        write_var_at_time_array_to_csv(var_over_time, stat_conf.simulations, host_number_of_vars, "var_over_time.csv");
     }
 
     // Check for launch error
