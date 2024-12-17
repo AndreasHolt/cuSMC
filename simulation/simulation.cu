@@ -41,7 +41,7 @@ __device__ void take_transition(ComponentState *my_state,
     if (my_state->num_enabled_edges == 1) {
         selected_idx = my_state->enabled_edges[0];
         if constexpr (VERBOSE || PRINT_TRANSITIONS) {
-            if (LISTEN_TO == -1 || LISTEN_TO == threadIdx.x) {
+            if (LISTEN_TO == -1 || LISTEN_TO == threadIdx.x || true) {
                 const EdgeInfo &edge = model->edges[my_state->current_node->first_edge_index + selected_idx];
                 printf("Alt_Thread %d: Only one enabled edge (%d), selecting it, going from location %d to %d.\n",
                        alt_thread_idx, selected_idx, edge.source_node_id, edge.dest_node_id);
@@ -167,7 +167,7 @@ __device__ void take_transition(ComponentState *my_state,
 
     // Update current node
     my_state->current_node = dest_node;
-    if constexpr (VERBOSE) {
+    if constexpr (VERBOSE || true) {
         printf("Alt_Thread %d: Moved to new node %d\n", alt_thread_idx, dest_node->id);
     }
 }
@@ -347,8 +347,9 @@ __device__ void SyncInSerial(ComponentState *my_state,
 
     // First step can be done in parallel.
     if (shared->channel_active > 0) {
-            //printf("Thread id: %d, comp_idx: %d, before: %p\n", threadIdx.x, comp_idx, my_state);
+            printf("Thread id: %d, first\n", threadIdx.x);
         if (shared->channel_sender != my_state->component_id) {
+            printf("Thread id: %d, second\n", threadIdx.x);
             // Collect all enabled receiving edges
             my_state->num_enabled_edges = 0;
             const NodeInfo *current_node = my_state->current_node;
@@ -357,11 +358,14 @@ __device__ void SyncInSerial(ComponentState *my_state,
                 const EdgeInfo &edge = model->edges[current_node->first_edge_index + e];
                 if (edge.channel == -shared->channel_active &&
                     check_edge_enabled(edge, shared, model, block_state, true, threadIdx.x)) {
+                    printf("Thread id: %d, third\n", threadIdx.x);
                     // Edges is enabled, therefore we add it to the enabled edges list, to be used inside take_transition
                     my_state->enabled_edges[my_state->num_enabled_edges++] = e;
                 }
             }
         }
+
+        __syncthreads();
 
         if (threadIdx.x == 0) {
             //For each in array active
@@ -375,6 +379,7 @@ __device__ void SyncInSerial(ComponentState *my_state,
                         printf("Found %d enabled receiving edges for channel %d.\n",
                                my_new_state->num_enabled_edges, shared->channel_active);
                     }
+                    printf("Thread id: %d, comp id: %d, fourth\n", threadIdx.x, comp_idx);
                     take_transition(my_new_state, shared, model, new_block_state, query_variable_id, comp_idx);
                 }
             }
@@ -518,7 +523,7 @@ __device__ void compute_possible_delay(
         // Fastest log, but not as accurate. We consider it fine because we are doing statistical sampling
 
         my_state->has_delay = true;
-        if constexpr (DELAY_VERBOSE | EXPR_VERBOSE) {
+        if constexpr (DELAY_VERBOSE || EXPR_VERBOSE) {
             printf("Thread %d: No delay bounds, sampled %f using exponential distribution with rate %f\n",
                    threadIdx.x,
                    my_state->next_delay, rate);
@@ -570,7 +575,7 @@ __device__ double find_minimum_delay(
         if (threadIdx.x < stride) {
             int compare_idx = threadIdx.x + stride;
             if (compare_idx < num_components) {
-                if constexpr (EXPR_VERBOSE) {
+                if constexpr (REDUCTION_VERBOSE) {
                     printf("Stride %d - Thread %d comparing [%d]=%f with [%d]=%f\n",
                            stride, threadIdx.x, threadIdx.x, delays[threadIdx.x],
                            compare_idx, delays[compare_idx]);
@@ -579,7 +584,7 @@ __device__ double find_minimum_delay(
                 if (delays[compare_idx] < delays[threadIdx.x]) {
                     delays[threadIdx.x] = delays[compare_idx];
                     component_indices[threadIdx.x] = component_indices[compare_idx];
-                    if constexpr (EXPR_VERBOSE) {
+                    if constexpr (REDUCTION_VERBOSE) {
                         printf("Stride %d - Thread %d updated minimum to %f from component %d\n",
                                stride, threadIdx.x, delays[threadIdx.x],
                                component_indices[threadIdx.x]);
@@ -587,7 +592,7 @@ __device__ double find_minimum_delay(
                 }
             }
         }
-        if constexpr (EXPR_VERBOSE) {
+        if constexpr (REDUCTION_VERBOSE) {
             __syncthreads();
             if (threadIdx.x == 0) {
                 printf("\nAfter stride %d, array state:\n", stride);
