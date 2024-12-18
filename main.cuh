@@ -11,21 +11,24 @@
 
 #define VERBOSE 0
 #define EXPR_VERBOSE 0
+#define REDUCTION_VERBOSE 0
+#define EXPR_VERBOSE_EXTRA 0
 #define DELAY_VERBOSE 0
+#define CHANNEL_VERBOSE 0
 #define PRINT_TRANSITIONS 0
 #define PRINT_VARIABLES 0
 #define PRINT_UPDATES 0
 #define LISTEN_TO -1 //-1 = all
 #define QUERYSTATS 0
-#define SYNC_SIDE_EFFECT false
 #define MINIMAL_PRINTS 0
 #define TIME_BOUND 10.0
-#define MAX_VARIABLES 4
+#define MAX_VARIABLES 2002
+#define SYNC_SIDE_EFFECT false
 
 #define TRACK_VARIABLE_OVER_TIME 1
 #define VAR_OVER_TIME_ARRAY_SIZE 100000
 
-constexpr int MAX_EDGES_PER_NODE = 3;
+constexpr int MAX_EDGES_PER_NODE = 2;
 constexpr int MAX_CHANNELS = 1;
 constexpr bool USE_GLOBAL_MEMORY_CURAND = true;
 

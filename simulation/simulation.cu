@@ -14,7 +14,11 @@ __device__ int get_sum_edge_weight(const ComponentState *my_state,
     const NodeInfo *node = my_state->current_node;
     for (int i = 0; i < node->num_edges; i++) {
         if (my_state->enabled_edges[i] + node->first_edge_index == node->first_edge_index + i) {
-            sum += evaluate_expression(model->edges[node->first_edge_index + i].weight, shared);
+            double edge_weight = evaluate_expression(model->edges[node->first_edge_index + i].weight, shared);
+            if (EXPR_VERBOSE && threadIdx.x == 0) {
+                printf("Adding edge weight %f to sum %f, resulting in a total of %f\n", edge_weight, sum,                       sum + edge_weight);
+            }
+            sum += edge_weight;
         }
     }
     return static_cast<int>(sum);
@@ -53,6 +57,7 @@ __device__ void take_transition(ComponentState *my_state,
         const int weights = get_sum_edge_weight(my_state, model, shared);
         float random = curand_uniform(block_state->random);
         const int rand = static_cast<int>(static_cast<float>(weights) * random);
+
         int temp = weights;
         const NodeInfo *node = my_state->current_node;
 
@@ -84,6 +89,9 @@ __device__ void take_transition(ComponentState *my_state,
     // If this edge has a positive channel (broadcast sender)
     if (edge.channel > 0) {
         int channel_abs = abs(edge.channel);
+        if constexpr (CHANNEL_VERBOSE) {
+            printf("Node: %d, just broadcasted channel %d.\n", threadIdx.x, channel_abs);
+        }
 
         // This component needs to signal the broadcast, as its channel is '!-labelled'
         shared->channel_active = channel_abs;
@@ -348,10 +356,9 @@ __device__ void SyncInSerial(ComponentState *my_state,
 
     // First step can be done in parallel.
     if (shared->channel_active > 0) {
-            //printf("Thread id: %d, comp_idx: %d, before: %p\n", threadIdx.x, comp_idx, my_state);
+        // Collect all enabled receiving edges
+        my_state->num_enabled_edges = 0;
         if (shared->channel_sender != my_state->component_id) {
-            // Collect all enabled receiving edges
-            my_state->num_enabled_edges = 0;
             const NodeInfo *current_node = my_state->current_node;
 
             for (int e = 0; e < current_node->num_edges; e++) {
@@ -364,18 +371,24 @@ __device__ void SyncInSerial(ComponentState *my_state,
             }
         }
 
+        __syncthreads();
+
         if (threadIdx.x == 0) {
             //For each in array active
             for (int comp_idx = 0; comp_idx < model->num_components; comp_idx++) {
                 ComponentState *my_new_state = my_state + comp_idx;
                 BlockSimulationState *new_block_state = block_state + comp_idx;
-                //printf("Thread id: %d, comp_idx: %d, after: %p\n", threadIdx.x, comp_idx, my_new_state);
                 // If we found any enabled receiving edges, we just randomly select one inside take_transition
                 if (my_new_state->num_enabled_edges > 0) {
                     if constexpr (VERBOSE) {
                         printf("Found %d enabled receiving edges for channel %d.\n",
                                my_new_state->num_enabled_edges, shared->channel_active);
                     }
+                    if constexpr (CHANNEL_VERBOSE) {
+                        printf("Alt thread id: %d, took a channel with droadcaster: %d.\n", comp_idx, shared->channel_sender);
+                    }
+
+
                     take_transition(my_new_state, shared, model, new_block_state, query_variable_id, comp_idx);
                 }
             }
@@ -411,14 +424,13 @@ __device__ void compute_possible_delay(
     double max_delay = DBL_MAX;
     bool is_bounded = false;
 
-    __syncthreads();
 
     if constexpr (VERBOSE) {
         printf("Node idx %d has type: %d \n", node.id, node.type);
     }
 
     // Node types with 3 (Urgent) or 4 (Commited) need to return 0 as their delay (they are immediate)
-    if (node.type > 2) {
+    if (node.type > 1) {
         if constexpr (VERBOSE) {
             printf("Node idx %d has type: %d, therefore it is urgent or commited and selecting delay 0 \n", node.id,
                    node.type);
@@ -433,9 +445,9 @@ __device__ void compute_possible_delay(
         if (threadIdx.x == 0) {
             printf("Thread %d: Current variable values:\n", threadIdx.x);
             for (int i = 0; i < num_vars; i++) {
-                printf("  var[%d] = %f (rate=%d)\n", i,
-                       shared->variables[i].value,
-                       shared->variables[i].rate);
+                printf("  var[%d] = %f\n", i,
+                       shared->variables[i].value
+                       );
             }
         }
     }
@@ -455,24 +467,19 @@ __device__ void compute_possible_delay(
             double current_val = var.value;
 
             // Set rate to 1 for clocks
-            if (inv.var_info.type == VariableKind::CLOCK) {
-                // TODO: fetch the rate from the model. Used for exponential distribution etc.
-                var.rate = 1;
-            }
 
             // Evaluate bound expression
             double bound = evaluate_expression(inv.expression, shared);
             if constexpr (VERBOSE) {
-                printf("Thread %d: Clock %d invariant: current=%f, bound=%f, rate=%d\n",
-                       threadIdx.x, var_id, current_val, bound,
-                       var.rate); // TODO: remove rate from var. Rates are dependent on the location
+                printf("Thread %d: Clock %d invariant: current=%f, bound=%f",
+                       threadIdx.x, var_id, current_val, bound);
             }
             // Only handle upper bounds
             if (inv.operand == constraint::less_c ||
                 inv.operand == constraint::less_equal_c) {
-                if (var.rate > 0) {
+                if (inv.var_info.type == VariableKind::CLOCK) {
                     // Only if clock increases
-                    double time_to_bound = (bound - current_val) / var.rate;
+                    double time_to_bound = (bound - current_val);
 
                     // Add small epsilon for strict inequality
                     if (inv.operand == constraint::less_c) {
@@ -515,11 +522,11 @@ __device__ void compute_possible_delay(
 
         // Sample from the exponential distribution
         double rand = curand_uniform_double(block_state->random);
-        my_state->next_delay = -logf(rand) / rate;
+        my_state->next_delay = -__log2f(rand) / rate;
         // Fastest log, but not as accurate. We consider it fine because we are doing statistical sampling
 
-        my_state->has_delay = true;
-        if constexpr (DELAY_VERBOSE | EXPR_VERBOSE) {
+
+        if constexpr (DELAY_VERBOSE || EXPR_VERBOSE_EXTRA || EXPR_VERBOSE) {
             printf("Thread %d: No delay bounds, sampled %f using exponential distribution with rate %f\n",
                    threadIdx.x,
                    my_state->next_delay, rate);
@@ -566,12 +573,23 @@ __device__ double find_minimum_delay(
         adjusted_size *= 2;
     }
 
+
+    if constexpr (REDUCTION_VERBOSE) {
+        __syncthreads();
+        if (threadIdx.x == 0) {
+            printf("\nBefore comparison, array state:\n");
+            for (int i = 0; i < num_components; i++) {
+                printf("[%d]=%f (comp %d) ", i, delays[i], component_indices[i]);
+            }
+            printf("\n\n");
+        }
+    }
     // Do reduction with the adjusted size
     for (int stride = adjusted_size / 2; stride > 0; stride >>= 1) {
         if (threadIdx.x < stride) {
             int compare_idx = threadIdx.x + stride;
             if (compare_idx < num_components) {
-                if constexpr (EXPR_VERBOSE) {
+                if constexpr (EXPR_VERBOSE_EXTRA) {
                     printf("Stride %d - Thread %d comparing [%d]=%f with [%d]=%f\n",
                            stride, threadIdx.x, threadIdx.x, delays[threadIdx.x],
                            compare_idx, delays[compare_idx]);
@@ -580,7 +598,7 @@ __device__ double find_minimum_delay(
                 if (delays[compare_idx] < delays[threadIdx.x]) {
                     delays[threadIdx.x] = delays[compare_idx];
                     component_indices[threadIdx.x] = component_indices[compare_idx];
-                    if constexpr (EXPR_VERBOSE) {
+                    if constexpr (EXPR_VERBOSE_EXTRA) {
                         printf("Stride %d - Thread %d updated minimum to %f from component %d\n",
                                stride, threadIdx.x, delays[threadIdx.x],
                                component_indices[threadIdx.x]);
@@ -588,7 +606,7 @@ __device__ double find_minimum_delay(
                 }
             }
         }
-        if constexpr (EXPR_VERBOSE) {
+        if constexpr (EXPR_VERBOSE_EXTRA) {
             __syncthreads();
             if (threadIdx.x == 0) {
                 printf("\nAfter stride %d, array state:\n", stride);
@@ -603,6 +621,8 @@ __device__ double find_minimum_delay(
 
     double min_delay = delays[0];
     int winning_component = component_indices[0];
+    __syncthreads();  // Make sure all threads see the same winner
+
 
     if (threadIdx.x == 0) {
         if (min_delay < DBL_MAX) {
@@ -615,7 +635,6 @@ __device__ double find_minimum_delay(
             for (int i = 0; i < MAX_VARIABLES; i++) {
                 if (shared->variables[i].kind == VariableKind::CLOCK) {
                     double old_value = shared->variables[i].value;
-                    shared->variables[i].rate = 1;
                     shared->variables[i].value += min_delay;
                     if constexpr (VERBOSE) {
                         printf("  Clock %d: %f -> %f (advanced by %f)\n",
@@ -635,7 +654,7 @@ __device__ double find_minimum_delay(
         if (is_race_winner) {
             check_enabled_edges(my_state, shared, model, block_state, is_race_winner);
             take_transition(my_state, shared, model, block_state, query_variable_id, threadIdx.x);
-            if (EXPR_VERBOSE) {
+            if constexpr (EXPR_VERBOSE) {
                 printf("Thread %d (component %d) won the race with delay %f\n",
                        threadIdx.x, my_state->component_id, min_delay);
             }

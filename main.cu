@@ -10,11 +10,11 @@
 int main(int argc, char *argv[]) {
 
     bool CONST_QUERY = true;
-    std::string filename = "../xml_files/LargeModels/abc_100_1p.xml";
+    std::string filename = "../xml_files/LargeModels/fischer_1000_29.xml";
     int curand_seed = 1234;
 
     // Statistics
-    int simulations = 500;
+    int simulations = 1024;
     int timeBound = 300;
     int variable_threshhold = -1;
     int variable_id = 1;
@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
     struct statistics_Configuration* stats = nullptr;
     if (CONST_QUERY) {
         stats = new statistics_Configuration[NumberOfQueries];
-        stats[0] = statistics_Configuration(simulations, timeBound, variable_threshhold, variable_id, isMax, isEstimate, "");
+        stats[0] = statistics_Configuration(simulations, timeBound, variable_threshhold, variable_id, isMax, isEstimate, loc_query);
         // stats[1] = {100, 100, 12, -1, false, false, "c1.f4"};
     } else {
         stats = (statistics_Configuration*)malloc(sizeof(statistics_Configuration));

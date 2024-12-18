@@ -142,6 +142,7 @@ __device__ double evaluate_expression(const expr *e, SharedBlockMemory *shared) 
 
         case expr::clock_variable_ee: {
             int var_id = e->variable_id; // Union access, single read
+
             if (var_id < MAX_VARIABLES) {
                 return shared->variables[var_id].value;
             }

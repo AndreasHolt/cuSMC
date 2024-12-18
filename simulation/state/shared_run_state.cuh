@@ -33,7 +33,6 @@ struct SharedBlockMemory {
     // Variables (fixed size array in shared memory)
     struct Variable {
         float value;
-        u_int rate;
         VariableKind kind;
     } variables[MAX_VARIABLES];
 
@@ -62,7 +61,6 @@ struct SharedBlockMemory {
         // Initialize variables explicitly
         for (int i = 0; i < MAX_VARIABLES; i++) {
             shared->variables[i].value = 0.0;
-            shared->variables[i].rate = 1;
             shared->variables[i].kind = VariableKind::INT;
         }
 
