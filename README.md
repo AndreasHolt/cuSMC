@@ -49,5 +49,15 @@ cmake ..
 make
 ```
 
+## Running
+To get help with the arguments run:
+```bash
+./cuSMC -h
+```
+This could look like:
+```bash
+./cuSMC -m "../xml_files/agentBaseCovid_100_1.0.xml" -q 1000 100 -1 1 1 1 " "
+```
+
 
 
