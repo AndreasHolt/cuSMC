@@ -8,20 +8,20 @@
 
 
 
-struct alignas(4) ComponentState {
-    // We force 4-byte alignment instead of 8
-    // Pack these 4 bytes
+// Minimal shared state needed per component
+struct alignas(4) SharedComponentState {
     uint16_t component_id;
-    uint8_t num_enabled_edges;
     bool has_delay;
-
-    // Pack 4 bytes, naturally aligned
     float next_delay;
-
-    uint16_t enabled_edges[MAX_EDGES_PER_NODE];
-
-    const NodeInfo *current_node; // 8 bytes, put pointer last
 };
+
+// Thread-local state in registers
+struct ThreadLocalState {
+    uint8_t num_enabled_edges;
+    uint16_t enabled_edges[MAX_EDGES_PER_NODE];
+    const NodeInfo *current_node;
+};
+
 
 struct SharedBlockMemory {
     float global_time;
@@ -33,7 +33,7 @@ struct SharedBlockMemory {
     // Variables (fixed size array in shared memory)
     struct Variable {
         float value;
-        u_int rate;
+        uint8_t rate;
         VariableKind kind;
     } variables[MAX_VARIABLES];
 
@@ -73,7 +73,7 @@ struct SharedBlockMemory {
 };
 
 struct BlockSimulationState {
-    ComponentState *my_component; // Points to thread's component in shared memory
+    SharedComponentState *my_component; // Points to thread's component in shared memory
     curandState *random; // Thread's RNG state
 };
 

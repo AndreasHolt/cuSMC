@@ -10,11 +10,11 @@
 int main(int argc, char *argv[]) {
 
     bool CONST_QUERY = true;
-    std::string filename = "../xml_files/LargeModels/abc_100_1.xml";
+    std::string filename = "../xml_files/LargeModels/agentBaseCovid_1000_10.0.xml";
     int curand_seed = 1234;
 
     // Statistics
-    int simulations = 1000;
+    int simulations = 1028;
     int timeBound = 100;
     int variable_threshhold = -1;
     int variable_id = 1;

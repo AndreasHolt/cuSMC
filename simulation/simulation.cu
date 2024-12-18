@@ -6,31 +6,52 @@
 #define CHECK_ERROR(loc) check_cuda_error(loc)
 
 // Calculate sum of edges from enabled set
-__device__ int get_sum_edge_weight(const ComponentState *my_state,
-                                   const SharedModelState *model,
-                                   SharedBlockMemory *shared) {
+__device__ int get_sum_edge_weight(
+    ThreadLocalState* my_state,
+    SharedModelState* model,
+    SharedBlockMemory* shared) {
+
     double sum = 0;
-    const NodeInfo *node = my_state->current_node;
-    for (int i = 0; i < node->num_edges; i++) {
-        if (my_state->enabled_edges[i] + node->first_edge_index == node->first_edge_index + i) {
-            double edge_weight = evaluate_expression(model->edges[node->first_edge_index + i].weight, shared);
-            if (EXPR_VERBOSE && threadIdx.x == 0) {
-                printf("Adding edge weight %f to sum %f, resulting in a total of %f\n", edge_weight, sum,                       sum + edge_weight);
+    const NodeInfo* node = my_state->current_node;
+
+    // Cache first edge index to avoid repeated memory accesses
+    const int first_edge = node->first_edge_index;
+
+    for (int i = 0; i < my_state->num_enabled_edges; i++) {
+        // Get the enabled edge's actual index
+        int edge_idx = my_state->enabled_edges[i];
+        if (edge_idx + first_edge == first_edge + edge_idx) {  // Verify index is valid
+            double edge_weight = evaluate_expression(model->edges[first_edge + edge_idx].weight, shared);
+
+            if constexpr (EXPR_VERBOSE) {
+                if (threadIdx.x == 0) {
+                    printf("Adding edge weight %f to sum %f, resulting in a total of %f\n",
+                           edge_weight, sum, sum + edge_weight);
+                }
             }
             sum += edge_weight;
         }
     }
+
     return static_cast<int>(sum);
 }
 
 
-__device__ void take_transition(ComponentState *my_state,
-                                SharedBlockMemory *shared,
-                                SharedModelState *model,
-                                BlockSimulationState *block_state, int query_variable_id, int alt_thread_idx) {
+
+__device__ void take_transition(
+    ThreadLocalState* my_state,
+    SharedComponentState* shared_components,
+    SharedBlockMemory* shared,
+    SharedModelState* model,
+    BlockSimulationState* block_state,
+    int query_variable_id,
+    int alt_thread_idx) {
+
     if constexpr (PRINT_TRANSITIONS) {
-        printf("Alt_Thread %d Taking transition, enabled edges: %d.\n", my_state->num_enabled_edges);
+        printf("Alt_Thread %d Taking transition, enabled edges: %d.\n",
+               my_state->num_enabled_edges);
     }
+
     if (my_state->num_enabled_edges == 0) {
         if constexpr (MINIMAL_PRINTS) {
             if (LISTEN_TO == -1 || LISTEN_TO == threadIdx.x) {
@@ -46,7 +67,7 @@ __device__ void take_transition(ComponentState *my_state,
         selected_idx = my_state->enabled_edges[0];
         if constexpr (VERBOSE || PRINT_TRANSITIONS) {
             if (LISTEN_TO == -1 || LISTEN_TO == threadIdx.x) {
-                const EdgeInfo &edge = model->edges[my_state->current_node->first_edge_index + selected_idx];
+                const EdgeInfo& edge = model->edges[my_state->current_node->first_edge_index + selected_idx];
                 printf("Alt_Thread %d: Only one enabled edge (%d), selecting it, going from location %d to %d.\n",
                        alt_thread_idx, selected_idx, edge.source_node_id, edge.dest_node_id);
             }
@@ -58,7 +79,7 @@ __device__ void take_transition(ComponentState *my_state,
         const int rand = static_cast<int>(static_cast<float>(weights) * random);
 
         int temp = weights;
-        const NodeInfo *node = my_state->current_node;
+        const NodeInfo* node = my_state->current_node;
 
         for (int i = my_state->num_enabled_edges - 1; i >= 0; i--) {
             int weight_of_edge = static_cast<int>(
@@ -79,7 +100,7 @@ __device__ void take_transition(ComponentState *my_state,
     }
 
     // Get the selected edge
-    const EdgeInfo &edge = model->edges[my_state->current_node->first_edge_index + selected_idx];
+    const EdgeInfo& edge = model->edges[my_state->current_node->first_edge_index + selected_idx];
     if constexpr (VERBOSE) {
         printf("Alt_Thread %d: Taking transition from node %d to node %d\n",
                alt_thread_idx, my_state->current_node->id, edge.dest_node_id);
@@ -88,16 +109,14 @@ __device__ void take_transition(ComponentState *my_state,
     // If this edge has a positive channel (broadcast sender)
     if (edge.channel > 0) {
         int channel_abs = abs(edge.channel);
-
-        // This component needs to signal the broadcast, as its channel is '!-labelled'
+        // Signal the broadcast
         shared->channel_active = channel_abs;
-        shared->channel_sender = my_state->component_id;
+        shared->channel_sender = shared_components[threadIdx.x].component_id;
     }
-
 
     // Apply updates if any
     for (int i = 0; i < edge.num_updates; i++) {
-        const UpdateInfo &update = model->updates[edge.updates_start_index + i];
+        const UpdateInfo& update = model->updates[edge.updates_start_index + i];
         int var_id = update.variable_id;
 
         // Evaluate update expression
@@ -131,28 +150,23 @@ __device__ void take_transition(ComponentState *my_state,
     }
 
     // Find destination node info
-    // First find node in the same level that matches destination ID
     if constexpr (VERBOSE) {
         printf("Alt_Thread %d: Searching for destination node %d (current level=%d)\n",
                alt_thread_idx, edge.dest_node_id, my_state->current_node->level);
     }
 
-    const NodeInfo *dest_node = nullptr;
+    const NodeInfo* dest_node = nullptr;
 
-    // If there are multiple runs in 1 block, then we can still find relevant index by using the modulo component
-    // Example: 4 runs, thread 1, 26, 51, 76 all access index 1. Aka. modulo num_components
     for (int level = 0; level < model->max_nodes_per_component; level++) {
-        // We know relevant nodes are stored at each level offset by the index of the component idx
-        // The component idx is equivalent to threadIdx
-        const NodeInfo &node = model->nodes[level * model->num_components + alt_thread_idx];
+        const NodeInfo& node = model->nodes[level * model->num_components + alt_thread_idx];
         if (node.id == edge.dest_node_id) {
             dest_node = &node;
 
             if (dest_node->type == 1) {
                 shared->has_hit_goal = true;
                 if constexpr (QUERYSTATS) {
-                    printf("Block %d alt_thread %d has reached the goal state at node %d\n", blockIdx.x, alt_thread_idx,
-                           edge.dest_node_id);
+                    printf("Block %d alt_thread %d has reached the goal state at node %d\n",
+                           blockIdx.x, alt_thread_idx, edge.dest_node_id);
                 }
             }
 
@@ -170,12 +184,13 @@ __device__ void take_transition(ComponentState *my_state,
         return;
     }
 
-    // Update current node
+    // Update current node in thread-local state
     my_state->current_node = dest_node;
     if constexpr (VERBOSE) {
         printf("Alt_Thread %d: Moved to new node %d\n", alt_thread_idx, dest_node->id);
     }
 }
+
 
 
 __device__ bool check_edge_enabled(const EdgeInfo &edge,
@@ -258,28 +273,32 @@ __device__ bool check_edge_enabled(const EdgeInfo &edge,
     return true;
 }
 
-__device__ void check_enabled_edges(ComponentState *my_state,
-                                    SharedBlockMemory *shared,
-                                    SharedModelState *model,
-                                    BlockSimulationState *block_state,
-                                    bool is_race_winner) {
+__device__ void check_enabled_edges(
+    ThreadLocalState* my_state,
+    SharedComponentState* shared_components,
+    SharedBlockMemory* shared,
+    SharedModelState* model,
+    BlockSimulationState* block_state,
+    bool is_race_winner) {
+
     if (!is_race_winner) {
         if constexpr (VERBOSE) {
             printf("Thread %d: Skipping edge check (didn't win race)\n", threadIdx.x);
         }
         return;
     }
+
     if constexpr (VERBOSE) {
         printf("\nThread %d: Checking enabled edges for node %d\n",
                threadIdx.x, my_state->current_node->id);
     }
 
-    const NodeInfo &node = *my_state->current_node;
+    const NodeInfo& node = *my_state->current_node;
     my_state->num_enabled_edges = 0; // Reset counter
 
     // Check each outgoing edge
     for (int i = 0; i < node.num_edges; i++) {
-        const EdgeInfo &edge = model->edges[node.first_edge_index + i];
+        const EdgeInfo& edge = model->edges[node.first_edge_index + i];
         if (check_edge_enabled(edge, shared, model, block_state, false, threadIdx.x)) {
             // Store enabled edge for later selection
             my_state->enabled_edges[my_state->num_enabled_edges++] = i;
@@ -289,11 +308,13 @@ __device__ void check_enabled_edges(ComponentState *my_state,
             }
         }
     }
+
     if constexpr (VERBOSE) {
         printf("Thread %d: Found %d enabled edges\n",
                threadIdx.x, my_state->num_enabled_edges);
     }
 }
+
 
 
 __device__ void check_cuda_error(const char *location) {
@@ -303,40 +324,51 @@ __device__ void check_cuda_error(const char *location) {
     }
 }
 
-__device__ void SyncInParallel(ComponentState *my_state,
-                               SharedBlockMemory *shared, SharedModelState *model,
-                               BlockSimulationState *block_state, int query_variable_id) {
-    // First check for active broadcasts
-    if (shared->channel_active > 0 &&
-        shared->channel_sender != my_state->component_id) {
-        // This is the correct check
+__device__ void SyncInParallel(
+    ThreadLocalState* my_state,
+    SharedComponentState* shared_components,
+    SharedBlockMemory* shared,
+    SharedModelState* model,
+    BlockSimulationState* block_state,
+    int query_variable_id) {
 
+    // Early exit if no active broadcast
+    if (shared->channel_active == 0) {
+        __syncthreads();
+        return;
+    }
+
+    // Check if we're not the sender
+    if (shared->channel_sender != shared_components[threadIdx.x].component_id) {
         // Collect all enabled receiving edges
         my_state->num_enabled_edges = 0;
-        const NodeInfo *current_node = my_state->current_node;
+        const NodeInfo* current_node = my_state->current_node;
+        const int active_channel = shared->channel_active;
 
-        for (int e = 0; e < current_node->num_edges; e++) {
-            const EdgeInfo &edge = model->edges[current_node->first_edge_index + e];
-            if (edge.channel == -shared->channel_active &&
+        // Cache first edge index and number of edges
+        const int first_edge = current_node->first_edge_index;
+        const int num_edges = current_node->num_edges;
+
+        // Process edges
+        for (int e = 0; e < num_edges; e++) {
+            const EdgeInfo& edge = model->edges[first_edge + e];
+            // Only check edges with matching negative channel
+            if (edge.channel == -active_channel &&
                 check_edge_enabled(edge, shared, model, block_state, true, threadIdx.x)) {
-                // Edges is enabled, therefore we add it to the enabled edges list, to be used inside take_transition
                 my_state->enabled_edges[my_state->num_enabled_edges++] = e;
-            }
+                }
         }
 
-        // If we found any enabled receiving edges, we just randomly select one inside take_transition
+        // If we found any enabled receiving edges, take a transition
         if (my_state->num_enabled_edges > 0) {
-            if constexpr (VERBOSE) {
-                printf("Found %d enabled receiving edges for channel %d.\n",
-                       my_state->num_enabled_edges, shared->channel_active);
-            }
-            take_transition(my_state, shared, model, block_state, query_variable_id, threadIdx.x);
+            take_transition(my_state, shared_components, shared, model, block_state,
+                          query_variable_id, threadIdx.x);
         }
     }
 
     __syncthreads();
 
-    // Only a single thread needs to reset synchronisation flags in shared memory
+    // Reset synchronization flags
     if (threadIdx.x == 0) {
         shared->channel_active = 0;
         shared->channel_sender = -1;
@@ -345,45 +377,55 @@ __device__ void SyncInParallel(ComponentState *my_state,
     __syncthreads();
 }
 
-__device__ void SyncInSerial(ComponentState *my_state,
-                             SharedBlockMemory *shared, SharedModelState *model,
-                             BlockSimulationState *block_state, int query_variable_id) {
+
+__device__ void SyncInSerial(
+    ThreadLocalState* my_state,
+    SharedComponentState* shared_components,
+    SharedBlockMemory* shared,
+    SharedModelState* model,
+    BlockSimulationState* block_state,
+    int query_variable_id) {
+
     __syncthreads();
 
-    // First step can be done in parallel.
+    // First step can be done in parallel
     if (shared->channel_active > 0) {
-            //printf("Thread id: %d, comp_idx: %d, before: %p\n", threadIdx.x, comp_idx, my_state);
-        if (shared->channel_sender != my_state->component_id) {
+        if (shared->channel_sender != shared_components[threadIdx.x].component_id) {
             // Collect all enabled receiving edges
             my_state->num_enabled_edges = 0;
-            const NodeInfo *current_node = my_state->current_node;
+            const NodeInfo* current_node = my_state->current_node;
 
-            for (int e = 0; e < current_node->num_edges; e++) {
-                const EdgeInfo &edge = model->edges[current_node->first_edge_index + e];
+            // Cache first edge index and edge count
+            const int first_edge = current_node->first_edge_index;
+            const int num_edges = current_node->num_edges;
+
+            for (int e = 0; e < num_edges; e++) {
+                const EdgeInfo& edge = model->edges[first_edge + e];
                 if (edge.channel == -shared->channel_active &&
                     check_edge_enabled(edge, shared, model, block_state, true, threadIdx.x)) {
-                    // Edges is enabled, therefore we add it to the enabled edges list, to be used inside take_transition
                     my_state->enabled_edges[my_state->num_enabled_edges++] = e;
                 }
             }
         }
 
         if (threadIdx.x == 0) {
-            //For each in array active
+            // Process components serially
             for (int comp_idx = 0; comp_idx < model->num_components; comp_idx++) {
-                ComponentState *my_new_state = my_state + comp_idx;
-                BlockSimulationState *new_block_state = block_state + comp_idx;
-                //printf("Thread id: %d, comp_idx: %d, after: %p\n", threadIdx.x, comp_idx, my_new_state);
-                // If we found any enabled receiving edges, we just randomly select one inside take_transition
-                if (my_new_state->num_enabled_edges > 0) {
+                ThreadLocalState* comp_state = my_state + comp_idx;
+                BlockSimulationState* comp_block_state = block_state + comp_idx;
+
+                // If we found any enabled receiving edges, take a transition
+                if (comp_state->num_enabled_edges > 0) {
                     if constexpr (VERBOSE) {
                         printf("Found %d enabled receiving edges for channel %d.\n",
-                               my_new_state->num_enabled_edges, shared->channel_active);
+                               comp_state->num_enabled_edges, shared->channel_active);
                     }
-                    take_transition(my_new_state, shared, model, new_block_state, query_variable_id, comp_idx);
+                    take_transition(comp_state, shared_components, shared, model,
+                                  comp_block_state, query_variable_id, comp_idx);
                 }
             }
-            // Only a single thread needs to reset synchronisation flags in shared memory
+
+            // Reset synchronization flags
             shared->channel_active = 0;
             shared->channel_sender = -1;
         }
@@ -392,60 +434,45 @@ __device__ void SyncInSerial(ComponentState *my_state,
     __syncthreads();
 }
 
+
 __device__ void compute_possible_delay(
-    ComponentState *my_state,
-    SharedBlockMemory *shared,
-    SharedModelState *model,
-    BlockSimulationState *block_state, int num_vars, int query_variable_id) {
+    ThreadLocalState* my_state,
+    SharedComponentState* shared_components,
+    SharedBlockMemory* shared,
+    SharedModelState* model,
+    BlockSimulationState* block_state,
+    int num_vars,
+    int query_variable_id) {
+
     if (model->channel_with_side_effects) {
-        SyncInSerial(my_state, shared, model, block_state, query_variable_id);
+        SyncInSerial(my_state, shared_components, shared, model, block_state, query_variable_id);
     } else {
-        SyncInParallel(my_state, shared, model, block_state, query_variable_id);
+        SyncInParallel(my_state, shared_components, shared, model, block_state, query_variable_id);
     }
 
-    const NodeInfo &node = *my_state->current_node;
+    const NodeInfo& node = *my_state->current_node;
     if constexpr (VERBOSE) {
-        printf("Thread %d: Processing node %d with %d invariants\n",
-               threadIdx.x, node.id, node.num_invariants);
-        printf("Lambda on node %d is polish notation: %s\n", node.id,
-               node.lambda->operand == expr::pn_compiled_ee ? "true" : "false");
+        printf("Thread %d: Time=%f\n", threadIdx.x, shared->global_time);
+    }
+
+    // Node types with 3 (Urgent) or 4 (Commited) need to return 0 as their delay
+    if (node.type > 1) {
+        if constexpr (VERBOSE) {
+            printf("Node idx %d has type: %d, therefore it is urgent or commited and selecting delay 0\n",
+                   node.id, node.type);
+        }
+        shared_components[threadIdx.x].next_delay = 0;
+        shared_components[threadIdx.x].has_delay = true;
+        return;
     }
 
     double min_delay = 0.0;
     double max_delay = DBL_MAX;
     bool is_bounded = false;
 
-
-    if constexpr (VERBOSE) {
-        printf("Node idx %d has type: %d \n", node.id, node.type);
-    }
-
-    // Node types with 3 (Urgent) or 4 (Commited) need to return 0 as their delay (they are immediate)
-    if (node.type > 1) {
-        if constexpr (VERBOSE) {
-            printf("Node idx %d has type: %d, therefore it is urgent or commited and selecting delay 0 \n", node.id,
-                   node.type);
-        }
-        my_state->next_delay = 0;
-        my_state->has_delay = true;
-        return;
-    }
-
-    // Debug current variable values
-    if constexpr (VERBOSE) {
-        if (threadIdx.x == 0) {
-            printf("Thread %d: Current variable values:\n", threadIdx.x);
-            for (int i = 0; i < num_vars; i++) {
-                printf("  var[%d] = %f (rate=%d)\n", i,
-                       shared->variables[i].value,
-                       shared->variables[i].rate);
-            }
-        }
-    }
-
     // Process invariants
     for (int i = 0; i < node.num_invariants; i++) {
-        const GuardInfo &inv = model->invariants[node.first_invariant_index + i];
+        const GuardInfo& inv = model->invariants[node.first_invariant_index + i];
 
         if (inv.uses_variable) {
             int var_id = inv.var_info.variable_id;
@@ -454,12 +481,11 @@ __device__ void compute_possible_delay(
                 continue;
             }
 
-            auto &var = shared->variables[var_id];
+            auto& var = shared->variables[var_id];
             double current_val = var.value;
 
             // Set rate to 1 for clocks
             if (inv.var_info.type == VariableKind::CLOCK) {
-                // TODO: fetch the rate from the model. Used for exponential distribution etc.
                 var.rate = 1;
             }
 
@@ -467,14 +493,13 @@ __device__ void compute_possible_delay(
             double bound = evaluate_expression(inv.expression, shared);
             if constexpr (VERBOSE) {
                 printf("Thread %d: Clock %d invariant: current=%f, bound=%f, rate=%d\n",
-                       threadIdx.x, var_id, current_val, bound,
-                       var.rate); // TODO: remove rate from var. Rates are dependent on the location
+                       threadIdx.x, var_id, current_val, bound, var.rate);
             }
+
             // Only handle upper bounds
             if (inv.operand == constraint::less_c ||
                 inv.operand == constraint::less_equal_c) {
                 if (var.rate > 0) {
-                    // Only if clock increases
                     double time_to_bound = (bound - current_val) / var.rate;
 
                     // Add small epsilon for strict inequality
@@ -489,7 +514,6 @@ __device__ void compute_possible_delay(
 
                     if (time_to_bound >= 0) {
                         max_delay = min(max_delay, time_to_bound);
-                        // TODO: remove time_to_bound, as it is not part of the semantics
                         is_bounded = true;
                         if constexpr (VERBOSE) {
                             printf("Thread %d: Updated max_delay to %f\n",
@@ -504,11 +528,11 @@ __device__ void compute_possible_delay(
     // Sample delay if bounded
     if (is_bounded) {
         double rand = curand_uniform(block_state->random);
-        my_state->next_delay = min_delay + (max_delay - min_delay) * rand;
-        my_state->has_delay = true;
+        shared_components[threadIdx.x].next_delay = min_delay + (max_delay - min_delay) * rand;
+        shared_components[threadIdx.x].has_delay = true;
         if constexpr (VERBOSE) {
             printf("Thread %d: Sampled delay %f in [%f, %f] (rand=%f)\n",
-                   threadIdx.x, my_state->next_delay, min_delay, max_delay, rand);
+                   threadIdx.x, shared_components[threadIdx.x].next_delay, min_delay, max_delay, rand);
         }
     } else {
         double rate = 1.0; // Default rate if no rate is specified on the node
@@ -518,34 +542,38 @@ __device__ void compute_possible_delay(
 
         // Sample from the exponential distribution
         double rand = curand_uniform_double(block_state->random);
-        my_state->next_delay = -__log2f(rand) / rate;
-        // Fastest log, but not as accurate. We consider it fine because we are doing statistical sampling
+        shared_components[threadIdx.x].next_delay = -__log2f(rand) / rate;
 
         if constexpr (DELAY_VERBOSE | EXPR_VERBOSE_EXTRA | EXPR_VERBOSE) {
             printf("Thread %d: No delay bounds, sampled %f using exponential distribution with rate %f\n",
-                   threadIdx.x,
-                   my_state->next_delay, rate);
+                   threadIdx.x, shared_components[threadIdx.x].next_delay, rate);
         }
-        my_state->has_delay = true;
+        shared_components[threadIdx.x].has_delay = true;
     }
 }
 
+
 // Finds the minimum delay and the winning component takes a transition
 __device__ double find_minimum_delay(
-    ComponentState *my_state,
-    SharedBlockMemory *shared,
-    SharedModelState *model,
-    BlockSimulationState *block_state,
-    int num_components, int query_variable_id,
-    double *delays, int *component_indices) {
+    ThreadLocalState* my_state,
+    SharedComponentState* shared_components,
+    SharedBlockMemory* shared,
+    SharedModelState* model,
+    BlockSimulationState* block_state,
+    int num_components,
+    int query_variable_id,
+    double* delays,
+    int* component_indices) {
 
     // Initialize only for active threads (components)
     if (threadIdx.x < num_components) {
-        delays[threadIdx.x] = my_state->has_delay ? my_state->next_delay : DBL_MAX;
-        component_indices[threadIdx.x] = my_state->component_id;
+        delays[threadIdx.x] = shared_components[threadIdx.x].has_delay ?
+                             shared_components[threadIdx.x].next_delay :
+                             DBL_MAX;
+        component_indices[threadIdx.x] = shared_components[threadIdx.x].component_id;
         if constexpr (VERBOSE) {
             printf("Thread %d (component %d): Initial delay %f\n",
-                   threadIdx.x, my_state->component_id, delays[threadIdx.x]);
+                   threadIdx.x, shared_components[threadIdx.x].component_id, delays[threadIdx.x]);
         }
     }
     __syncthreads();
@@ -568,7 +596,6 @@ __device__ double find_minimum_delay(
         adjusted_size *= 2;
     }
 
-
     if constexpr (REDUCTION_VERBOSE) {
         __syncthreads();
         if (threadIdx.x == 0) {
@@ -579,6 +606,7 @@ __device__ double find_minimum_delay(
             printf("\n\n");
         }
     }
+
     // Do reduction with the adjusted size
     for (int stride = adjusted_size / 2; stride > 0; stride >>= 1) {
         if (threadIdx.x < stride) {
@@ -616,8 +644,7 @@ __device__ double find_minimum_delay(
 
     double min_delay = delays[0];
     int winning_component = component_indices[0];
-    __syncthreads();  // Make sure all threads see the same winner
-
+    __syncthreads();
 
     if (threadIdx.x == 0) {
         if (min_delay < DBL_MAX) {
@@ -646,13 +673,13 @@ __device__ double find_minimum_delay(
     bool is_race_winner = false;
     if (threadIdx.x < num_components) {
         is_race_winner = (min_delay < DBL_MAX &&
-                         my_state->component_id == winning_component);
+                         shared_components[threadIdx.x].component_id == winning_component);
         if (is_race_winner) {
-            check_enabled_edges(my_state, shared, model, block_state, is_race_winner);
-            take_transition(my_state, shared, model, block_state, query_variable_id, threadIdx.x);
+            check_enabled_edges(my_state, shared_components, shared, model, block_state, is_race_winner);
+            take_transition(my_state, shared_components, shared, model, block_state, query_variable_id, threadIdx.x);
             if (EXPR_VERBOSE) {
                 printf("Thread %d (component %d) won the race with delay %f\n",
-                       threadIdx.x, my_state->component_id, min_delay);
+                       threadIdx.x, shared_components[threadIdx.x].component_id, min_delay);
             }
         }
     }
@@ -662,102 +689,71 @@ __device__ double find_minimum_delay(
 }
 
 
-__global__ void simulation_kernel(SharedModelState *model, bool *results,
-                                  int runs_per_block, float time_bound, VariableKind *kinds, uint32_t num_vars,
-                                  bool *flags,
-                                  double *variable_flags, int variable_id, bool isMax,
-                                  curandState *rng_states_global, int curand_seed, int max_components) {
-    // Prepare Shared memory
-    //extern __shared__ int s[];
-    //int *integerData = s;                        // nI ints
-    //float *floatData = (float*)&integerData[nI]; // nF floats
-    //char *charData = (char*)&floatData[nF];      // nC chars
+
+__global__ void simulation_kernel(
+    SharedModelState* model,
+    bool* results,
+    int runs_per_block,
+    float time_bound,
+    VariableKind* kinds,
+    uint32_t num_vars,
+    bool* flags,
+    double* variable_flags,
+    int variable_id,
+    bool isMax,
+    curandState* rng_states_global,
+    int curand_seed,
+    int max_components) {
+
+    // Setup shared memory
     extern __shared__ int s[];
+    SharedBlockMemory* shared_mem = (SharedBlockMemory*)&s;
 
-    SharedBlockMemory *shared_mem = (SharedBlockMemory *) &s;
-    // Using (char*) because it is 1 byte large.
-    ComponentState *components = (ComponentState *) ((char *) shared_mem + sizeof(SharedBlockMemory));
+    // Replace ComponentState array with SharedComponentState
+    SharedComponentState* shared_components = (SharedComponentState*)((char*)shared_mem + sizeof(SharedBlockMemory));
 
-    double *delays = (double *) &components[max_components]; // Only need MAX_COMPONENTS slots, not full warp size
-    int *component_indices = (int *) &delays[max_components];
+    // Rest of shared memory allocations
+    double* delays = (double*)&shared_components[max_components];
+    int* component_indices = (int*)&delays[max_components];
 
-    curandState *rng_states;
+    // Initialize thread-local state
+    ThreadLocalState my_state;
+    my_state.num_enabled_edges = 0;
+    my_state.current_node = nullptr;
 
-    // Store curandStates in either global memory or shared memory. Requires ~90kb of shared memory w/ curandStates
+    // Setup RNG states
+    curandState* rng_states;
     if constexpr (USE_GLOBAL_MEMORY_CURAND) {
-        // extern __shared__ curandState *rng_states_global;
         rng_states = rng_states_global;
     } else {
-        curandState *rng_states_shared = (curandState *) component_indices[max_components];
+        curandState* rng_states_shared = (curandState*)&component_indices[max_components];
         rng_states = rng_states_shared;
     }
 
     CHECK_ERROR("Kernel start");
+
     if constexpr (VERBOSE) {
         if (threadIdx.x == 0) {
-            printf("Starting kernel: block=%d, thread=%d\n",
-                   blockIdx.x, threadIdx.x);
+            printf("Starting kernel: block=%d, thread=%d\n", blockIdx.x, threadIdx.x);
             printf("Number of variables: %d\n", num_vars);
-        }
-
-        // Verify model pointer
-        if (model == nullptr) {
-            printf("Thread %d: NULL model pointer!\n", threadIdx.x);
-            return;
         }
     }
 
-
-    if constexpr (VERBOSE) {
-        if (threadIdx.x < model->num_components) {
-            // Only debug print for actual components
-            printf("Thread %d: Model details:\n"
-                   "  Num components: %d\n"
-                   "  First node invariant index: %d\n"
-                   "  Num invariants in first node: %d\n",
-                   threadIdx.x,
-                   model->num_components,
-                   model->nodes[threadIdx.x].first_invariant_index,
-                   model->nodes[threadIdx.x].num_invariants);
-        }
+    if (model == nullptr) {
+        printf("Thread %d: NULL model pointer!\n", threadIdx.x);
+        return;
     }
 
     __syncthreads();
 
-    CHECK_ERROR("after shared memory declaration");
-
-    // Debug model access
-    if (threadIdx.x == 0) {
-        if constexpr (VERBOSE) {
-            printf("Thread %d: Attempting to access model, num_components=%d\n",
-                   threadIdx.x, model->num_components);
-        }
-    }
-
-    CHECK_ERROR("after model access");
-
-
     // Setup block state
     BlockSimulationState block_state;
-
-    block_state.my_component = &components[threadIdx.x];
-    if constexpr (VERBOSE) {
-        if (threadIdx.x == 0) {
-            printf("Thread %d: Block state setup complete\n", threadIdx.x);
-        }
-    }
-
-    CHECK_ERROR("after block state setup");
+    block_state.random = &rng_states[threadIdx.x];
 
     // Initialize RNG
     int sim_id = blockIdx.x * runs_per_block;
     int comp_id = threadIdx.x;
-    curand_init(curand_seed + sim_id * blockDim.x + comp_id, 0, 0,
-                &rng_states[threadIdx.x]);
-    block_state.random = &rng_states[threadIdx.x];
-
-    // printf("Thread %d: RNG initialized\n", threadIdx.x);
-    CHECK_ERROR("after RNG init");
+    curand_init(curand_seed + sim_id * blockDim.x + comp_id, 0, 0, block_state.random);
 
     // Initialize shared state
     if (threadIdx.x == 0) {
@@ -767,9 +763,6 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
         SharedBlockMemory::init(shared_mem, sim_id);
 
         for (int i = 0; i < num_vars; i++) {
-            if constexpr (VERBOSE) {
-                printf("Setting variable %d to kind %d\n", i, kinds[i]);
-            }
             shared_mem->variables[i].value = model->initial_var_values[i];
             if (kinds[i] == VariableKind::CLOCK) {
                 shared_mem->variables[i].kind = VariableKind::CLOCK;
@@ -778,122 +771,90 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
                     shared_mem->query_variable_min = model->initial_var_values[i];
                     shared_mem->query_variable_max = model->initial_var_values[i];
                 }
-                // Not sure whether we need this case yet
             }
         }
     }
     __syncthreads();
-    CHECK_ERROR("after shared memory init");
 
-    // Initialize component state
-    // TODO: Move this to the top of the function?
+    // Early exit for threads beyond component count
     if (threadIdx.x >= model->num_components) {
         if constexpr (MINIMAL_PRINTS) {
-            printf("Thread %d: Exiting - thread ID exceeds number of components\n",
-                   threadIdx.x);
+            printf("Thread %d: Exiting - thread ID exceeds number of components\n", threadIdx.x);
         }
         return;
     }
 
-    ComponentState *my_state = block_state.my_component;
-    my_state->component_id = comp_id;
+    // Initialize component state
+    shared_components[threadIdx.x].component_id = comp_id;
+    shared_components[threadIdx.x].has_delay = false;
+
+    // Find initial node
     bool found_initial_node = false;
-    if constexpr (VERBOSE) {
-        if (threadIdx.x == 0) {
-            for (int i = 0; i < model->num_components; i++) {
-                printf("Initial nodes: %d.\n", model->initial_nodes[i]);
-            }
-        }
-    }
     for (int i = 0; i < model->max_nodes_per_component; i++) {
-        if constexpr (VERBOSE) {
-            if (threadIdx.x == 0) {
-                printf("Comparing id1: %d, with id2: %d.\n", model->initial_nodes[comp_id],
-                       model->nodes[i * model->num_components + comp_id].id);
-            }
-        }
-        if (model->initial_nodes[comp_id] == model->nodes[i * model->num_components + comp_id].id) {
-            my_state->current_node = &model->nodes[i * model->num_components + comp_id];
+        if (model->initial_nodes[comp_id] ==
+            model->nodes[i * model->num_components + comp_id].id) {
+            my_state.current_node = &model->nodes[i * model->num_components + comp_id];
             found_initial_node = true;
+            break;
         }
     }
 
-    if (found_initial_node == false) {
+    if (!found_initial_node) {
         printf("Error: thread: %d could not find its initial node.\n", threadIdx.x);
+        return;
     }
 
-    my_state->has_delay = false;
-    if constexpr (VERBOSE) {
-        printf("Thread %d: Component initialized, node_id=%d, comp_id=%d\n",
-               threadIdx.x, my_state->current_node->id, comp_id);
-    }
-    CHECK_ERROR("after component init");
+    __syncthreads();
 
     // Main simulation loop
     while (shared_mem->global_time < time_bound) {
         __syncthreads();
-        // Synchronize before continuing to make sure all threads have the latest value of shared_mem.has_hit_goal etc.
 
         if (shared_mem->has_hit_goal && flags != nullptr) {
-            // All threads should check whether the goal has been reached
             if (threadIdx.x == 0) {
                 if constexpr (QUERYSTATS) {
                     printf("Flag was true for block %d\n", blockIdx.x);
                 }
                 flags[blockIdx.x] = true;
-                // ... but only a single thread should write to the flag to avoid race conditions
             }
             break;
         }
 
-
-        if constexpr (VERBOSE) {
-            printf("Thread %d: Time=%f\n", threadIdx.x, shared_mem->global_time);
-        }
-        compute_possible_delay(my_state, shared_mem, model, &block_state, num_vars, variable_id);
+        compute_possible_delay(&my_state, shared_components, shared_mem, model,
+                             &block_state, num_vars, variable_id);
 
         CHECK_ERROR("after compute delay");
         __syncthreads();
 
-        double min_delay = find_minimum_delay(
-            block_state.my_component, // ComponentState*
-            shared_mem, // SharedBlockMemory*
-            model, // SharedModelState*
-            &block_state, // BlockSimulationState*
-            model->num_components, // int num_components
-            variable_id,
-            delays, //Delays in shared memory
-            component_indices //Component indices in shared memory.
-        );
+        double min_delay = find_minimum_delay(&my_state, shared_components, shared_mem, model,
+                                            &block_state, model->num_components, variable_id,
+                                            delays, component_indices);
+
         CHECK_ERROR("after find minimum");
-        if constexpr (VERBOSE) {
-            if (threadIdx.x == 0) {
-                printf("Block %d: Minimum delay = %f\n", blockIdx.x, min_delay);
-            }
-        }
+
         if (threadIdx.x == 0) {
             shared_mem->global_time += min_delay;
             if constexpr (VERBOSE) {
-                printf("Block %d: Advanced time to %f\n",
-                       blockIdx.x, shared_mem->global_time);
+                printf("Block %d: Advanced time to %f\n", blockIdx.x, shared_mem->global_time);
             }
         }
 
-        __syncthreads(); // Sync to make sure all threads see the break condition
+        __syncthreads();
     }
 
+    // Store results
     if (variable_flags != nullptr) {
-        if (isMax) {
-            variable_flags[blockIdx.x] = shared_mem->query_variable_max;
-        } else {
-            variable_flags[blockIdx.x] = shared_mem->query_variable_min;
+        if (threadIdx.x == 0) {
+            if (isMax) {
+                variable_flags[blockIdx.x] = shared_mem->query_variable_max;
+            } else {
+                variable_flags[blockIdx.x] = shared_mem->query_variable_min;
+            }
         }
     }
 
     if (threadIdx.x == 0 && blockIdx.x % 100 == 100) {
         printf("Block %d: Simulation complete\n", blockIdx.x);
     }
-    if constexpr (MINIMAL_PRINTS) {
-        printf("Thread %d: Simulation complete\n", threadIdx.x);
-    }
 }
+
