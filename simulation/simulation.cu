@@ -436,9 +436,9 @@ __device__ void compute_possible_delay(
         if (threadIdx.x == 0) {
             printf("Thread %d: Current variable values:\n", threadIdx.x);
             for (int i = 0; i < num_vars; i++) {
-                printf("  var[%d] = %f (rate=%d)\n", i,
-                       shared->variables[i].value,
-                       shared->variables[i].rate);
+                printf("  var[%d] = %f\n", i,
+                       shared->variables[i].value
+                       );
             }
         }
     }
@@ -458,24 +458,19 @@ __device__ void compute_possible_delay(
             double current_val = var.value;
 
             // Set rate to 1 for clocks
-            if (inv.var_info.type == VariableKind::CLOCK) {
-                // TODO: fetch the rate from the model. Used for exponential distribution etc.
-                var.rate = 1;
-            }
 
             // Evaluate bound expression
             double bound = evaluate_expression(inv.expression, shared);
             if constexpr (VERBOSE) {
-                printf("Thread %d: Clock %d invariant: current=%f, bound=%f, rate=%d\n",
-                       threadIdx.x, var_id, current_val, bound,
-                       var.rate); // TODO: remove rate from var. Rates are dependent on the location
+                printf("Thread %d: Clock %d invariant: current=%f, bound=%f",
+                       threadIdx.x, var_id, current_val, bound);
             }
             // Only handle upper bounds
             if (inv.operand == constraint::less_c ||
                 inv.operand == constraint::less_equal_c) {
-                if (var.rate > 0) {
+                if (inv.var_info.type == VariableKind::CLOCK) {
                     // Only if clock increases
-                    double time_to_bound = (bound - current_val) / var.rate;
+                    double time_to_bound = (bound - current_val);
 
                     // Add small epsilon for strict inequality
                     if (inv.operand == constraint::less_c) {
@@ -630,7 +625,6 @@ __device__ double find_minimum_delay(
             for (int i = 0; i < MAX_VARIABLES; i++) {
                 if (shared->variables[i].kind == VariableKind::CLOCK) {
                     double old_value = shared->variables[i].value;
-                    shared->variables[i].rate = 1;
                     shared->variables[i].value += min_delay;
                     if constexpr (VERBOSE) {
                         printf("  Clock %d: %f -> %f (advanced by %f)\n",
