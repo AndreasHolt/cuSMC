@@ -26,8 +26,8 @@
 #define MAX_VARIABLES 3
 #define SYNC_SIDE_EFFECT true
 
-constexpr int MAX_EDGES_PER_NODE = 3;
-constexpr int MAX_CHANNELS = 2;
+constexpr int MAX_EDGES_PER_NODE = 2;
+constexpr int MAX_CHANNELS = 8;
 constexpr bool USE_GLOBAL_MEMORY_CURAND = true;
 
 struct configuration {
@@ -57,6 +57,6 @@ struct statistics_Configuration {
         : simulations(sims), timeBound(tBound), variable_threshhold(vThresh), variable_id(vId), isMax(max), isEstimate(estimate), loc_query(locQuery) {}
 };
 
-bool HandleCommandLineArguments(int argc, char **argv, std::string *filename, int *seed, statistics_Configuration* stats, bool CONST_QUERY);
+bool HandleCommandLineArguments(int argc, char **argv, std::string *filename, int *seed, statistics_Configuration* stats);
 
 #endif //MAIN_CUH

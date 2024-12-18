@@ -9,39 +9,27 @@
 
 int main(int argc, char *argv[]) {
 
-    bool CONST_QUERY = true;
     std::string filename = "../xml_files/LargeModels/aloha_50.xml";
     int curand_seed = 1235;
 
     // Statistics
-    int simulations = 16384;
-    int timeBound = 100;
-    int variable_threshhold = -1;
-    int variable_id = 1;
-    bool isMax = true; // Gather info on either the max value of the variable or the min
-    bool isEstimate = true;
-    string loc_query = "";
+    statistics_Configuration stat_input = statistics_Configuration();
+    stat_input.simulations = 16384;
+    stat_input.timeBound = 100;
+    stat_input.variable_threshhold = -1;
+    stat_input.variable_id = 1;
+    stat_input.isMax = true; // Gather info on either the max value of the variable or the min
+    stat_input.isEstimate = true;
+    stat_input.loc_query = "";
 
-    statistics_Configuration* stat_input = {};
 
-    bool cliSucceeded = HandleCommandLineArguments(argc, argv, &filename, &curand_seed, stat_input, &CONST_QUERY);
+
+    bool cliSucceeded = HandleCommandLineArguments(argc, argv, &filename, &curand_seed, &stat_input);
     if (!cliSucceeded) {return 0;}
 
-    const struct configuration conf = {filename, curand_seed};
-    int NumberOfQueries = 1;
-    struct statistics_Configuration* stats = nullptr;
-    if (CONST_QUERY) {
-        stats = new statistics_Configuration[NumberOfQueries];
-        stats[0] = statistics_Configuration(simulations, timeBound, variable_threshhold, variable_id, isMax, isEstimate, loc_query);
-        // stats[1] = {100, 100, 12, -1, false, false, "c1.f4"};
-    } else {
-        stats = (statistics_Configuration*)malloc(sizeof(statistics_Configuration));
-        stats[0] = {simulations, timeBound, variable_threshhold, variable_id, isMax, isEstimate, loc_query};
-    }
+    const configuration conf = {filename, curand_seed};
 
-    for (int i = 0; i < NumberOfQueries; i++) {
-        smc(conf, stats[i]);
-    }
+    smc(conf, stat_input);
 
 
     return 1;
@@ -50,7 +38,7 @@ int main(int argc, char *argv[]) {
 
 
 
-bool HandleCommandLineArguments(int argc, char **argv, string *filename, int *seed, statistics_Configuration* stats, bool CONST_QUERY) {
+bool HandleCommandLineArguments(int argc, char **argv, string *filename, int *seed, statistics_Configuration* stats) {
     for (int i = 1; i < argc; i++) {    // Skip first argument, which is the executable path.
         std::string arg = argv[i];
         if (arg == "-m" || arg == "--model") {
@@ -81,7 +69,6 @@ bool HandleCommandLineArguments(int argc, char **argv, string *filename, int *se
                 return false;
             }
         } else if (arg == "-q" || arg == "--query") {
-            CONST_QUERY = false;
             if (i + 7 < argc) {
                 // statistics_Configuration
                 /*int simulations = 1000;
@@ -91,16 +78,14 @@ bool HandleCommandLineArguments(int argc, char **argv, string *filename, int *se
                 bool isMax = true; // Gather info on either the max value of the variable or the min
                 bool isEstimate = True;
                 string loc_query = "";*/
-                std::string sims_string = argv[i + 1];
-                std::string timb_string = argv[i + 2];
-                std::string var_thresh_string = argv[i + 3];
-                std::string var_id_string = argv[i + 4];
-                std::string is_Max_string = argv[i + 5];
-                std::string is_Estimate_string = argv[i + 6];
-                stats->loc_query = argv[i + 7];
+                std::string sims_string = argv[++i];
+                std::string timb_string = argv[++i];
+                std::string var_thresh_string = argv[++i];
+                std::string var_id_string = argv[++i];
+                std::string is_Max_string = argv[++i];
+                std::string is_Estimate_string = argv[++i];
+                stats->loc_query = argv[++i];
 
-
-                i++; // Skip the next argument
                 try {
                     stats->simulations = std::stoi(sims_string);
                     stats->timeBound = std::stoi(timb_string);
@@ -123,6 +108,7 @@ bool HandleCommandLineArguments(int argc, char **argv, string *filename, int *se
         } else if (arg == "-h" || arg == "--help") {
             cout << "Use -m or --model, followed by a path, for inputting a path the the model XML file." << endl;
             cout << "Use -s or --seed, followed by a number, to initialize curand with a constant seed. (0 = random seed)" << endl;
+            cout << "Use -q or --query, followed by : number of simulation, time bound, a variable threshold, a variable name (id), Max=1 or Min=0, Estimate=1 or Probability=0." << endl;
             return false;
         }
         else {

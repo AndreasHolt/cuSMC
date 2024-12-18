@@ -1,0 +1,5415 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+<declaration>// Fischer's mutual exclusion protocol.
+int id;
+int in_critical = 0;
+const int k = 29;</declaration><template>
+<name x="16" y="-8">P0</name>
+<declaration>clock x;
+int pid = 1;</declaration>
+<location id="id0" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id1" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id2" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id3" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id2"/>
+<transition>
+<source ref="id2"/>
+<target ref="id1"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id1"/>
+<target ref="id0"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id0"/>
+<target ref="id1"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id0"/>
+<target ref="id3"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id3"/>
+<target ref="id2"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P1</name>
+<declaration>clock x;
+int pid = 2;</declaration>
+<location id="id4" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id5" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id6" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id7" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id6"/>
+<transition>
+<source ref="id6"/>
+<target ref="id5"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id5"/>
+<target ref="id4"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id4"/>
+<target ref="id5"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id4"/>
+<target ref="id7"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id7"/>
+<target ref="id6"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P2</name>
+<declaration>clock x;
+int pid = 3;</declaration>
+<location id="id8" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id9" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id10" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id11" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id10"/>
+<transition>
+<source ref="id10"/>
+<target ref="id9"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id9"/>
+<target ref="id8"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id8"/>
+<target ref="id9"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id8"/>
+<target ref="id11"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id11"/>
+<target ref="id10"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P3</name>
+<declaration>clock x;
+int pid = 4;</declaration>
+<location id="id12" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id13" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id14" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id15" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id14"/>
+<transition>
+<source ref="id14"/>
+<target ref="id13"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id13"/>
+<target ref="id12"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id12"/>
+<target ref="id13"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id12"/>
+<target ref="id15"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id15"/>
+<target ref="id14"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P4</name>
+<declaration>clock x;
+int pid = 5;</declaration>
+<location id="id16" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id17" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id18" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id19" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id18"/>
+<transition>
+<source ref="id18"/>
+<target ref="id17"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id17"/>
+<target ref="id16"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id16"/>
+<target ref="id17"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id16"/>
+<target ref="id19"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id19"/>
+<target ref="id18"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P5</name>
+<declaration>clock x;
+int pid = 6;</declaration>
+<location id="id20" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id21" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id22" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id23" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id22"/>
+<transition>
+<source ref="id22"/>
+<target ref="id21"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id21"/>
+<target ref="id20"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id20"/>
+<target ref="id21"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id20"/>
+<target ref="id23"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id23"/>
+<target ref="id22"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P6</name>
+<declaration>clock x;
+int pid = 7;</declaration>
+<location id="id24" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id25" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id26" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id27" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id26"/>
+<transition>
+<source ref="id26"/>
+<target ref="id25"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id25"/>
+<target ref="id24"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id24"/>
+<target ref="id25"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id24"/>
+<target ref="id27"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id27"/>
+<target ref="id26"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P7</name>
+<declaration>clock x;
+int pid = 8;</declaration>
+<location id="id28" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id29" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id30" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id31" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id30"/>
+<transition>
+<source ref="id30"/>
+<target ref="id29"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id29"/>
+<target ref="id28"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id28"/>
+<target ref="id29"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id28"/>
+<target ref="id31"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id31"/>
+<target ref="id30"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P8</name>
+<declaration>clock x;
+int pid = 9;</declaration>
+<location id="id32" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id33" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id34" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id35" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id34"/>
+<transition>
+<source ref="id34"/>
+<target ref="id33"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id33"/>
+<target ref="id32"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id32"/>
+<target ref="id33"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id32"/>
+<target ref="id35"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id35"/>
+<target ref="id34"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P9</name>
+<declaration>clock x;
+int pid = 10;</declaration>
+<location id="id36" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id37" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id38" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id39" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id38"/>
+<transition>
+<source ref="id38"/>
+<target ref="id37"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id37"/>
+<target ref="id36"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id36"/>
+<target ref="id37"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id36"/>
+<target ref="id39"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id39"/>
+<target ref="id38"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P10</name>
+<declaration>clock x;
+int pid = 11;</declaration>
+<location id="id40" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id41" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id42" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id43" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id42"/>
+<transition>
+<source ref="id42"/>
+<target ref="id41"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id41"/>
+<target ref="id40"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id40"/>
+<target ref="id41"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id40"/>
+<target ref="id43"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id43"/>
+<target ref="id42"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P11</name>
+<declaration>clock x;
+int pid = 12;</declaration>
+<location id="id44" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id45" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id46" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id47" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id46"/>
+<transition>
+<source ref="id46"/>
+<target ref="id45"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id45"/>
+<target ref="id44"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id44"/>
+<target ref="id45"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id44"/>
+<target ref="id47"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id47"/>
+<target ref="id46"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P12</name>
+<declaration>clock x;
+int pid = 13;</declaration>
+<location id="id48" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id49" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id50" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id51" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id50"/>
+<transition>
+<source ref="id50"/>
+<target ref="id49"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id49"/>
+<target ref="id48"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id48"/>
+<target ref="id49"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id48"/>
+<target ref="id51"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id51"/>
+<target ref="id50"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P13</name>
+<declaration>clock x;
+int pid = 14;</declaration>
+<location id="id52" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id53" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id54" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id55" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id54"/>
+<transition>
+<source ref="id54"/>
+<target ref="id53"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id53"/>
+<target ref="id52"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id52"/>
+<target ref="id53"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id52"/>
+<target ref="id55"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id55"/>
+<target ref="id54"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P14</name>
+<declaration>clock x;
+int pid = 15;</declaration>
+<location id="id56" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id57" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id58" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id59" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id58"/>
+<transition>
+<source ref="id58"/>
+<target ref="id57"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id57"/>
+<target ref="id56"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id56"/>
+<target ref="id57"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id56"/>
+<target ref="id59"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id59"/>
+<target ref="id58"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P15</name>
+<declaration>clock x;
+int pid = 16;</declaration>
+<location id="id60" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id61" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id62" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id63" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id62"/>
+<transition>
+<source ref="id62"/>
+<target ref="id61"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id61"/>
+<target ref="id60"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id60"/>
+<target ref="id61"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id60"/>
+<target ref="id63"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id63"/>
+<target ref="id62"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P16</name>
+<declaration>clock x;
+int pid = 17;</declaration>
+<location id="id64" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id65" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id66" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id67" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id66"/>
+<transition>
+<source ref="id66"/>
+<target ref="id65"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id65"/>
+<target ref="id64"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id64"/>
+<target ref="id65"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id64"/>
+<target ref="id67"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id67"/>
+<target ref="id66"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P17</name>
+<declaration>clock x;
+int pid = 18;</declaration>
+<location id="id68" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id69" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id70" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id71" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id70"/>
+<transition>
+<source ref="id70"/>
+<target ref="id69"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id69"/>
+<target ref="id68"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id68"/>
+<target ref="id69"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id68"/>
+<target ref="id71"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id71"/>
+<target ref="id70"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P18</name>
+<declaration>clock x;
+int pid = 19;</declaration>
+<location id="id72" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id73" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id74" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id75" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id74"/>
+<transition>
+<source ref="id74"/>
+<target ref="id73"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id73"/>
+<target ref="id72"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id72"/>
+<target ref="id73"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id72"/>
+<target ref="id75"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id75"/>
+<target ref="id74"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P19</name>
+<declaration>clock x;
+int pid = 20;</declaration>
+<location id="id76" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id77" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id78" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id79" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id78"/>
+<transition>
+<source ref="id78"/>
+<target ref="id77"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id77"/>
+<target ref="id76"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id76"/>
+<target ref="id77"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id76"/>
+<target ref="id79"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id79"/>
+<target ref="id78"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P20</name>
+<declaration>clock x;
+int pid = 21;</declaration>
+<location id="id80" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id81" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id82" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id83" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id82"/>
+<transition>
+<source ref="id82"/>
+<target ref="id81"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id81"/>
+<target ref="id80"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id80"/>
+<target ref="id81"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id80"/>
+<target ref="id83"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id83"/>
+<target ref="id82"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P21</name>
+<declaration>clock x;
+int pid = 22;</declaration>
+<location id="id84" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id85" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id86" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id87" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id86"/>
+<transition>
+<source ref="id86"/>
+<target ref="id85"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id85"/>
+<target ref="id84"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id84"/>
+<target ref="id85"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id84"/>
+<target ref="id87"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id87"/>
+<target ref="id86"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P22</name>
+<declaration>clock x;
+int pid = 23;</declaration>
+<location id="id88" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id89" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id90" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id91" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id90"/>
+<transition>
+<source ref="id90"/>
+<target ref="id89"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id89"/>
+<target ref="id88"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id88"/>
+<target ref="id89"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id88"/>
+<target ref="id91"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id91"/>
+<target ref="id90"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P23</name>
+<declaration>clock x;
+int pid = 24;</declaration>
+<location id="id92" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id93" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id94" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id95" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id94"/>
+<transition>
+<source ref="id94"/>
+<target ref="id93"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id93"/>
+<target ref="id92"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id92"/>
+<target ref="id93"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id92"/>
+<target ref="id95"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id95"/>
+<target ref="id94"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P24</name>
+<declaration>clock x;
+int pid = 25;</declaration>
+<location id="id96" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id97" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id98" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id99" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id98"/>
+<transition>
+<source ref="id98"/>
+<target ref="id97"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id97"/>
+<target ref="id96"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id96"/>
+<target ref="id97"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id96"/>
+<target ref="id99"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id99"/>
+<target ref="id98"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P25</name>
+<declaration>clock x;
+int pid = 26;</declaration>
+<location id="id100" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id101" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id102" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id103" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id102"/>
+<transition>
+<source ref="id102"/>
+<target ref="id101"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id101"/>
+<target ref="id100"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id100"/>
+<target ref="id101"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id100"/>
+<target ref="id103"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id103"/>
+<target ref="id102"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P26</name>
+<declaration>clock x;
+int pid = 27;</declaration>
+<location id="id104" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id105" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id106" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id107" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id106"/>
+<transition>
+<source ref="id106"/>
+<target ref="id105"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id105"/>
+<target ref="id104"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id104"/>
+<target ref="id105"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id104"/>
+<target ref="id107"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id107"/>
+<target ref="id106"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P27</name>
+<declaration>clock x;
+int pid = 28;</declaration>
+<location id="id108" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id109" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id110" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id111" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id110"/>
+<transition>
+<source ref="id110"/>
+<target ref="id109"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id109"/>
+<target ref="id108"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id108"/>
+<target ref="id109"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id108"/>
+<target ref="id111"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id111"/>
+<target ref="id110"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P28</name>
+<declaration>clock x;
+int pid = 29;</declaration>
+<location id="id112" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id113" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id114" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id115" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id114"/>
+<transition>
+<source ref="id114"/>
+<target ref="id113"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id113"/>
+<target ref="id112"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id112"/>
+<target ref="id113"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id112"/>
+<target ref="id115"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id115"/>
+<target ref="id114"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P29</name>
+<declaration>clock x;
+int pid = 30;</declaration>
+<location id="id116" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id117" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id118" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id119" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id118"/>
+<transition>
+<source ref="id118"/>
+<target ref="id117"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id117"/>
+<target ref="id116"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id116"/>
+<target ref="id117"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id116"/>
+<target ref="id119"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id119"/>
+<target ref="id118"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P30</name>
+<declaration>clock x;
+int pid = 31;</declaration>
+<location id="id120" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id121" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id122" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id123" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id122"/>
+<transition>
+<source ref="id122"/>
+<target ref="id121"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id121"/>
+<target ref="id120"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id120"/>
+<target ref="id121"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id120"/>
+<target ref="id123"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id123"/>
+<target ref="id122"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P31</name>
+<declaration>clock x;
+int pid = 32;</declaration>
+<location id="id124" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id125" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id126" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id127" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id126"/>
+<transition>
+<source ref="id126"/>
+<target ref="id125"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id125"/>
+<target ref="id124"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id124"/>
+<target ref="id125"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id124"/>
+<target ref="id127"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id127"/>
+<target ref="id126"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P32</name>
+<declaration>clock x;
+int pid = 33;</declaration>
+<location id="id128" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id129" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id130" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id131" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id130"/>
+<transition>
+<source ref="id130"/>
+<target ref="id129"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id129"/>
+<target ref="id128"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id128"/>
+<target ref="id129"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id128"/>
+<target ref="id131"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id131"/>
+<target ref="id130"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P33</name>
+<declaration>clock x;
+int pid = 34;</declaration>
+<location id="id132" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id133" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id134" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id135" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id134"/>
+<transition>
+<source ref="id134"/>
+<target ref="id133"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id133"/>
+<target ref="id132"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id132"/>
+<target ref="id133"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id132"/>
+<target ref="id135"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id135"/>
+<target ref="id134"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P34</name>
+<declaration>clock x;
+int pid = 35;</declaration>
+<location id="id136" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id137" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id138" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id139" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id138"/>
+<transition>
+<source ref="id138"/>
+<target ref="id137"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id137"/>
+<target ref="id136"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id136"/>
+<target ref="id137"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id136"/>
+<target ref="id139"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id139"/>
+<target ref="id138"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P35</name>
+<declaration>clock x;
+int pid = 36;</declaration>
+<location id="id140" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id141" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id142" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id143" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id142"/>
+<transition>
+<source ref="id142"/>
+<target ref="id141"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id141"/>
+<target ref="id140"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id140"/>
+<target ref="id141"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id140"/>
+<target ref="id143"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id143"/>
+<target ref="id142"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P36</name>
+<declaration>clock x;
+int pid = 37;</declaration>
+<location id="id144" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id145" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id146" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id147" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id146"/>
+<transition>
+<source ref="id146"/>
+<target ref="id145"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id145"/>
+<target ref="id144"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id144"/>
+<target ref="id145"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id144"/>
+<target ref="id147"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id147"/>
+<target ref="id146"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P37</name>
+<declaration>clock x;
+int pid = 38;</declaration>
+<location id="id148" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id149" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id150" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id151" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id150"/>
+<transition>
+<source ref="id150"/>
+<target ref="id149"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id149"/>
+<target ref="id148"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id148"/>
+<target ref="id149"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id148"/>
+<target ref="id151"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id151"/>
+<target ref="id150"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P38</name>
+<declaration>clock x;
+int pid = 39;</declaration>
+<location id="id152" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id153" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id154" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id155" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id154"/>
+<transition>
+<source ref="id154"/>
+<target ref="id153"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id153"/>
+<target ref="id152"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id152"/>
+<target ref="id153"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id152"/>
+<target ref="id155"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id155"/>
+<target ref="id154"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P39</name>
+<declaration>clock x;
+int pid = 40;</declaration>
+<location id="id156" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id157" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id158" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id159" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id158"/>
+<transition>
+<source ref="id158"/>
+<target ref="id157"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id157"/>
+<target ref="id156"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id156"/>
+<target ref="id157"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id156"/>
+<target ref="id159"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id159"/>
+<target ref="id158"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P40</name>
+<declaration>clock x;
+int pid = 41;</declaration>
+<location id="id160" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id161" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id162" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id163" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id162"/>
+<transition>
+<source ref="id162"/>
+<target ref="id161"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id161"/>
+<target ref="id160"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id160"/>
+<target ref="id161"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id160"/>
+<target ref="id163"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id163"/>
+<target ref="id162"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P41</name>
+<declaration>clock x;
+int pid = 42;</declaration>
+<location id="id164" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id165" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id166" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id167" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id166"/>
+<transition>
+<source ref="id166"/>
+<target ref="id165"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id165"/>
+<target ref="id164"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id164"/>
+<target ref="id165"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id164"/>
+<target ref="id167"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id167"/>
+<target ref="id166"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P42</name>
+<declaration>clock x;
+int pid = 43;</declaration>
+<location id="id168" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id169" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id170" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id171" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id170"/>
+<transition>
+<source ref="id170"/>
+<target ref="id169"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id169"/>
+<target ref="id168"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id168"/>
+<target ref="id169"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id168"/>
+<target ref="id171"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id171"/>
+<target ref="id170"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P43</name>
+<declaration>clock x;
+int pid = 44;</declaration>
+<location id="id172" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id173" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id174" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id175" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id174"/>
+<transition>
+<source ref="id174"/>
+<target ref="id173"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id173"/>
+<target ref="id172"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id172"/>
+<target ref="id173"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id172"/>
+<target ref="id175"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id175"/>
+<target ref="id174"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P44</name>
+<declaration>clock x;
+int pid = 45;</declaration>
+<location id="id176" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id177" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id178" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id179" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id178"/>
+<transition>
+<source ref="id178"/>
+<target ref="id177"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id177"/>
+<target ref="id176"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id176"/>
+<target ref="id177"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id176"/>
+<target ref="id179"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id179"/>
+<target ref="id178"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P45</name>
+<declaration>clock x;
+int pid = 46;</declaration>
+<location id="id180" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id181" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id182" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id183" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id182"/>
+<transition>
+<source ref="id182"/>
+<target ref="id181"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id181"/>
+<target ref="id180"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id180"/>
+<target ref="id181"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id180"/>
+<target ref="id183"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id183"/>
+<target ref="id182"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P46</name>
+<declaration>clock x;
+int pid = 47;</declaration>
+<location id="id184" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id185" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id186" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id187" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id186"/>
+<transition>
+<source ref="id186"/>
+<target ref="id185"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id185"/>
+<target ref="id184"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id184"/>
+<target ref="id185"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id184"/>
+<target ref="id187"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id187"/>
+<target ref="id186"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P47</name>
+<declaration>clock x;
+int pid = 48;</declaration>
+<location id="id188" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id189" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id190" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id191" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id190"/>
+<transition>
+<source ref="id190"/>
+<target ref="id189"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id189"/>
+<target ref="id188"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id188"/>
+<target ref="id189"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id188"/>
+<target ref="id191"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id191"/>
+<target ref="id190"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P48</name>
+<declaration>clock x;
+int pid = 49;</declaration>
+<location id="id192" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id193" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id194" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id195" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id194"/>
+<transition>
+<source ref="id194"/>
+<target ref="id193"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id193"/>
+<target ref="id192"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id192"/>
+<target ref="id193"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id192"/>
+<target ref="id195"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id195"/>
+<target ref="id194"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P49</name>
+<declaration>clock x;
+int pid = 50;</declaration>
+<location id="id196" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id197" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id198" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id199" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id198"/>
+<transition>
+<source ref="id198"/>
+<target ref="id197"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id197"/>
+<target ref="id196"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id196"/>
+<target ref="id197"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id196"/>
+<target ref="id199"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id199"/>
+<target ref="id198"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P50</name>
+<declaration>clock x;
+int pid = 51;</declaration>
+<location id="id200" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id201" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id202" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id203" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id202"/>
+<transition>
+<source ref="id202"/>
+<target ref="id201"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id201"/>
+<target ref="id200"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id200"/>
+<target ref="id201"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id200"/>
+<target ref="id203"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id203"/>
+<target ref="id202"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P51</name>
+<declaration>clock x;
+int pid = 52;</declaration>
+<location id="id204" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id205" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id206" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id207" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id206"/>
+<transition>
+<source ref="id206"/>
+<target ref="id205"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id205"/>
+<target ref="id204"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id204"/>
+<target ref="id205"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id204"/>
+<target ref="id207"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id207"/>
+<target ref="id206"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P52</name>
+<declaration>clock x;
+int pid = 53;</declaration>
+<location id="id208" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id209" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id210" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id211" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id210"/>
+<transition>
+<source ref="id210"/>
+<target ref="id209"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id209"/>
+<target ref="id208"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id208"/>
+<target ref="id209"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id208"/>
+<target ref="id211"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id211"/>
+<target ref="id210"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P53</name>
+<declaration>clock x;
+int pid = 54;</declaration>
+<location id="id212" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id213" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id214" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id215" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id214"/>
+<transition>
+<source ref="id214"/>
+<target ref="id213"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id213"/>
+<target ref="id212"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id212"/>
+<target ref="id213"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id212"/>
+<target ref="id215"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id215"/>
+<target ref="id214"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P54</name>
+<declaration>clock x;
+int pid = 55;</declaration>
+<location id="id216" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id217" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id218" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id219" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id218"/>
+<transition>
+<source ref="id218"/>
+<target ref="id217"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id217"/>
+<target ref="id216"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id216"/>
+<target ref="id217"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id216"/>
+<target ref="id219"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id219"/>
+<target ref="id218"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P55</name>
+<declaration>clock x;
+int pid = 56;</declaration>
+<location id="id220" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id221" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id222" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id223" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id222"/>
+<transition>
+<source ref="id222"/>
+<target ref="id221"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id221"/>
+<target ref="id220"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id220"/>
+<target ref="id221"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id220"/>
+<target ref="id223"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id223"/>
+<target ref="id222"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P56</name>
+<declaration>clock x;
+int pid = 57;</declaration>
+<location id="id224" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id225" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id226" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id227" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id226"/>
+<transition>
+<source ref="id226"/>
+<target ref="id225"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id225"/>
+<target ref="id224"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id224"/>
+<target ref="id225"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id224"/>
+<target ref="id227"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id227"/>
+<target ref="id226"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P57</name>
+<declaration>clock x;
+int pid = 58;</declaration>
+<location id="id228" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id229" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id230" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id231" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id230"/>
+<transition>
+<source ref="id230"/>
+<target ref="id229"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id229"/>
+<target ref="id228"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id228"/>
+<target ref="id229"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id228"/>
+<target ref="id231"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id231"/>
+<target ref="id230"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P58</name>
+<declaration>clock x;
+int pid = 59;</declaration>
+<location id="id232" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id233" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id234" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id235" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id234"/>
+<transition>
+<source ref="id234"/>
+<target ref="id233"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id233"/>
+<target ref="id232"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id232"/>
+<target ref="id233"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id232"/>
+<target ref="id235"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id235"/>
+<target ref="id234"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P59</name>
+<declaration>clock x;
+int pid = 60;</declaration>
+<location id="id236" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id237" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id238" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id239" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id238"/>
+<transition>
+<source ref="id238"/>
+<target ref="id237"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id237"/>
+<target ref="id236"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id236"/>
+<target ref="id237"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id236"/>
+<target ref="id239"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id239"/>
+<target ref="id238"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P60</name>
+<declaration>clock x;
+int pid = 61;</declaration>
+<location id="id240" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id241" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id242" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id243" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id242"/>
+<transition>
+<source ref="id242"/>
+<target ref="id241"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id241"/>
+<target ref="id240"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id240"/>
+<target ref="id241"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id240"/>
+<target ref="id243"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id243"/>
+<target ref="id242"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P61</name>
+<declaration>clock x;
+int pid = 62;</declaration>
+<location id="id244" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id245" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id246" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id247" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id246"/>
+<transition>
+<source ref="id246"/>
+<target ref="id245"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id245"/>
+<target ref="id244"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id244"/>
+<target ref="id245"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id244"/>
+<target ref="id247"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id247"/>
+<target ref="id246"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P62</name>
+<declaration>clock x;
+int pid = 63;</declaration>
+<location id="id248" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id249" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id250" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id251" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id250"/>
+<transition>
+<source ref="id250"/>
+<target ref="id249"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id249"/>
+<target ref="id248"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id248"/>
+<target ref="id249"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id248"/>
+<target ref="id251"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id251"/>
+<target ref="id250"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P63</name>
+<declaration>clock x;
+int pid = 64;</declaration>
+<location id="id252" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id253" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id254" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id255" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id254"/>
+<transition>
+<source ref="id254"/>
+<target ref="id253"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id253"/>
+<target ref="id252"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id252"/>
+<target ref="id253"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id252"/>
+<target ref="id255"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id255"/>
+<target ref="id254"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P64</name>
+<declaration>clock x;
+int pid = 65;</declaration>
+<location id="id256" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id257" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id258" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id259" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id258"/>
+<transition>
+<source ref="id258"/>
+<target ref="id257"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id257"/>
+<target ref="id256"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id256"/>
+<target ref="id257"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id256"/>
+<target ref="id259"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id259"/>
+<target ref="id258"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P65</name>
+<declaration>clock x;
+int pid = 66;</declaration>
+<location id="id260" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id261" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id262" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id263" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id262"/>
+<transition>
+<source ref="id262"/>
+<target ref="id261"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id261"/>
+<target ref="id260"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id260"/>
+<target ref="id261"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id260"/>
+<target ref="id263"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id263"/>
+<target ref="id262"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P66</name>
+<declaration>clock x;
+int pid = 67;</declaration>
+<location id="id264" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id265" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id266" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id267" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id266"/>
+<transition>
+<source ref="id266"/>
+<target ref="id265"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id265"/>
+<target ref="id264"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id264"/>
+<target ref="id265"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id264"/>
+<target ref="id267"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id267"/>
+<target ref="id266"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P67</name>
+<declaration>clock x;
+int pid = 68;</declaration>
+<location id="id268" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id269" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id270" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id271" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id270"/>
+<transition>
+<source ref="id270"/>
+<target ref="id269"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id269"/>
+<target ref="id268"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id268"/>
+<target ref="id269"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id268"/>
+<target ref="id271"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id271"/>
+<target ref="id270"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P68</name>
+<declaration>clock x;
+int pid = 69;</declaration>
+<location id="id272" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id273" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id274" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id275" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id274"/>
+<transition>
+<source ref="id274"/>
+<target ref="id273"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id273"/>
+<target ref="id272"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id272"/>
+<target ref="id273"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id272"/>
+<target ref="id275"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id275"/>
+<target ref="id274"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P69</name>
+<declaration>clock x;
+int pid = 70;</declaration>
+<location id="id276" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id277" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id278" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id279" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id278"/>
+<transition>
+<source ref="id278"/>
+<target ref="id277"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id277"/>
+<target ref="id276"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id276"/>
+<target ref="id277"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id276"/>
+<target ref="id279"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id279"/>
+<target ref="id278"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P70</name>
+<declaration>clock x;
+int pid = 71;</declaration>
+<location id="id280" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id281" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id282" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id283" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id282"/>
+<transition>
+<source ref="id282"/>
+<target ref="id281"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id281"/>
+<target ref="id280"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id280"/>
+<target ref="id281"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id280"/>
+<target ref="id283"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id283"/>
+<target ref="id282"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P71</name>
+<declaration>clock x;
+int pid = 72;</declaration>
+<location id="id284" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id285" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id286" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id287" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id286"/>
+<transition>
+<source ref="id286"/>
+<target ref="id285"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id285"/>
+<target ref="id284"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id284"/>
+<target ref="id285"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id284"/>
+<target ref="id287"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id287"/>
+<target ref="id286"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P72</name>
+<declaration>clock x;
+int pid = 73;</declaration>
+<location id="id288" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id289" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id290" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id291" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id290"/>
+<transition>
+<source ref="id290"/>
+<target ref="id289"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id289"/>
+<target ref="id288"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id288"/>
+<target ref="id289"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id288"/>
+<target ref="id291"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id291"/>
+<target ref="id290"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P73</name>
+<declaration>clock x;
+int pid = 74;</declaration>
+<location id="id292" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id293" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id294" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id295" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id294"/>
+<transition>
+<source ref="id294"/>
+<target ref="id293"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id293"/>
+<target ref="id292"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id292"/>
+<target ref="id293"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id292"/>
+<target ref="id295"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id295"/>
+<target ref="id294"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P74</name>
+<declaration>clock x;
+int pid = 75;</declaration>
+<location id="id296" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id297" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id298" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id299" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id298"/>
+<transition>
+<source ref="id298"/>
+<target ref="id297"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id297"/>
+<target ref="id296"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id296"/>
+<target ref="id297"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id296"/>
+<target ref="id299"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id299"/>
+<target ref="id298"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P75</name>
+<declaration>clock x;
+int pid = 76;</declaration>
+<location id="id300" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id301" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id302" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id303" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id302"/>
+<transition>
+<source ref="id302"/>
+<target ref="id301"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id301"/>
+<target ref="id300"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id300"/>
+<target ref="id301"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id300"/>
+<target ref="id303"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id303"/>
+<target ref="id302"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P76</name>
+<declaration>clock x;
+int pid = 77;</declaration>
+<location id="id304" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id305" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id306" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id307" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id306"/>
+<transition>
+<source ref="id306"/>
+<target ref="id305"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id305"/>
+<target ref="id304"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id304"/>
+<target ref="id305"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id304"/>
+<target ref="id307"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id307"/>
+<target ref="id306"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P77</name>
+<declaration>clock x;
+int pid = 78;</declaration>
+<location id="id308" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id309" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id310" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id311" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id310"/>
+<transition>
+<source ref="id310"/>
+<target ref="id309"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id309"/>
+<target ref="id308"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id308"/>
+<target ref="id309"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id308"/>
+<target ref="id311"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id311"/>
+<target ref="id310"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P78</name>
+<declaration>clock x;
+int pid = 79;</declaration>
+<location id="id312" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id313" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id314" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id315" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id314"/>
+<transition>
+<source ref="id314"/>
+<target ref="id313"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id313"/>
+<target ref="id312"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id312"/>
+<target ref="id313"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id312"/>
+<target ref="id315"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id315"/>
+<target ref="id314"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P79</name>
+<declaration>clock x;
+int pid = 80;</declaration>
+<location id="id316" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id317" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id318" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id319" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id318"/>
+<transition>
+<source ref="id318"/>
+<target ref="id317"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id317"/>
+<target ref="id316"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id316"/>
+<target ref="id317"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id316"/>
+<target ref="id319"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id319"/>
+<target ref="id318"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P80</name>
+<declaration>clock x;
+int pid = 81;</declaration>
+<location id="id320" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id321" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id322" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id323" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id322"/>
+<transition>
+<source ref="id322"/>
+<target ref="id321"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id321"/>
+<target ref="id320"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id320"/>
+<target ref="id321"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id320"/>
+<target ref="id323"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id323"/>
+<target ref="id322"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P81</name>
+<declaration>clock x;
+int pid = 82;</declaration>
+<location id="id324" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id325" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id326" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id327" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id326"/>
+<transition>
+<source ref="id326"/>
+<target ref="id325"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id325"/>
+<target ref="id324"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id324"/>
+<target ref="id325"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id324"/>
+<target ref="id327"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id327"/>
+<target ref="id326"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P82</name>
+<declaration>clock x;
+int pid = 83;</declaration>
+<location id="id328" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id329" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id330" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id331" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id330"/>
+<transition>
+<source ref="id330"/>
+<target ref="id329"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id329"/>
+<target ref="id328"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id328"/>
+<target ref="id329"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id328"/>
+<target ref="id331"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id331"/>
+<target ref="id330"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P83</name>
+<declaration>clock x;
+int pid = 84;</declaration>
+<location id="id332" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id333" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id334" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id335" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id334"/>
+<transition>
+<source ref="id334"/>
+<target ref="id333"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id333"/>
+<target ref="id332"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id332"/>
+<target ref="id333"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id332"/>
+<target ref="id335"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id335"/>
+<target ref="id334"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P84</name>
+<declaration>clock x;
+int pid = 85;</declaration>
+<location id="id336" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id337" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id338" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id339" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id338"/>
+<transition>
+<source ref="id338"/>
+<target ref="id337"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id337"/>
+<target ref="id336"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id336"/>
+<target ref="id337"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id336"/>
+<target ref="id339"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id339"/>
+<target ref="id338"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P85</name>
+<declaration>clock x;
+int pid = 86;</declaration>
+<location id="id340" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id341" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id342" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id343" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id342"/>
+<transition>
+<source ref="id342"/>
+<target ref="id341"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id341"/>
+<target ref="id340"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id340"/>
+<target ref="id341"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id340"/>
+<target ref="id343"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id343"/>
+<target ref="id342"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P86</name>
+<declaration>clock x;
+int pid = 87;</declaration>
+<location id="id344" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id345" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id346" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id347" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id346"/>
+<transition>
+<source ref="id346"/>
+<target ref="id345"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id345"/>
+<target ref="id344"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id344"/>
+<target ref="id345"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id344"/>
+<target ref="id347"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id347"/>
+<target ref="id346"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P87</name>
+<declaration>clock x;
+int pid = 88;</declaration>
+<location id="id348" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id349" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id350" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id351" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id350"/>
+<transition>
+<source ref="id350"/>
+<target ref="id349"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id349"/>
+<target ref="id348"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id348"/>
+<target ref="id349"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id348"/>
+<target ref="id351"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id351"/>
+<target ref="id350"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P88</name>
+<declaration>clock x;
+int pid = 89;</declaration>
+<location id="id352" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id353" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id354" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id355" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id354"/>
+<transition>
+<source ref="id354"/>
+<target ref="id353"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id353"/>
+<target ref="id352"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id352"/>
+<target ref="id353"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id352"/>
+<target ref="id355"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id355"/>
+<target ref="id354"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P89</name>
+<declaration>clock x;
+int pid = 90;</declaration>
+<location id="id356" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id357" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id358" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id359" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id358"/>
+<transition>
+<source ref="id358"/>
+<target ref="id357"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id357"/>
+<target ref="id356"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id356"/>
+<target ref="id357"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id356"/>
+<target ref="id359"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id359"/>
+<target ref="id358"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P90</name>
+<declaration>clock x;
+int pid = 91;</declaration>
+<location id="id360" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id361" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id362" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id363" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id362"/>
+<transition>
+<source ref="id362"/>
+<target ref="id361"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id361"/>
+<target ref="id360"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id360"/>
+<target ref="id361"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id360"/>
+<target ref="id363"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id363"/>
+<target ref="id362"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P91</name>
+<declaration>clock x;
+int pid = 92;</declaration>
+<location id="id364" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id365" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id366" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id367" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id366"/>
+<transition>
+<source ref="id366"/>
+<target ref="id365"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id365"/>
+<target ref="id364"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id364"/>
+<target ref="id365"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id364"/>
+<target ref="id367"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id367"/>
+<target ref="id366"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P92</name>
+<declaration>clock x;
+int pid = 93;</declaration>
+<location id="id368" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id369" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id370" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id371" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id370"/>
+<transition>
+<source ref="id370"/>
+<target ref="id369"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id369"/>
+<target ref="id368"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id368"/>
+<target ref="id369"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id368"/>
+<target ref="id371"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id371"/>
+<target ref="id370"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P93</name>
+<declaration>clock x;
+int pid = 94;</declaration>
+<location id="id372" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id373" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id374" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id375" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id374"/>
+<transition>
+<source ref="id374"/>
+<target ref="id373"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id373"/>
+<target ref="id372"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id372"/>
+<target ref="id373"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id372"/>
+<target ref="id375"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id375"/>
+<target ref="id374"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P94</name>
+<declaration>clock x;
+int pid = 95;</declaration>
+<location id="id376" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id377" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id378" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id379" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id378"/>
+<transition>
+<source ref="id378"/>
+<target ref="id377"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id377"/>
+<target ref="id376"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id376"/>
+<target ref="id377"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id376"/>
+<target ref="id379"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id379"/>
+<target ref="id378"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P95</name>
+<declaration>clock x;
+int pid = 96;</declaration>
+<location id="id380" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id381" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id382" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id383" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id382"/>
+<transition>
+<source ref="id382"/>
+<target ref="id381"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id381"/>
+<target ref="id380"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id380"/>
+<target ref="id381"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id380"/>
+<target ref="id383"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id383"/>
+<target ref="id382"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P96</name>
+<declaration>clock x;
+int pid = 97;</declaration>
+<location id="id384" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id385" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id386" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id387" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id386"/>
+<transition>
+<source ref="id386"/>
+<target ref="id385"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id385"/>
+<target ref="id384"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id384"/>
+<target ref="id385"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id384"/>
+<target ref="id387"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id387"/>
+<target ref="id386"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P97</name>
+<declaration>clock x;
+int pid = 98;</declaration>
+<location id="id388" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id389" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id390" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id391" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id390"/>
+<transition>
+<source ref="id390"/>
+<target ref="id389"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id389"/>
+<target ref="id388"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id388"/>
+<target ref="id389"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id388"/>
+<target ref="id391"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id391"/>
+<target ref="id390"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P98</name>
+<declaration>clock x;
+int pid = 99;</declaration>
+<location id="id392" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id393" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id394" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id395" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id394"/>
+<transition>
+<source ref="id394"/>
+<target ref="id393"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id393"/>
+<target ref="id392"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id392"/>
+<target ref="id393"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id392"/>
+<target ref="id395"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id395"/>
+<target ref="id394"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><template>
+<name x="16" y="-8">P99</name>
+<declaration>clock x;
+int pid = 100;</declaration>
+<location id="id396" x="216" y="176">
+<name x="216" y="192">wait</name>
+<label kind="exponentialrate" x="232" y="168">1</label>
+</location>
+<location id="id397" x="216" y="48">
+<name x="216" y="16">req</name>
+<label kind="invariant" x="240" y="32">x&lt;=30</label>
+</location>
+<location id="id398" x="64" y="48">
+<name x="54" y="18">A</name>
+<label kind="exponentialrate" x="40" y="40">1</label>
+</location>
+<location id="id399" x="64" y="176">
+<name x="56" y="192">cs</name>
+<label kind="exponentialrate" x="40" y="168">1</label>
+</location>
+<init ref="id398"/>
+<transition>
+<source ref="id398"/>
+<target ref="id397"/>
+<label kind="guard" x="88" y="24">id== 0</label>
+<label kind="assignment" x="160" y="24">x = 0</label>
+</transition>
+<transition>
+<source ref="id397"/>
+<target ref="id396"/>
+<label kind="guard" x="144" y="72">x&lt;=30</label>
+<label kind="assignment" x="144" y="104">x = 0,
+id = pid</label>
+</transition>
+<transition>
+<source ref="id396"/>
+<target ref="id397"/>
+<label kind="guard" x="264" y="120">id== 0</label>
+<label kind="assignment" x="264" y="88">x = 0</label>
+<nail x="251" y="146"/>
+<nail x="251" y="82"/>
+</transition>
+<transition>
+<source ref="id396"/>
+<target ref="id399"/>
+<label kind="guard" x="96" y="184">x&gt;29 &amp;&amp; id==pid</label>
+<label kind="assignment" x="96" y="184">in_critical = in_critical + 1</label>
+</transition>
+<transition>
+<source ref="id399"/>
+<target ref="id398"/>
+<label kind="assignment" x="8" y="80">id = 0, 
+in_critical = in_critical - 1</label>
+</transition>
+</template><system>system P0,P1,P2,P3,P4,P5,P6,P7,P8,P9,P10,P11,P12,P13,P14,P15,P16,P17,P18,P19,P20,P21,P22,P23,P24,P25,P26,P27,P28,P29,P30,P31,P32,P33,P34,P35,P36,P37,P38,P39,P40,P41,P42,P43,P44,P45,P46,P47,P48,P49,P50,P51,P52,P53,P54,P55,P56,P57,P58,P59,P60,P61,P62,P63,P64,P65,P66,P67,P68,P69,P70,P71,P72,P73,P74,P75,P76,P77,P78,P79,P80,P81,P82,P83,P84,P85,P86,P87,P88,P89,P90,P91,P92,P93,P94,P95,P96,P97,P98,P99;</system><queries>
+<query>
+<formula>E[&lt;=300; 1000](max: in_critical)
+</formula>
+<comment>
+</comment>
+</query>
+</queries>
+</nta>
