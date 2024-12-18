@@ -10,12 +10,12 @@
 int main(int argc, char *argv[]) {
 
     bool CONST_QUERY = true;
-    std::string filename = "../xml_files/LargeModels/fischer_1000_29.xml";
-    int curand_seed = 1234;
+    std::string filename = "../xml_files/LargeModels/aloha_50.xml";
+    int curand_seed = 1235;
 
     // Statistics
-    int simulations = 1024;
-    int timeBound = 300;
+    int simulations = 16384;
+    int timeBound = 100;
     int variable_threshhold = -1;
     int variable_id = 1;
     bool isMax = true; // Gather info on either the max value of the variable or the min
