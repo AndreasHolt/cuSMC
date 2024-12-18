@@ -83,6 +83,9 @@ __device__ void take_transition(ComponentState *my_state,
     // If this edge has a positive channel (broadcast sender)
     if (edge.channel > 0) {
         int channel_abs = abs(edge.channel);
+        if constexpr (CHANNEL_VERBOSE) {
+            printf("Node: %d, just broadcasted channel %d.\n", threadIdx.x, channel_abs);
+        }
 
         // This component needs to signal the broadcast, as its channel is '!-labelled'
         shared->channel_active = channel_abs;
@@ -167,7 +170,7 @@ __device__ void take_transition(ComponentState *my_state,
 
     // Update current node
     my_state->current_node = dest_node;
-    if constexpr (VERBOSE || true) {
+    if constexpr (VERBOSE) {
         printf("Alt_Thread %d: Moved to new node %d\n", alt_thread_idx, dest_node->id);
     }
 }
@@ -178,8 +181,11 @@ __device__ bool check_edge_enabled(const EdgeInfo &edge,
                                    SharedModelState *model,
                                    BlockSimulationState *block_state, bool is_broadcast_sync, int alt_thread_idx) {
     if constexpr (PRINT_TRANSITIONS) {
-        printf("\nAlt_Thread %d: Checking edge %d->%d with %d guards\n",
-               alt_thread_idx, edge.source_node_id, edge.dest_node_id, edge.num_guards);
+        if (edge.dest_node_id == 68) {
+            printf("\nAlt_Thread %d: Checking edge %d->%d with %d guards\n",
+                           alt_thread_idx, edge.source_node_id, edge.dest_node_id, edge.num_guards);
+        }
+
     }
 
     // Only reject negative channels if not part of broadcast sync
@@ -273,8 +279,10 @@ __device__ void check_enabled_edges(ComponentState *my_state,
     my_state->num_enabled_edges = 0; // Reset counter
 
     // Check each outgoing edge
+    //if (node.num_edges > 0){ printf("Number of edges: %d.\n", node.num_edges);}
     for (int i = 0; i < node.num_edges; i++) {
         const EdgeInfo &edge = model->edges[node.first_edge_index + i];
+
         if (check_edge_enabled(edge, shared, model, block_state, false, threadIdx.x)) {
             // Store enabled edge for later selection
             my_state->enabled_edges[my_state->num_enabled_edges++] = i;
@@ -347,18 +355,15 @@ __device__ void SyncInSerial(ComponentState *my_state,
 
     // First step can be done in parallel.
     if (shared->channel_active > 0) {
-            printf("Thread id: %d, first\n", threadIdx.x);
+        // Collect all enabled receiving edges
+        my_state->num_enabled_edges = 0;
         if (shared->channel_sender != my_state->component_id) {
-            printf("Thread id: %d, second\n", threadIdx.x);
-            // Collect all enabled receiving edges
-            my_state->num_enabled_edges = 0;
             const NodeInfo *current_node = my_state->current_node;
 
             for (int e = 0; e < current_node->num_edges; e++) {
                 const EdgeInfo &edge = model->edges[current_node->first_edge_index + e];
                 if (edge.channel == -shared->channel_active &&
                     check_edge_enabled(edge, shared, model, block_state, true, threadIdx.x)) {
-                    printf("Thread id: %d, third\n", threadIdx.x);
                     // Edges is enabled, therefore we add it to the enabled edges list, to be used inside take_transition
                     my_state->enabled_edges[my_state->num_enabled_edges++] = e;
                 }
@@ -372,14 +377,17 @@ __device__ void SyncInSerial(ComponentState *my_state,
             for (int comp_idx = 0; comp_idx < model->num_components; comp_idx++) {
                 ComponentState *my_new_state = my_state + comp_idx;
                 BlockSimulationState *new_block_state = block_state + comp_idx;
-                //printf("Thread id: %d, comp_idx: %d, after: %p\n", threadIdx.x, comp_idx, my_new_state);
                 // If we found any enabled receiving edges, we just randomly select one inside take_transition
                 if (my_new_state->num_enabled_edges > 0) {
                     if constexpr (VERBOSE) {
                         printf("Found %d enabled receiving edges for channel %d.\n",
                                my_new_state->num_enabled_edges, shared->channel_active);
                     }
-                    printf("Thread id: %d, comp id: %d, fourth\n", threadIdx.x, comp_idx);
+                    if constexpr (CHANNEL_VERBOSE) {
+                        printf("Alt thread id: %d, took a channel with droadcaster: %d.\n", comp_idx, shared->channel_sender);
+                    }
+
+
                     take_transition(my_new_state, shared, model, new_block_state, query_variable_id, comp_idx);
                 }
             }
@@ -639,7 +647,7 @@ __device__ double find_minimum_delay(
         if (is_race_winner) {
             check_enabled_edges(my_state, shared, model, block_state, is_race_winner);
             take_transition(my_state, shared, model, block_state, query_variable_id, threadIdx.x);
-            if (EXPR_VERBOSE) {
+            if constexpr (EXPR_VERBOSE) {
                 printf("Thread %d (component %d) won the race with delay %f\n",
                        threadIdx.x, my_state->component_id, min_delay);
             }
