@@ -17,10 +17,10 @@ int main(int argc, char *argv[]) {
     int simulations = 1000;
     int timeBound = 100;
     int variable_threshhold = -1;
-    int variable_id = 1;
+    int variable_id = -1;
     bool isMax = true; // Gather info on either the max value of the variable or the min
     bool isEstimate = true;
-    string loc_query = "";
+    string loc_query = "Process0.SUCCESS";
 
     statistics_Configuration* stat_input = {};
 
@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
     struct statistics_Configuration* stats = nullptr;
     if (CONST_QUERY) {
         stats = new statistics_Configuration[NumberOfQueries];
-        stats[0] = statistics_Configuration(simulations, timeBound, variable_threshhold, variable_id, isMax, isEstimate, "");
+        stats[0] = statistics_Configuration(simulations, timeBound, variable_threshhold, variable_id, isMax, isEstimate, loc_query);
         // stats[1] = {100, 100, 12, -1, false, false, "c1.f4"};
     } else {
         stats = (statistics_Configuration*)malloc(sizeof(statistics_Configuration));

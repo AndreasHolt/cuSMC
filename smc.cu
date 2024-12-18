@@ -313,6 +313,11 @@ void smc(configuration conf, statistics_Configuration stat_conf) {
     network_props properties = {};
     populate_properties(properties, parser);
 
+    auto nodes_w_names = parser->get_nodes_with_name();
+    for (auto node: *nodes_w_names) {
+        cout << node.first << "," << node.second << endl;
+    }
+
     std::unordered_set<std::string> *query_set = new std::unordered_set<std::string>();
     query_set->insert(stat_conf.loc_query);
     // Optimize the model
@@ -332,6 +337,8 @@ void smc(configuration conf, statistics_Configuration stat_conf) {
     var_tracker.visit(&model);
 
     auto registry = var_tracker.get_variable_registry();
+    int number_of_variables = registry.size();
+    printf("Set number of variables to: %d\n", number_of_variables);
 
     if (PRINT_VARIABLES) {
         auto node_name = parser->get_nodes_with_name();
@@ -478,6 +485,13 @@ void smc(configuration conf, statistics_Configuration stat_conf) {
 
         cout << "=================\n\n";
         Statistics stats(stat_conf.simulations, COMP_STAT);
+
+        // Check for launch error
+        cudaError_t error = cudaGetLastError();
+        if (error != cudaSuccess) {
+            cout << "Launch error: " << cudaGetErrorString(error) << endl;
+            return;
+        }
 
         // Run the SMC simulations
         run_statistical_model_checking(state, 0.05, 0.01, kinds, stats.get_comp_device_ptr(),
