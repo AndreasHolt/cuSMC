@@ -186,6 +186,7 @@ __device__ bool check_edge_enabled(const EdgeInfo &edge,
                                    SharedModelState *model,
                                    BlockSimulationState *block_state, bool is_broadcast_sync, int alt_thread_idx) {
     if constexpr (PRINT_TRANSITIONS) {
+        printf("check edge enabled. has op %d", edge.num_guards);
         if (edge.dest_node_id == 68) {
             printf("\nAlt_Thread %d: Checking edge %d->%d with %d guards\n",
                            alt_thread_idx, edge.source_node_id, edge.dest_node_id, edge.num_guards);
@@ -209,7 +210,7 @@ __device__ bool check_edge_enabled(const EdgeInfo &edge,
             int var_id = guard.var_info.variable_id;
             double var_value = shared->variables[var_id].value;
             double bound = evaluate_expression(guard.expression, shared);
-            if constexpr (PRINT_TRANSITIONS) {
+            if constexpr (PRINT_TRANS_ALOHA) {
                 printf("  Guard %d: var_%d (%s) = %f %s %f\n",
                        i, var_id,
                        guard.var_info.type == VariableKind::CLOCK ? "clock" : "int",
@@ -243,7 +244,7 @@ __device__ bool check_edge_enabled(const EdgeInfo &edge,
                     satisfied = var_value >= bound;
                     break;
                 case constraint::equal_c:
-                    satisfied = var_value == bound;
+                    satisfied = (var_value - bound) <= DBL_EPSILON ;
                     break;
                 default:
                     printf("  Warning: Unknown operator %d\n", guard.operand);
@@ -251,14 +252,14 @@ __device__ bool check_edge_enabled(const EdgeInfo &edge,
             }
 
             if (!satisfied) {
-                if constexpr (PRINT_TRANSITIONS) {
+                if constexpr (PRINT_TRANSITIONS || PRINT_TRANS_ALOHA) {
                     printf("  Guard not satisfied - edge disabled\n");
                 }
                 return false;
             }
         }
     }
-    if constexpr (PRINT_TRANSITIONS) {
+    if constexpr (PRINT_TRANSITIONS || PRINT_TRANS_ALOHA) {
         printf("  All guards satisfied - edge enabled!\n");
     }
     return true;
@@ -640,7 +641,7 @@ __device__ double find_minimum_delay(
                 if (shared->variables[i].kind == VariableKind::CLOCK) {
                     double old_value = shared->variables[i].value;
                     shared->variables[i].value += min_delay;
-                    if constexpr (VERBOSE) {
+                    if constexpr (VERBOSE || EXPR_VERBOSE) {
                         printf("  Clock %d: %f -> %f (advanced by %f)\n",
                                i, old_value, shared->variables[i].value, min_delay);
                     }
