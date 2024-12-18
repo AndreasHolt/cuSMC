@@ -1,0 +1,768 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.1//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_2.dtd'>
+<nta>
+<declaration>const int N=10;
+typedef int[0,N-1] id_t;
+broadcast chan busy;
+clock x;
+int ns;
+int nt;
+const int TransmitProb = 75;</declaration><template>
+<name x="5" y="5">P0</name>
+<declaration>// Local declarations for process 0</declaration>
+<location id="id0" x="-255" y="-187">
+    <name x="-265" y="-221">INITIAL</name>
+    <label kind="invariant" x="-297" y="-178">x&lt;=1</label>
+</location>
+<location id="id1" x="-255" y="-93">
+    <urgent/>
+</location>
+<location id="id2" x="-8" y="-93">
+    <name x="-18" y="-127">Transmit</name>
+    <label kind="invariant" x="-18" y="-76">x&lt;=1</label>
+</location>
+<location id="id3" x="-8" y="119">
+    <name x="0" y="93">Wait</name>
+    <label kind="invariant" x="-18" y="136">x&lt;=1</label>
+</location>
+<branchpoint id="id4" x="-255" y="110">
+</branchpoint>
+<init ref="id0"/>
+<transition>
+    <source ref="id4"/>
+    <target ref="id3"/>
+    <label kind="assignment" x="-245" y="127">x=0</label>
+    <label kind="probability" x="-245" y="144">100-TransmitProb</label>
+    <nail x="-144" y="144"/>
+</transition>
+<transition>
+    <source ref="id3"/>
+    <target ref="id4"/>
+    <label kind="guard" x="-118" y="59">x==1</label>
+    <nail x="-136" y="68"/>
+</transition>
+<transition>
+    <source ref="id2"/>
+    <target ref="id3"/>
+    <label kind="synchronisation" x="-8" y="-4">busy?</label>
+    <label kind="assignment" x="-8" y="13">x=0, nt = nt-1</label>
+</transition>
+<transition>
+    <source ref="id2"/>
+    <target ref="id1"/>
+    <label kind="guard" x="-85" y="-51">x==1</label>
+    <label kind="assignment" x="-170" y="-42">ns = ns+1,
+nt=nt-1,
+x=0</label>
+    <nail x="-127" y="-42"/>
+</transition>
+<transition>
+    <source ref="id1"/>
+    <target ref="id2"/>
+    <label kind="guard" x="-187" y="-178">nt==0</label>
+    <label kind="synchronisation" x="-204" y="-161">busy!</label>
+    <label kind="assignment" x="-161" y="-153">nt=nt+1,
+x=0</label>
+    <nail x="-136" y="-161"/>
+</transition>
+<transition>
+    <source ref="id4"/>
+    <target ref="id1"/>
+    <label kind="probability" x="-259" y="25">TransmitProb</label>
+</transition>
+<transition>
+    <source ref="id1"/>
+    <target ref="id4"/>
+    <label kind="guard" x="-314" y="-26">nt&gt;0</label>
+    <label kind="synchronisation" x="-314" y="-9">busy!</label>
+    <nail x="-314" y="-93"/>
+    <nail x="-314" y="110"/>
+</transition>
+<transition>
+    <source ref="id0"/>
+    <target ref="id1"/>
+</transition>
+</template><template>
+<name x="5" y="5">P1</name>
+<declaration>// Local declarations for process 1</declaration>
+<location id="id5" x="-255" y="-187">
+    <name x="-265" y="-221">INITIAL</name>
+    <label kind="invariant" x="-297" y="-178">x&lt;=1</label>
+</location>
+<location id="id6" x="-255" y="-93">
+    <urgent/>
+</location>
+<location id="id7" x="-8" y="-93">
+    <name x="-18" y="-127">Transmit</name>
+    <label kind="invariant" x="-18" y="-76">x&lt;=1</label>
+</location>
+<location id="id8" x="-8" y="119">
+    <name x="0" y="93">Wait</name>
+    <label kind="invariant" x="-18" y="136">x&lt;=1</label>
+</location>
+<branchpoint id="id9" x="-255" y="110">
+</branchpoint>
+<init ref="id5"/>
+<transition>
+    <source ref="id9"/>
+    <target ref="id8"/>
+    <label kind="assignment" x="-245" y="127">x=0</label>
+    <label kind="probability" x="-245" y="144">100-TransmitProb</label>
+    <nail x="-144" y="144"/>
+</transition>
+<transition>
+    <source ref="id8"/>
+    <target ref="id9"/>
+    <label kind="guard" x="-118" y="59">x==1</label>
+    <nail x="-136" y="68"/>
+</transition>
+<transition>
+    <source ref="id7"/>
+    <target ref="id8"/>
+    <label kind="synchronisation" x="-8" y="-4">busy?</label>
+    <label kind="assignment" x="-8" y="13">x=0, nt = nt-1</label>
+</transition>
+<transition>
+    <source ref="id7"/>
+    <target ref="id6"/>
+    <label kind="guard" x="-85" y="-51">x==1</label>
+    <label kind="assignment" x="-170" y="-42">ns = ns+1,
+nt=nt-1,
+x=0</label>
+    <nail x="-127" y="-42"/>
+</transition>
+<transition>
+    <source ref="id6"/>
+    <target ref="id7"/>
+    <label kind="guard" x="-187" y="-178">nt==0</label>
+    <label kind="synchronisation" x="-204" y="-161">busy!</label>
+    <label kind="assignment" x="-161" y="-153">nt=nt+1,
+x=0</label>
+    <nail x="-136" y="-161"/>
+</transition>
+<transition>
+    <source ref="id9"/>
+    <target ref="id6"/>
+    <label kind="probability" x="-259" y="25">TransmitProb</label>
+</transition>
+<transition>
+    <source ref="id6"/>
+    <target ref="id9"/>
+    <label kind="guard" x="-314" y="-26">nt&gt;0</label>
+    <label kind="synchronisation" x="-314" y="-9">busy!</label>
+    <nail x="-314" y="-93"/>
+    <nail x="-314" y="110"/>
+</transition>
+<transition>
+    <source ref="id5"/>
+    <target ref="id6"/>
+</transition>
+</template><template>
+<name x="5" y="5">P2</name>
+<declaration>// Local declarations for process 2</declaration>
+<location id="id10" x="-255" y="-187">
+    <name x="-265" y="-221">INITIAL</name>
+    <label kind="invariant" x="-297" y="-178">x&lt;=1</label>
+</location>
+<location id="id11" x="-255" y="-93">
+    <urgent/>
+</location>
+<location id="id12" x="-8" y="-93">
+    <name x="-18" y="-127">Transmit</name>
+    <label kind="invariant" x="-18" y="-76">x&lt;=1</label>
+</location>
+<location id="id13" x="-8" y="119">
+    <name x="0" y="93">Wait</name>
+    <label kind="invariant" x="-18" y="136">x&lt;=1</label>
+</location>
+<branchpoint id="id14" x="-255" y="110">
+</branchpoint>
+<init ref="id10"/>
+<transition>
+    <source ref="id14"/>
+    <target ref="id13"/>
+    <label kind="assignment" x="-245" y="127">x=0</label>
+    <label kind="probability" x="-245" y="144">100-TransmitProb</label>
+    <nail x="-144" y="144"/>
+</transition>
+<transition>
+    <source ref="id13"/>
+    <target ref="id14"/>
+    <label kind="guard" x="-118" y="59">x==1</label>
+    <nail x="-136" y="68"/>
+</transition>
+<transition>
+    <source ref="id12"/>
+    <target ref="id13"/>
+    <label kind="synchronisation" x="-8" y="-4">busy?</label>
+    <label kind="assignment" x="-8" y="13">x=0, nt = nt-1</label>
+</transition>
+<transition>
+    <source ref="id12"/>
+    <target ref="id11"/>
+    <label kind="guard" x="-85" y="-51">x==1</label>
+    <label kind="assignment" x="-170" y="-42">ns = ns+1,
+nt=nt-1,
+x=0</label>
+    <nail x="-127" y="-42"/>
+</transition>
+<transition>
+    <source ref="id11"/>
+    <target ref="id12"/>
+    <label kind="guard" x="-187" y="-178">nt==0</label>
+    <label kind="synchronisation" x="-204" y="-161">busy!</label>
+    <label kind="assignment" x="-161" y="-153">nt=nt+1,
+x=0</label>
+    <nail x="-136" y="-161"/>
+</transition>
+<transition>
+    <source ref="id14"/>
+    <target ref="id11"/>
+    <label kind="probability" x="-259" y="25">TransmitProb</label>
+</transition>
+<transition>
+    <source ref="id11"/>
+    <target ref="id14"/>
+    <label kind="guard" x="-314" y="-26">nt&gt;0</label>
+    <label kind="synchronisation" x="-314" y="-9">busy!</label>
+    <nail x="-314" y="-93"/>
+    <nail x="-314" y="110"/>
+</transition>
+<transition>
+    <source ref="id10"/>
+    <target ref="id11"/>
+</transition>
+</template><template>
+<name x="5" y="5">P3</name>
+<declaration>// Local declarations for process 3</declaration>
+<location id="id15" x="-255" y="-187">
+    <name x="-265" y="-221">INITIAL</name>
+    <label kind="invariant" x="-297" y="-178">x&lt;=1</label>
+</location>
+<location id="id16" x="-255" y="-93">
+    <urgent/>
+</location>
+<location id="id17" x="-8" y="-93">
+    <name x="-18" y="-127">Transmit</name>
+    <label kind="invariant" x="-18" y="-76">x&lt;=1</label>
+</location>
+<location id="id18" x="-8" y="119">
+    <name x="0" y="93">Wait</name>
+    <label kind="invariant" x="-18" y="136">x&lt;=1</label>
+</location>
+<branchpoint id="id19" x="-255" y="110">
+</branchpoint>
+<init ref="id15"/>
+<transition>
+    <source ref="id19"/>
+    <target ref="id18"/>
+    <label kind="assignment" x="-245" y="127">x=0</label>
+    <label kind="probability" x="-245" y="144">100-TransmitProb</label>
+    <nail x="-144" y="144"/>
+</transition>
+<transition>
+    <source ref="id18"/>
+    <target ref="id19"/>
+    <label kind="guard" x="-118" y="59">x==1</label>
+    <nail x="-136" y="68"/>
+</transition>
+<transition>
+    <source ref="id17"/>
+    <target ref="id18"/>
+    <label kind="synchronisation" x="-8" y="-4">busy?</label>
+    <label kind="assignment" x="-8" y="13">x=0, nt = nt-1</label>
+</transition>
+<transition>
+    <source ref="id17"/>
+    <target ref="id16"/>
+    <label kind="guard" x="-85" y="-51">x==1</label>
+    <label kind="assignment" x="-170" y="-42">ns = ns+1,
+nt=nt-1,
+x=0</label>
+    <nail x="-127" y="-42"/>
+</transition>
+<transition>
+    <source ref="id16"/>
+    <target ref="id17"/>
+    <label kind="guard" x="-187" y="-178">nt==0</label>
+    <label kind="synchronisation" x="-204" y="-161">busy!</label>
+    <label kind="assignment" x="-161" y="-153">nt=nt+1,
+x=0</label>
+    <nail x="-136" y="-161"/>
+</transition>
+<transition>
+    <source ref="id19"/>
+    <target ref="id16"/>
+    <label kind="probability" x="-259" y="25">TransmitProb</label>
+</transition>
+<transition>
+    <source ref="id16"/>
+    <target ref="id19"/>
+    <label kind="guard" x="-314" y="-26">nt&gt;0</label>
+    <label kind="synchronisation" x="-314" y="-9">busy!</label>
+    <nail x="-314" y="-93"/>
+    <nail x="-314" y="110"/>
+</transition>
+<transition>
+    <source ref="id15"/>
+    <target ref="id16"/>
+</transition>
+</template><template>
+<name x="5" y="5">P4</name>
+<declaration>// Local declarations for process 4</declaration>
+<location id="id20" x="-255" y="-187">
+    <name x="-265" y="-221">INITIAL</name>
+    <label kind="invariant" x="-297" y="-178">x&lt;=1</label>
+</location>
+<location id="id21" x="-255" y="-93">
+    <urgent/>
+</location>
+<location id="id22" x="-8" y="-93">
+    <name x="-18" y="-127">Transmit</name>
+    <label kind="invariant" x="-18" y="-76">x&lt;=1</label>
+</location>
+<location id="id23" x="-8" y="119">
+    <name x="0" y="93">Wait</name>
+    <label kind="invariant" x="-18" y="136">x&lt;=1</label>
+</location>
+<branchpoint id="id24" x="-255" y="110">
+</branchpoint>
+<init ref="id20"/>
+<transition>
+    <source ref="id24"/>
+    <target ref="id23"/>
+    <label kind="assignment" x="-245" y="127">x=0</label>
+    <label kind="probability" x="-245" y="144">100-TransmitProb</label>
+    <nail x="-144" y="144"/>
+</transition>
+<transition>
+    <source ref="id23"/>
+    <target ref="id24"/>
+    <label kind="guard" x="-118" y="59">x==1</label>
+    <nail x="-136" y="68"/>
+</transition>
+<transition>
+    <source ref="id22"/>
+    <target ref="id23"/>
+    <label kind="synchronisation" x="-8" y="-4">busy?</label>
+    <label kind="assignment" x="-8" y="13">x=0, nt = nt-1</label>
+</transition>
+<transition>
+    <source ref="id22"/>
+    <target ref="id21"/>
+    <label kind="guard" x="-85" y="-51">x==1</label>
+    <label kind="assignment" x="-170" y="-42">ns = ns+1,
+nt=nt-1,
+x=0</label>
+    <nail x="-127" y="-42"/>
+</transition>
+<transition>
+    <source ref="id21"/>
+    <target ref="id22"/>
+    <label kind="guard" x="-187" y="-178">nt==0</label>
+    <label kind="synchronisation" x="-204" y="-161">busy!</label>
+    <label kind="assignment" x="-161" y="-153">nt=nt+1,
+x=0</label>
+    <nail x="-136" y="-161"/>
+</transition>
+<transition>
+    <source ref="id24"/>
+    <target ref="id21"/>
+    <label kind="probability" x="-259" y="25">TransmitProb</label>
+</transition>
+<transition>
+    <source ref="id21"/>
+    <target ref="id24"/>
+    <label kind="guard" x="-314" y="-26">nt&gt;0</label>
+    <label kind="synchronisation" x="-314" y="-9">busy!</label>
+    <nail x="-314" y="-93"/>
+    <nail x="-314" y="110"/>
+</transition>
+<transition>
+    <source ref="id20"/>
+    <target ref="id21"/>
+</transition>
+</template><template>
+<name x="5" y="5">P5</name>
+<declaration>// Local declarations for process 5</declaration>
+<location id="id25" x="-255" y="-187">
+    <name x="-265" y="-221">INITIAL</name>
+    <label kind="invariant" x="-297" y="-178">x&lt;=1</label>
+</location>
+<location id="id26" x="-255" y="-93">
+    <urgent/>
+</location>
+<location id="id27" x="-8" y="-93">
+    <name x="-18" y="-127">Transmit</name>
+    <label kind="invariant" x="-18" y="-76">x&lt;=1</label>
+</location>
+<location id="id28" x="-8" y="119">
+    <name x="0" y="93">Wait</name>
+    <label kind="invariant" x="-18" y="136">x&lt;=1</label>
+</location>
+<branchpoint id="id29" x="-255" y="110">
+</branchpoint>
+<init ref="id25"/>
+<transition>
+    <source ref="id29"/>
+    <target ref="id28"/>
+    <label kind="assignment" x="-245" y="127">x=0</label>
+    <label kind="probability" x="-245" y="144">100-TransmitProb</label>
+    <nail x="-144" y="144"/>
+</transition>
+<transition>
+    <source ref="id28"/>
+    <target ref="id29"/>
+    <label kind="guard" x="-118" y="59">x==1</label>
+    <nail x="-136" y="68"/>
+</transition>
+<transition>
+    <source ref="id27"/>
+    <target ref="id28"/>
+    <label kind="synchronisation" x="-8" y="-4">busy?</label>
+    <label kind="assignment" x="-8" y="13">x=0, nt = nt-1</label>
+</transition>
+<transition>
+    <source ref="id27"/>
+    <target ref="id26"/>
+    <label kind="guard" x="-85" y="-51">x==1</label>
+    <label kind="assignment" x="-170" y="-42">ns = ns+1,
+nt=nt-1,
+x=0</label>
+    <nail x="-127" y="-42"/>
+</transition>
+<transition>
+    <source ref="id26"/>
+    <target ref="id27"/>
+    <label kind="guard" x="-187" y="-178">nt==0</label>
+    <label kind="synchronisation" x="-204" y="-161">busy!</label>
+    <label kind="assignment" x="-161" y="-153">nt=nt+1,
+x=0</label>
+    <nail x="-136" y="-161"/>
+</transition>
+<transition>
+    <source ref="id29"/>
+    <target ref="id26"/>
+    <label kind="probability" x="-259" y="25">TransmitProb</label>
+</transition>
+<transition>
+    <source ref="id26"/>
+    <target ref="id29"/>
+    <label kind="guard" x="-314" y="-26">nt&gt;0</label>
+    <label kind="synchronisation" x="-314" y="-9">busy!</label>
+    <nail x="-314" y="-93"/>
+    <nail x="-314" y="110"/>
+</transition>
+<transition>
+    <source ref="id25"/>
+    <target ref="id26"/>
+</transition>
+</template><template>
+<name x="5" y="5">P6</name>
+<declaration>// Local declarations for process 6</declaration>
+<location id="id30" x="-255" y="-187">
+    <name x="-265" y="-221">INITIAL</name>
+    <label kind="invariant" x="-297" y="-178">x&lt;=1</label>
+</location>
+<location id="id31" x="-255" y="-93">
+    <urgent/>
+</location>
+<location id="id32" x="-8" y="-93">
+    <name x="-18" y="-127">Transmit</name>
+    <label kind="invariant" x="-18" y="-76">x&lt;=1</label>
+</location>
+<location id="id33" x="-8" y="119">
+    <name x="0" y="93">Wait</name>
+    <label kind="invariant" x="-18" y="136">x&lt;=1</label>
+</location>
+<branchpoint id="id34" x="-255" y="110">
+</branchpoint>
+<init ref="id30"/>
+<transition>
+    <source ref="id34"/>
+    <target ref="id33"/>
+    <label kind="assignment" x="-245" y="127">x=0</label>
+    <label kind="probability" x="-245" y="144">100-TransmitProb</label>
+    <nail x="-144" y="144"/>
+</transition>
+<transition>
+    <source ref="id33"/>
+    <target ref="id34"/>
+    <label kind="guard" x="-118" y="59">x==1</label>
+    <nail x="-136" y="68"/>
+</transition>
+<transition>
+    <source ref="id32"/>
+    <target ref="id33"/>
+    <label kind="synchronisation" x="-8" y="-4">busy?</label>
+    <label kind="assignment" x="-8" y="13">x=0, nt = nt-1</label>
+</transition>
+<transition>
+    <source ref="id32"/>
+    <target ref="id31"/>
+    <label kind="guard" x="-85" y="-51">x==1</label>
+    <label kind="assignment" x="-170" y="-42">ns = ns+1,
+nt=nt-1,
+x=0</label>
+    <nail x="-127" y="-42"/>
+</transition>
+<transition>
+    <source ref="id31"/>
+    <target ref="id32"/>
+    <label kind="guard" x="-187" y="-178">nt==0</label>
+    <label kind="synchronisation" x="-204" y="-161">busy!</label>
+    <label kind="assignment" x="-161" y="-153">nt=nt+1,
+x=0</label>
+    <nail x="-136" y="-161"/>
+</transition>
+<transition>
+    <source ref="id34"/>
+    <target ref="id31"/>
+    <label kind="probability" x="-259" y="25">TransmitProb</label>
+</transition>
+<transition>
+    <source ref="id31"/>
+    <target ref="id34"/>
+    <label kind="guard" x="-314" y="-26">nt&gt;0</label>
+    <label kind="synchronisation" x="-314" y="-9">busy!</label>
+    <nail x="-314" y="-93"/>
+    <nail x="-314" y="110"/>
+</transition>
+<transition>
+    <source ref="id30"/>
+    <target ref="id31"/>
+</transition>
+</template><template>
+<name x="5" y="5">P7</name>
+<declaration>// Local declarations for process 7</declaration>
+<location id="id35" x="-255" y="-187">
+    <name x="-265" y="-221">INITIAL</name>
+    <label kind="invariant" x="-297" y="-178">x&lt;=1</label>
+</location>
+<location id="id36" x="-255" y="-93">
+    <urgent/>
+</location>
+<location id="id37" x="-8" y="-93">
+    <name x="-18" y="-127">Transmit</name>
+    <label kind="invariant" x="-18" y="-76">x&lt;=1</label>
+</location>
+<location id="id38" x="-8" y="119">
+    <name x="0" y="93">Wait</name>
+    <label kind="invariant" x="-18" y="136">x&lt;=1</label>
+</location>
+<branchpoint id="id39" x="-255" y="110">
+</branchpoint>
+<init ref="id35"/>
+<transition>
+    <source ref="id39"/>
+    <target ref="id38"/>
+    <label kind="assignment" x="-245" y="127">x=0</label>
+    <label kind="probability" x="-245" y="144">100-TransmitProb</label>
+    <nail x="-144" y="144"/>
+</transition>
+<transition>
+    <source ref="id38"/>
+    <target ref="id39"/>
+    <label kind="guard" x="-118" y="59">x==1</label>
+    <nail x="-136" y="68"/>
+</transition>
+<transition>
+    <source ref="id37"/>
+    <target ref="id38"/>
+    <label kind="synchronisation" x="-8" y="-4">busy?</label>
+    <label kind="assignment" x="-8" y="13">x=0, nt = nt-1</label>
+</transition>
+<transition>
+    <source ref="id37"/>
+    <target ref="id36"/>
+    <label kind="guard" x="-85" y="-51">x==1</label>
+    <label kind="assignment" x="-170" y="-42">ns = ns+1,
+nt=nt-1,
+x=0</label>
+    <nail x="-127" y="-42"/>
+</transition>
+<transition>
+    <source ref="id36"/>
+    <target ref="id37"/>
+    <label kind="guard" x="-187" y="-178">nt==0</label>
+    <label kind="synchronisation" x="-204" y="-161">busy!</label>
+    <label kind="assignment" x="-161" y="-153">nt=nt+1,
+x=0</label>
+    <nail x="-136" y="-161"/>
+</transition>
+<transition>
+    <source ref="id39"/>
+    <target ref="id36"/>
+    <label kind="probability" x="-259" y="25">TransmitProb</label>
+</transition>
+<transition>
+    <source ref="id36"/>
+    <target ref="id39"/>
+    <label kind="guard" x="-314" y="-26">nt&gt;0</label>
+    <label kind="synchronisation" x="-314" y="-9">busy!</label>
+    <nail x="-314" y="-93"/>
+    <nail x="-314" y="110"/>
+</transition>
+<transition>
+    <source ref="id35"/>
+    <target ref="id36"/>
+</transition>
+</template><template>
+<name x="5" y="5">P8</name>
+<declaration>// Local declarations for process 8</declaration>
+<location id="id40" x="-255" y="-187">
+    <name x="-265" y="-221">INITIAL</name>
+    <label kind="invariant" x="-297" y="-178">x&lt;=1</label>
+</location>
+<location id="id41" x="-255" y="-93">
+    <urgent/>
+</location>
+<location id="id42" x="-8" y="-93">
+    <name x="-18" y="-127">Transmit</name>
+    <label kind="invariant" x="-18" y="-76">x&lt;=1</label>
+</location>
+<location id="id43" x="-8" y="119">
+    <name x="0" y="93">Wait</name>
+    <label kind="invariant" x="-18" y="136">x&lt;=1</label>
+</location>
+<branchpoint id="id44" x="-255" y="110">
+</branchpoint>
+<init ref="id40"/>
+<transition>
+    <source ref="id44"/>
+    <target ref="id43"/>
+    <label kind="assignment" x="-245" y="127">x=0</label>
+    <label kind="probability" x="-245" y="144">100-TransmitProb</label>
+    <nail x="-144" y="144"/>
+</transition>
+<transition>
+    <source ref="id43"/>
+    <target ref="id44"/>
+    <label kind="guard" x="-118" y="59">x==1</label>
+    <nail x="-136" y="68"/>
+</transition>
+<transition>
+    <source ref="id42"/>
+    <target ref="id43"/>
+    <label kind="synchronisation" x="-8" y="-4">busy?</label>
+    <label kind="assignment" x="-8" y="13">x=0, nt = nt-1</label>
+</transition>
+<transition>
+    <source ref="id42"/>
+    <target ref="id41"/>
+    <label kind="guard" x="-85" y="-51">x==1</label>
+    <label kind="assignment" x="-170" y="-42">ns = ns+1,
+nt=nt-1,
+x=0</label>
+    <nail x="-127" y="-42"/>
+</transition>
+<transition>
+    <source ref="id41"/>
+    <target ref="id42"/>
+    <label kind="guard" x="-187" y="-178">nt==0</label>
+    <label kind="synchronisation" x="-204" y="-161">busy!</label>
+    <label kind="assignment" x="-161" y="-153">nt=nt+1,
+x=0</label>
+    <nail x="-136" y="-161"/>
+</transition>
+<transition>
+    <source ref="id44"/>
+    <target ref="id41"/>
+    <label kind="probability" x="-259" y="25">TransmitProb</label>
+</transition>
+<transition>
+    <source ref="id41"/>
+    <target ref="id44"/>
+    <label kind="guard" x="-314" y="-26">nt&gt;0</label>
+    <label kind="synchronisation" x="-314" y="-9">busy!</label>
+    <nail x="-314" y="-93"/>
+    <nail x="-314" y="110"/>
+</transition>
+<transition>
+    <source ref="id40"/>
+    <target ref="id41"/>
+</transition>
+</template><template>
+<name x="5" y="5">P9</name>
+<declaration>// Local declarations for process 9</declaration>
+<location id="id45" x="-255" y="-187">
+    <name x="-265" y="-221">INITIAL</name>
+    <label kind="invariant" x="-297" y="-178">x&lt;=1</label>
+</location>
+<location id="id46" x="-255" y="-93">
+    <urgent/>
+</location>
+<location id="id47" x="-8" y="-93">
+    <name x="-18" y="-127">Transmit</name>
+    <label kind="invariant" x="-18" y="-76">x&lt;=1</label>
+</location>
+<location id="id48" x="-8" y="119">
+    <name x="0" y="93">Wait</name>
+    <label kind="invariant" x="-18" y="136">x&lt;=1</label>
+</location>
+<branchpoint id="id49" x="-255" y="110">
+</branchpoint>
+<init ref="id45"/>
+<transition>
+    <source ref="id49"/>
+    <target ref="id48"/>
+    <label kind="assignment" x="-245" y="127">x=0</label>
+    <label kind="probability" x="-245" y="144">100-TransmitProb</label>
+    <nail x="-144" y="144"/>
+</transition>
+<transition>
+    <source ref="id48"/>
+    <target ref="id49"/>
+    <label kind="guard" x="-118" y="59">x==1</label>
+    <nail x="-136" y="68"/>
+</transition>
+<transition>
+    <source ref="id47"/>
+    <target ref="id48"/>
+    <label kind="synchronisation" x="-8" y="-4">busy?</label>
+    <label kind="assignment" x="-8" y="13">x=0, nt = nt-1</label>
+</transition>
+<transition>
+    <source ref="id47"/>
+    <target ref="id46"/>
+    <label kind="guard" x="-85" y="-51">x==1</label>
+    <label kind="assignment" x="-170" y="-42">ns = ns+1,
+nt=nt-1,
+x=0</label>
+    <nail x="-127" y="-42"/>
+</transition>
+<transition>
+    <source ref="id46"/>
+    <target ref="id47"/>
+    <label kind="guard" x="-187" y="-178">nt==0</label>
+    <label kind="synchronisation" x="-204" y="-161">busy!</label>
+    <label kind="assignment" x="-161" y="-153">nt=nt+1,
+x=0</label>
+    <nail x="-136" y="-161"/>
+</transition>
+<transition>
+    <source ref="id49"/>
+    <target ref="id46"/>
+    <label kind="probability" x="-259" y="25">TransmitProb</label>
+</transition>
+<transition>
+    <source ref="id46"/>
+    <target ref="id49"/>
+    <label kind="guard" x="-314" y="-26">nt&gt;0</label>
+    <label kind="synchronisation" x="-314" y="-9">busy!</label>
+    <nail x="-314" y="-93"/>
+    <nail x="-314" y="110"/>
+</transition>
+<transition>
+    <source ref="id45"/>
+    <target ref="id46"/>
+</transition>
+</template>
+<system>system P0,P1,P2,P3,P4,P5,P6,P7,P8,P9;</system>
+<queries>
+    <query>
+        <formula>E[&lt;=100; 10240](max: nt)</formula>
+        <comment></comment>
+    </query>
+</queries>
+</nta>
