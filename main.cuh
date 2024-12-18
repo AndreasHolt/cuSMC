@@ -10,7 +10,6 @@
 
 
 #define VERBOSE 0
-#define REDUCTION_VERBOSE 0
 #define EXPR_VERBOSE 0
 #define REDUCTION_VERBOSE 0
 #define EXPR_VERBOSE_EXTRA 0
@@ -24,6 +23,7 @@
 #define MINIMAL_PRINTS 0
 #define TIME_BOUND 10.0
 #define MAX_VARIABLES 2002
+#define SYNC_SIDE_EFFECT false
 
 constexpr int MAX_EDGES_PER_NODE = 2;
 constexpr int MAX_CHANNELS = 1;

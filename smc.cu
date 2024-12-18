@@ -313,9 +313,11 @@ void smc(configuration conf, statistics_Configuration stat_conf) {
     network_props properties = {};
     populate_properties(properties, parser);
 
-    auto nodes_w_names = parser->get_nodes_with_name();
-    for (auto node: *nodes_w_names) {
-        cout << node.first << "," << node.second << endl;
+    if constexpr (PRINT_VARIABLES) {
+        auto nodes_w_names = parser->get_nodes_with_name();
+        for (auto node: *nodes_w_names) {
+            cout << node.first << "," << node.second << endl;
+        }
     }
 
     std::unordered_set<std::string> *query_set = new std::unordered_set<std::string>();
@@ -340,7 +342,7 @@ void smc(configuration conf, statistics_Configuration stat_conf) {
     int number_of_variables = registry.size();
     printf("Set number of variables to: %d\n", number_of_variables);
 
-    if (PRINT_VARIABLES) {
+    if constexpr(PRINT_VARIABLES) {
         auto node_name = parser->get_nodes_with_name();
         auto variable_name = parser->get_variables_names_to_ids_map();
         for (auto iter = node_name->begin(); iter != node_name->end(); ++iter) {

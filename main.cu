@@ -17,10 +17,10 @@ int main(int argc, char *argv[]) {
     int simulations = 1024;
     int timeBound = 300;
     int variable_threshhold = -1;
-    int variable_id = -1;
+    int variable_id = 1;
     bool isMax = true; // Gather info on either the max value of the variable or the min
     bool isEstimate = true;
-    string loc_query = "Process0.SUCCESS";
+    string loc_query = "";
 
     statistics_Configuration* stat_input = {};
 
