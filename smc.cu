@@ -231,32 +231,8 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
 
     cudaGetDeviceProperties(&deviceProp, 0); // Assuming device 0, change if necessary
 
-
-
-    // What share memory we need:
-    /*
-    __shared__ double delays[MAX_COMPONENTS]; // Only need MAX_COMPONENTS slots, not full warp size
-    __shared__ int component_indices[MAX_COMPONENTS];
-    __shared__ SharedBlockMemory shared_mem;
-    __shared__ ComponentState components[MAX_COMPONENTS];
-    curandState *rng_states;
-
-    // Store curandStates in either global memory or shared memory. Requires ~90kb of shared memory w/ curandStates
-    if constexpr (USE_GLOBAL_MEMORY_CURAND) {
-        // extern __shared__ curandState *rng_states_global;
-        rng_states = rng_states_global;
-    } else {
-        __shared__ curandState rng_states_shared[MAX_COMPONENTS];
-        rng_states = rng_states_shared;
-    }
-
-
-
-    */
-
     const chrono::steady_clock::time_point global_start = chrono::steady_clock::now();
-    // Dynamic Shared memory: https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/
-    // int MC = m_info.MAX_COMPONENTS;
+    // For reference: Dynamic Shared memory: https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/
     if constexpr (USE_GLOBAL_MEMORY_CURAND) {
         simulation_kernel<<<num_blocks, threads_per_block, MC*sizeof(double) + MC*sizeof(int) + sizeof(SharedBlockMemory) + MC*sizeof(ComponentState)>>>(
         model, device_results, runs_per_block, stat_conf.timeBound, d_kinds, m_info.num_vars, flags, variable_flags, stat_conf.variable_id, stat_conf.isMax, rng_states_global, conf.curand_seed, MC);
@@ -279,8 +255,6 @@ __host__ void run_statistical_model_checking(SharedModelState *model, float conf
           << (duration_nano.count() / 1000000.0) << " ms)" << std::endl;
 
     writeTimingToCSV(conf.filename, MC, stat_conf.simulations, stat_conf.timeBound, ms);
-
-
 
     // Check for launch error
     error = cudaGetLastError();
@@ -360,7 +334,7 @@ void smc(configuration conf, statistics_Configuration stat_conf) {
     VariableKind *kinds = var_tracker.createKindArray(registry);
     uint32_t num_vars = registry.size();
 
-    // TODO: Calculate these values... (MAX VALUE STACK = FANOUT?
+    // TODO: Calculate these values... (MAX VALUE STACK = FANOUT?)
     const struct model_info m_info = { 64, 1, num_vars};
 
 

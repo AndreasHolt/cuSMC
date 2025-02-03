@@ -36,8 +36,6 @@ int main(int argc, char *argv[]) {
 }
 
 
-
-
 bool HandleCommandLineArguments(int argc, char **argv, string *filename, int *seed, statistics_Configuration* stats) {
     for (int i = 1; i < argc; i++) {    // Skip first argument, which is the executable path.
         std::string arg = argv[i];
@@ -70,14 +68,6 @@ bool HandleCommandLineArguments(int argc, char **argv, string *filename, int *se
             }
         } else if (arg == "-q" || arg == "--query") {
             if (i + 7 < argc) {
-                // statistics_Configuration
-                /*int simulations = 1000;
-                int timeBound = 100;
-                int variable_threshhold = 10;
-                int variable_id = 5;
-                bool isMax = true; // Gather info on either the max value of the variable or the min
-                bool isEstimate = True;
-                string loc_query = "";*/
                 std::string sims_string = argv[++i];
                 std::string timb_string = argv[++i];
                 std::string var_thresh_string = argv[++i];

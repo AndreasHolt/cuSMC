@@ -676,15 +676,9 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
                                   bool *flags,
                                   double *variable_flags, int variable_id, bool isMax,
                                   curandState *rng_states_global, int curand_seed, int max_components) {
-    // Prepare Shared memory
-    //extern __shared__ int s[];
-    //int *integerData = s;                        // nI ints
-    //float *floatData = (float*)&integerData[nI]; // nF floats
-    //char *charData = (char*)&floatData[nF];      // nC chars
     extern __shared__ int s[];
 
     SharedBlockMemory *shared_mem = (SharedBlockMemory *) &s;
-    // Using (char*) because it is 1 byte large.
     ComponentState *components = (ComponentState *) ((char *) shared_mem + sizeof(SharedBlockMemory));
 
     double *delays = (double *) &components[max_components]; // Only need MAX_COMPONENTS slots, not full warp size
@@ -692,7 +686,8 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 
     curandState *rng_states;
 
-    // Store curandStates in either global memory or shared memory. Requires ~90kb of shared memory w/ curandStates
+    // Store curandStates in either GMEM or GMEM. Requires ~90kb of SMEM w/ curandStates
+    // From testing, performance tends to be way better with curand in GMEM, as SM's can then have more concurrent blocks, duo to SMEM bottlenecks
     if constexpr (USE_GLOBAL_MEMORY_CURAND) {
         // extern __shared__ curandState *rng_states_global;
         rng_states = rng_states_global;
@@ -745,7 +740,6 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
 
     CHECK_ERROR("after model access");
 
-
     // Setup block state
     BlockSimulationState block_state;
 
@@ -795,7 +789,6 @@ __global__ void simulation_kernel(SharedModelState *model, bool *results,
     CHECK_ERROR("after shared memory init");
 
     // Initialize component state
-    // TODO: Move this to the top of the function?
     if (threadIdx.x >= model->num_components) {
         if constexpr (MINIMAL_PRINTS) {
             printf("Thread %d: Exiting - thread ID exceeds number of components\n",
